@@ -60,19 +60,19 @@ test('sound begins only on interaction, skips holds, and hidden tab pauses',asyn
   const Native=window.AudioContext;
   (window as any).cueCount=0;
   window.AudioContext=class extends Native {
-   createOscillator(){(window as any).cueCount++;return super.createOscillator()}
+   createBufferSource(){(window as any).cueCount++;return super.createBufferSource()}
   };
  });
  expect(await page.evaluate(()=>(window as any).cueCount)).toBe(0);
  await page.clock.install();
  await page.getByRole('button',{name:'Begin your practice'}).click();
- await expect.poll(()=>page.evaluate(()=>(window as any).cueCount)).toBe(3);
+ await expect.poll(()=>page.evaluate(()=>(window as any).cueCount)).toBe(1);
  await page.clock.runFor(4100);
  await expect(page.getByRole('heading',{name:'Exhale',exact:true})).toBeVisible();
- expect(await page.evaluate(()=>(window as any).cueCount)).toBe(6);
+ expect(await page.evaluate(()=>(window as any).cueCount)).toBe(2);
  await page.getByRole('button',{name:'Mute sound',exact:true}).click();
  await page.clock.runFor(6100);
- expect(await page.evaluate(()=>(window as any).cueCount)).toBe(6);
+ expect(await page.evaluate(()=>(window as any).cueCount)).toBe(2);
  await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'))});
  await expect(page.getByRole('heading',{name:'Paused',exact:true})).toBeVisible();
 });
@@ -91,4 +91,53 @@ test('repository subpath loads scripts, styles and both local images',async({pag
  }
  expect(await page.locator('.start-button').evaluate(el=>getComputedStyle(el).backgroundColor)).toBe('rgb(55, 87, 68)');
  expect(failed).toEqual([]);
+});
+
+test('background stays fixed until changed; random mode avoids immediate repeats',async({page})=>{
+ await page.goto('./');await page.clock.install();
+ await page.getByRole('button',{name:'Begin your practice'}).click();
+ const first=await page.locator('.scenery').getAttribute('src');
+ await page.clock.runFor(11000);
+ await expect(page.locator('.scenery')).toHaveAttribute('src',first!);
+ await page.getByRole('combobox',{name:'Session scenery'}).selectOption('coast');
+ await expect(page.locator('.scenery')).toHaveAttribute('src',/coast.webp$/);
+ await page.getByRole('combobox',{name:'Session scenery'}).selectOption('gradient');
+ await expect(page.locator('.scenery')).toHaveCount(0);
+ await page.getByRole('combobox',{name:'Session scenery'}).selectOption('random');
+ const previous=await page.locator('.scenery').getAttribute('src');
+ await page.getByRole('button',{name:'Stop',exact:true}).click();
+ await page.getByRole('button',{name:'Begin your practice'}).click();
+ await expect(page.locator('.scenery')).not.toHaveAttribute('src',previous!);
+});
+test('resume and unmute restore phase audio; volume changes do not restart a voice',async({page})=>{
+ await page.goto('./');
+ await page.evaluate(()=>{
+  const Native=window.AudioContext;(window as any).voices=[];
+  window.AudioContext=class extends Native {
+   createBufferSource(){const s=super.createBufferSource();(window as any).voices.push(s);return s}
+  };
+ });
+ await page.clock.install();await page.getByRole('button',{name:'Begin your practice'}).click();
+ await page.clock.runFor(1000);await page.getByRole('button',{name:'Pause',exact:true}).click();
+ const count=await page.evaluate(()=>(window as any).voices.length);
+ await page.clock.runFor(5000);expect(await page.evaluate(()=>(window as any).voices.length)).toBe(count);
+ await page.getByRole('button',{name:'Resume',exact:true}).click();
+ await expect.poll(()=>page.evaluate(()=>(window as any).voices.length)).toBe(count+1);
+ await page.getByRole('slider',{name:'Session volume'}).fill('0.1');
+ expect(await page.evaluate(()=>(window as any).voices.length)).toBe(count+1);
+ await page.getByRole('button',{name:'Mute sound',exact:true}).click();
+ await page.getByRole('button',{name:'Unmute sound',exact:true}).click();
+ await expect.poll(()=>page.evaluate(()=>(window as any).voices.length)).toBe(count+2);
+ await page.getByRole('button',{name:'Stop',exact:true}).click();
+ await page.clock.runFor(20000);expect(await page.evaluate(()=>(window as any).voices.length)).toBe(count+2);
+});
+test('unavailable Web Audio does not prevent silent breathing practice',async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.addInitScript(()=>Object.defineProperty(window,'AudioContext',{value:undefined,configurable:true}));
+ await page.goto('./');await page.getByRole('button',{name:'Begin your practice'}).click();
+ await expect(page.getByRole('heading',{name:'Inhale',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Pause',exact:true}).click();
+ await page.getByRole('button',{name:'Resume',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Inhale',exact:true})).toBeVisible();
+ expect(errors).toEqual([]);
 });

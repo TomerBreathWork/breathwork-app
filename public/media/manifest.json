@@ -1,0 +1,9 @@
+{
+  "backgrounds": [],
+  "recordings": {
+    "inhale": null,
+    "holdAfterInhale": null,
+    "exhale": null,
+    "holdAfterExhale": null
+  }
+}
