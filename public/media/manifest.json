@@ -1,9 +1,15 @@
 {
-  "backgrounds": [],
+  "backgrounds": [
+    "backgrounds/1.webp",
+    "backgrounds/2.webp",
+    "backgrounds/3.webp",
+    "backgrounds/4.webp",
+    "backgrounds/5.webp"
+  ],
   "recordings": {
-    "inhale": null,
-    "holdAfterInhale": null,
-    "exhale": null,
-    "holdAfterExhale": null
+    "inhale": "audio/inhale 4.MP3",
+    "holdAfterInhale": "audio/hold 4.MP3",
+    "exhale": "audio/exhale 4.MP3",
+    "holdAfterExhale": "audio/hold 4.MP3"
   }
 }
