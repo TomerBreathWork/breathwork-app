@@ -1,8 +1,9 @@
 import {phaseAt, validRhythm, type Rhythm} from './engine.ts';
 import {phaseEnvelope} from './audio-envelope.ts';
-import type {PhaseRole, SoundSet} from './audio-types.ts';
+import type {SoundSet, AudioMode} from './audio-types.ts';
 import {phaseRoles} from './audio-types.ts';
-interface Voice { source: AudioBufferSourceNode; gain: GainNode; start: number; end: number; levelAt: (time:number)=>number }
+import {createSingingBowl} from './bowl-synth.ts';
+interface Voice { sources: AudioScheduledSourceNode[]; gain: GainNode; start: number; end: number; levelAt: (time:number)=>number }
 
 export class BowlAudio {
  private context?: AudioContext;
@@ -13,7 +14,8 @@ export class BowlAudio {
  private generation = 0;
  private volume = 0.35;
  private silenceUntil = 0;
- private loadState: 'fallback'|'recorded'|'partial' = 'fallback';
+ private mode: AudioMode = 'synthesized';
+ private loadState: 'synthesized'|'fallback'|'recorded'|'partial' = 'synthesized';
  get recordingStatus() { return this.loadState; }
  async unlock() {
   try {
@@ -26,49 +28,55 @@ export class BowlAudio {
   this.volume=volume;
   if(this.context&&this.master){const t=this.context.currentTime;this.master.gain.cancelScheduledValues(t);this.master.gain.setTargetAtTime(volume,t,0.02)}
  }
- async prepare(set:SoundSet) {
-  const c=this.context;if(!c)return;
+ async prepare(set:SoundSet,mode:AudioMode='synthesized') {
+  this.mode=mode;
+  this.loadState=mode==='synthesized'?'synthesized':'fallback';
+  const c=this.context;if(!c||mode==='synthesized')return;
   await Promise.all([...new Set(Object.values(set.recordings).filter((url):url is string=>Boolean(url)))].map(async url=>{
    if(this.buffers.has(url))return;
    try {const response=await fetch(url,{signal:AbortSignal.timeout(8000)});if(!response.ok)throw new Error('Media unavailable');const buffer=await c.decodeAudioData(await response.arrayBuffer());this.buffers.set(url,buffer)}catch{/* Missing/corrupt recordings use fallback for that role. */}
   }));
   const loaded=phaseRoles.filter(role=>{const url=set.recordings[role];return url&&this.buffers.has(url)}).length;
   this.loadState=loaded===4?'recorded':loaded?'partial':'fallback';
-  // Prepare fallback buffers before the session clock starts, never on a phase boundary.
-  phaseRoles.forEach(role=>this.bufferFor(set,role));
- }
- private bufferFor(set:SoundSet,role:PhaseRole):AudioBuffer {
-  const url=set.recordings[role];const recording=url&&this.buffers.get(url);if(recording)return recording;
-  const key=`synth:${set.frequencies[role]}`;
-  let buffer=this.buffers.get(key);if(buffer)return buffer;
-  const c=this.context!;buffer=c.createBuffer(1,Math.ceil(c.sampleRate*4),c.sampleRate);
-  const data=buffer.getChannelData(0),frequency=set.frequencies[role];
-  for(let i=0;i<data.length;i++){const t=i/c.sampleRate;data[i]=0.2*Math.exp(-t*1.5)*(Math.sin(2*Math.PI*frequency*t)+0.18*Math.sin(2*Math.PI*frequency*2.01*t)+0.06*Math.sin(2*Math.PI*frequency*3.98*t))}
-  this.buffers.set(key,buffer);return buffer;
  }
  private schedule(set:SoundSet,index:number,at:number,duration:number,offset:number) {
   const c=this.context;if(!c||c.state!=='running'||!this.master)return;
   const delayed=Math.max(at,c.currentTime,this.silenceUntil);offset+=delayed-at;at=delayed;
-  const buffer=this.bufferFor(set,phaseRoles[index]);
+  const url=set.recordings[phaseRoles[index]];
+  const buffer=this.mode==='recorded'&&url?this.buffers.get(url):undefined;
   // A recording that already ended before pause stays silent on resume.
-  if(offset>=buffer.duration)return;
+  if(buffer&&offset>=buffer.duration)return;
   const envelope=phaseEnvelope(duration,offset);if(envelope.end<=0)return;
-  const source=c.createBufferSource(),gain=c.createGain();source.buffer=buffer;source.loop=false;
-  source.connect(gain);gain.connect(this.master);
+  const gain=c.createGain();gain.connect(this.master);
+  let sources: AudioScheduledSourceNode[], partialGains: GainNode[]=[];
+  try {
+   if(buffer){
+    const source=c.createBufferSource();source.buffer=buffer;source.loop=false;source.connect(gain);sources=[source];
+   } else {
+    const bowl=createSingingBowl(c,gain,set.frequencies[phaseRoles[index]],at,offset);
+    sources=bowl.sources;partialGains=bowl.gains;
+   }
+  } catch {gain.disconnect();return; /* Failed audio leaves the breathing clock untouched. */}
   gain.gain.setValueAtTime(0,at);
   gain.gain.linearRampToValueAtTime(envelope.peak,at+envelope.attack);
   gain.gain.setValueAtTime(envelope.peak,at+envelope.fadeStart);
   gain.gain.linearRampToValueAtTime(0,at+envelope.end);
-  const voice:Voice={source,gain,start:at,end:at+envelope.end,levelAt:(time)=>{
+  const voice:Voice={sources,gain,start:at,end:at+envelope.end,levelAt:(time)=>{
    const t=time-at;
    if(t<0||t>=envelope.end)return 0;
    if(t<envelope.attack)return envelope.peak*t/envelope.attack;
    return t<=envelope.fadeStart?envelope.peak:envelope.peak*(envelope.end-t)/(envelope.end-envelope.fadeStart);
   }};
   this.voices.add(voice);
-  source.onended=()=>{source.disconnect();gain.disconnect();this.voices.delete(voice)};
-  source.start(at,offset);
-  source.stop(at+Math.min(envelope.end,buffer.duration-offset));
+  let active=sources.length;
+  sources.forEach(source=>{
+   source.onended=()=>{
+    source.disconnect();
+    if(--active===0){partialGains.forEach(node=>node.disconnect());gain.disconnect();this.voices.delete(voice)}
+   };
+   if(buffer)(source as AudioBufferSourceNode).start(at,offset);else (source as OscillatorNode).start(at);
+   source.stop(at+Math.min(envelope.end,buffer?buffer.duration-offset:envelope.end));
+  });
  }
  run(set:SoundSet,rhythm:Rhythm,elapsedMs:number,endMs:number) {
   this.stop();
@@ -110,7 +118,7 @@ export class BowlAudio {
    voice.levelAt=time=>time>=end?0:level*Math.max(0,(end-time)/(end-now||1));
    voice.end=end;
    this.silenceUntil=Math.max(this.silenceUntil,end);
-   voice.source.stop(end);
+   voice.sources.forEach(source=>source.stop(end));
   }
  }
  preview(set:SoundSet){this.stop();this.schedule(set,0,this.context?.currentTime||0,5,0)}

@@ -3,7 +3,7 @@ import {resolveMediaPath} from './media-path';
 
 export interface MediaAsset { id: string; name: string; description: string; url: string; kind: 'image'; published: boolean; order: number }
 export type {PhaseRole, SoundSet} from './audio-types';
-import {phaseRoles, type PhaseRole, type SoundSet} from './audio-types';
+import {phaseRoles, phaseNotes, type PhaseRole, type SoundSet} from './audio-types';
 interface BackgroundEntry { id: string; name: string; description?: string; file: string; published?: boolean }
 // All configured files are local public assets. A future provider can supply published URLs.
 export function mediaUrl(file: unknown): string | null {
@@ -34,7 +34,7 @@ export function chooseBackground(selection: string, previous: string, random = M
 export const soundSets: SoundSet[] = [{
  id:'bowls',name:'Tibetan Bowls',
  recordings:Object.fromEntries(phaseRoles.map(role=>[role,mediaUrl(manifest.recordings?.[role])])) as Record<PhaseRole,string|null>,
- frequencies:{inhale:261.63,holdAfterInhale:329.63,exhale:196,holdAfterExhale:329.63}
+ frequencies:Object.fromEntries(phaseRoles.map(role=>[role,phaseNotes[role].frequency])) as Record<PhaseRole,number>
 }];
 export const hasRecordings=Object.values(soundSets[0].recordings).some(Boolean);
 export const appDefaults = {rhythm:[4,0,6,0] as [number,number,number,number],minutes:5,background:'random',sound:'bowls',volume:0.35};

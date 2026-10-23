@@ -64,7 +64,7 @@ test('sound begins only on interaction, skips holds, and hidden tab pauses',asyn
   const Native=window.AudioContext;
   (window as any).cueCount=0;
   window.AudioContext=class extends Native {
-   createBufferSource(){(window as any).cueCount++;return super.createBufferSource()}
+   createOscillator(){(window as any).cueCount+=1/8;return super.createOscillator()}
   };
  });
  expect(await page.evaluate(()=>(window as any).cueCount)).toBe(0);
@@ -121,7 +121,7 @@ test('resume and unmute restore phase audio; volume changes do not restart a voi
  await page.evaluate(()=>{
   const Native=window.AudioContext;(window as any).voices=[];
   window.AudioContext=class extends Native {
-   createBufferSource(){const s=super.createBufferSource();(window as any).voices.push(s);return s}
+   createOscillator(){const s=super.createOscillator();if(!(this as any).oscillatorCount||(this as any).oscillatorCount%8===0)(window as any).voices.push(s);(this as any).oscillatorCount=((this as any).oscillatorCount||0)+1;return s}
   };
  });
  await page.clock.install();await page.getByRole('button',{name:'Begin your practice'}).click();
@@ -184,10 +184,11 @@ test('the three uploaded MP3 recordings decode with spaces and uppercase extensi
 });
 test('missing recordings use synthesized fallback without blocking the session',async({page})=>{
  await page.route(/\/media\/audio\/.*\.MP3$/,route=>route.abort());
- await page.goto('./');await page.getByRole('button',{name:'Begin your practice'}).click();
- await expect(page.locator('.session')).toBeVisible();
- await expect(page.getByRole('heading',{name:'Inhale',exact:true})).toBeVisible();
- await page.getByRole('button',{name:'Stop',exact:true}).click();
+ await page.goto('./');
  await page.getByRole('button',{name:'Atmosphere & sound'}).click();
+ await page.getByRole('combobox',{name:'Sound',exact:true}).selectOption('recordings');
+ await page.getByRole('button',{name:'Begin your practice'}).click();
+ await expect(page.locator('.session')).toBeVisible();
+ await page.getByRole('button',{name:'Stop',exact:true}).click();
  await expect(page.getByRole('status')).toContainText('synthesized fallback');
 });

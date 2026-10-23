@@ -1,0 +1,4 @@
+// Only bundled into browser tests, never imported by the production application.
+export {BowlAudio} from '../src/audio';
+export {createSingingBowl} from '../src/bowl-synth';
+export {phaseNotes,phaseRoles} from '../src/audio-types';

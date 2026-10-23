@@ -11,7 +11,7 @@ const presets: {name:string;note:string;rhythm:Rhythm}[] = [
  {name:'Box breathing',note:'4 · 4 · 4 · 4',rhythm:[4,4,4,4]},
  {name:'Evening unwind',note:'4 · 7 · 8 · 0',rhythm:[4,7,8,0]}
 ];
-function load():Settings {try {const s=JSON.parse(localStorage.getItem('still-settings')||'null');if(s && Array.isArray(s.rhythm) && s.rhythm.length===4 && validRhythm(s.rhythm) && s.minutes>=1 && s.minutes<=120 && ['bowls','silent'].includes(s.sound) && Number.isFinite(s.volume) && s.volume>=0 && s.volume<=1)return {...s,background:['random','gradient',...mediaAssets.map(a=>a.id),...fallbackAssets.map(a=>a.id)].includes(s.background)?s.background:'random'};}catch{}return {...appDefaults};}
+function load():Settings {try {const s=JSON.parse(localStorage.getItem('still-settings')||'null');if(s && Array.isArray(s.rhythm) && s.rhythm.length===4 && validRhythm(s.rhythm) && s.minutes>=1 && s.minutes<=120 && ['bowls','recordings','silent'].includes(s.sound) && Number.isFinite(s.volume) && s.volume>=0 && s.volume<=1)return {...s,background:['random','gradient',...mediaAssets.map(a=>a.id),...fallbackAssets.map(a=>a.id)].includes(s.background)?s.background:'random'};}catch{}return {...appDefaults};}
 const clockText=(seconds:number)=>`${Math.floor(seconds/60).toString().padStart(2,'0')}:${Math.floor(seconds%60).toString().padStart(2,'0')}`;
 function App(){
  const [settings,setSettings]=useState<Settings>(load);
@@ -22,7 +22,7 @@ function App(){
  const [imageFailed,setImageFailed]=useState(false);
  const [muted,setMuted]=useState(false);
  const [preparing,setPreparing]=useState(false);
- const [audioStatus,setAudioStatus]=useState(hasRecordings?'Recordings load on Start or Preview':'Recordings not uploaded · synthesized fallback');
+ const [audioStatus,setAudioStatus]=useState('Synthesized singing bowls · C4 / G3 / C4 / E4');
  const operation=useRef(0);
  const audio=useRef(new BowlAudio());
  const base=useRef(0), origin=useRef(0),previousImage=useRef('');
@@ -53,9 +53,9 @@ function App(){
  }
  async function prepareAudio(){
   await audio.current.unlock();
-  await audio.current.prepare(soundSets[0]);
+  await audio.current.prepare(soundSets[0],settings.sound==='recordings'?'recorded':'synthesized');
   const status=audio.current.recordingStatus;
-  setAudioStatus(status==='recorded'?'Recorded Tibetan bowls':status==='partial'?'Recordings + synthesized fallback':'Recordings unavailable · synthesized fallback');
+  setAudioStatus(status==='synthesized'?'Synthesized singing bowls · C4 / G3 / C4 / E4':status==='recorded'?'Recorded Tibetan bowls':status==='partial'?'Recordings + synthesized fallback':'Recordings unavailable · synthesized fallback');
  }
  async function start(){
   if(!valid||preparing)return;
@@ -100,7 +100,7 @@ function App(){
     <div className="rhythm-grid">{['Inhale','Hold after inhale','Exhale','Hold after exhale'].map((label,i)=><label key={label}><span>{label}</span><div className="number-field"><input aria-label={`${label} seconds`} type="number" min="0" max="120" step="1" value={Number.isNaN(settings.rhythm[i])?'':settings.rhythm[i]} onChange={e=>{const rhythm=[...settings.rhythm] as Rhythm;rhythm[i]=e.target.value===''?NaN:Number(e.target.value);patch({rhythm})}}/><span>sec</span></div></label>)}</div><p className="field-note">Set a phase to 0 to skip it.</p>
     <div className="duration-row"><label htmlFor="duration">Session length<span>A little time goes a long way.</span></label><div className="number-field"><input id="duration" type="number" min="1" max="120" value={Number.isNaN(settings.minutes)?'':settings.minutes} onChange={e=>patch({minutes:e.target.value===''?NaN:Number(e.target.value)})}/><span>min</span></div></div>
     <button className="preferences-toggle" aria-expanded={more} onClick={()=>setMore(!more)}><span>☷ &nbsp; Atmosphere & sound</span><span>{more?'−':'+'}</span></button>
-    {more&&<div className="preferences"><label>Scenery<select value={settings.background} onChange={e=>patch({background:e.target.value})}>{sceneryOptions}</select></label><label>Sound<select value={settings.sound} onChange={e=>{operation.current++;audio.current.stop();setPreparing(false);patch({sound:e.target.value})}}><option value="bowls">{hasRecordings?'Tibetan Bowls · recordings':'Tibetan Bowls · synthesized fallback'}</option><option value="silent">Silent</option></select></label><p className="field-note" role="status">{audioStatus}</p><div className="volume-row"><label htmlFor="volume">Volume</label><input id="volume" type="range" min="0" max="1" step="0.05" value={settings.volume} onChange={e=>patch({volume:Number(e.target.value)})}/><button className="text-button" disabled={settings.sound==='silent'} onClick={preview}>Preview</button></div></div>}
+    {more&&<div className="preferences"><label>Scenery<select value={settings.background} onChange={e=>patch({background:e.target.value})}>{sceneryOptions}</select></label><label>Sound<select value={settings.sound} onChange={e=>{operation.current++;audio.current.stop();setPreparing(false);patch({sound:e.target.value})}}><option value="bowls">Tibetan Bowls · synthesized</option>{hasRecordings&&<option value="recordings">Tibetan Bowls · recordings</option>}<option value="silent">Silent</option></select></label><p className="field-note" role="status">{audioStatus}</p><div className="volume-row"><label htmlFor="volume">Volume</label><input id="volume" type="range" min="0" max="1" step="0.05" value={settings.volume} onChange={e=>patch({volume:Number(e.target.value)})}/><button className="text-button" disabled={settings.sound==='silent'} onClick={preview}>Preview</button></div></div>}
     {!valid&&<p className="error" role="alert">Use 0–120 seconds per phase, with at least one phase above 0, and a session of 1–120 minutes.</p>}
     <button className="start-button" disabled={!valid||preparing} onClick={start}>{preparing?'Preparing audio…':'Begin your practice'} <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></button><p className="end-note">We finish the current phase, so your session may run a little longer.</p>
    </section>

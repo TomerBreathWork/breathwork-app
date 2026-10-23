@@ -1,6 +1,6 @@
 # Still — breathing, simply
 
-A free React + TypeScript + Vite breathing app. No registration, credentials, paid APIs, or runtime external requests. All preferences stay in this browser. Local original WebP landscape illustrations and synthesized bowl-style fallback audio are included. Local photographs and recordings can be registered in the media manifest.
+A free React + TypeScript + Vite breathing app. No registration, credentials, paid APIs, or runtime external requests. All preferences stay in this browser. Local photographs, fallback landscape illustrations, and native synthesized singing bowls are included. Synthesis is the default sound mode; uploaded recordings remain selectable. Local photographs and recordings can be registered in the media manifest.
 
 ## Preview
 
@@ -16,7 +16,7 @@ Open the address Vite prints in your browser (normally port 5173, under `/breath
 
 Choose a preset or enter your own seconds; 0 skips a phase entirely. Start opens the scenic exercise. Try pause/resume, mute, stop, and the × button. Under **Atmosphere & sound**, choose a fixed background, random scenery, a gradient, volume, or silence. Preview plays a sample bowl. Use **Reset defaults** to return to 4–0–6–0 for 5 minutes.
 
-The session completes at the end of the phase containing the target duration; the countdown includes this extension. Hiding the browser tab pauses safely and silences cues; resume manually on return. Refreshing ends a session, while keeping valid settings. When no recordings are assigned, sound is synthesized locally, not a recording of an actual Tibetan bowl. Assigned recordings take priority, with per-role synthesis on load/decode failure. Start or Preview unlocks browser audio; unavailable audio falls back to silence.
+The session completes at the end of the phase containing the target duration; the countdown includes this extension. Hiding the browser tab pauses safely and silences cues; resume manually on return. Refreshing ends a session, while keeping valid settings. Synthesized Tibetan Bowls is the default; it does not fetch audio files. You can select the existing recordings under Atmosphere & sound. In recording mode, missing or undecodable files use per-role synthesis instead. Existing sound-on preferences use the new synthesis; saved silence preferences remain silent. Start or Preview unlocks browser audio; unavailable audio falls back to silence.
 
 ## Checks
 
@@ -43,7 +43,7 @@ Manual checks on your phone and desktop:
 
 - `src/engine.ts`: pure monotonic-time phase math, independently tested.
 - `src/main.tsx`: idle/running/paused/completed state, settings, UI and pause policy.
-- `src/audio.ts`: recorded phase playback, lookahead Web Audio scheduling, per-phase fades, independent master gain, soft cancellation and synthesized fallback.
+- `src/audio.ts`: lookahead scheduling, synthesized/recorded playback, phase fades, independent master gain and soft cancellation. `src/bowl-synth.ts`: tuned paired-partial bowl voices, natural decay and sustained floors.
 - `src/media.ts` and `public/media/manifest.json`: typed static media catalog, phase-role recordings, defaults, read-only media provider and separate access provider.
 - `public/media/`: locally served original illustrative placeholders. `scripts/create-landscapes.py` reproduces them with Pillow; Python is not needed to run the app.
 
@@ -84,12 +84,12 @@ The browser tests start a production preview on port 5174 and exercise `/breathw
 
 ## Local photographs and recorded bowls
 
-Five photographs (`1.webp`–`5.webp`) and three recordings (`inhale 4.MP3`, `hold 4.MP3`, `exhale 4.MP3`) are registered in the manifest. Both holds share the hold recording. The existing illustrations and synthesized sounds remain functional fallbacks. No service subscriptions or API credentials are needed.
+Five photographs (`1.webp`–`5.webp`) and three recordings (`inhale 4.MP3`, `hold 4.MP3`, `exhale 4.MP3`) are registered in the manifest. Both holds share the hold recording. The existing illustrations remain functional fallbacks. Synthesized singing bowls are the default; recordings remain available as an alternative. No service subscriptions or API credentials are needed.
 
 You can add media directly through GitHub's **Add file → Upload files** in these folders, then edit the manifest and commit to `main`. The existing Actions workflow rebuilds and deploys your updates.
 
 1. Put licensed JPG/JPEG/PNG/WebP photographs in `public/media/backgrounds/`. Prefer compressed WebP, about 1600–2000 pixels wide, preferably below 500 KB. Use simple ASCII filenames (spaces, dashes and underscores are supported).
-2. Put licensed MP3/WAV/OGG recordings in `public/media/audio/`. MP3 is a broadly compatible choice for phones. Use soft, normalized recordings without harsh attacks. Musical references: inhale C4 (261.63 Hz), hold E4 (329.63 Hz), exhale G3 (196 Hz); no therapeutic frequency claims are made.
+2. Put licensed MP3/WAV/OGG recordings in `public/media/audio/`. MP3 is a broadly compatible choice for phones. Use soft, normalized recordings without harsh attacks. The synthesis mapping is inhale C4 (261.63 Hz), first hold G3 (196.00 Hz), exhale C4 (261.63 Hz), second hold E4 (329.63 Hz). Uploaded recordings keep their original pitches. No therapeutic frequency claims are made.
 3. Edit `public/media/manifest.json`, for example:
 
 ```json
@@ -111,8 +111,25 @@ Only register paths for files you have actually uploaded. Leave an unassigned au
 
 When photographs are present, random sessions choose from those photographs and avoid an immediate repeat when possible. Fallback illustrations remain selectable. The chosen image stays fixed unless you change **Scenery** in the session header. Failed session images use the gradient. All media URLs respect `/breathwork-app/`; no root-relative media URLs or runtime external requests are used. Only the displayed background loads, and browsers can cache the static assets. Settings remain stored in the browser.
 
-**Audio behavior:** Start and Preview unlock audio and preload/decode assigned recordings, caching them for this page visit. Missing or unsupported recordings fall back individually to synthesized bowls; Settings reports whether playback uses recordings, partial fallback, or full fallback. Autoplay/API failure leaves the exercise silent. Sources never loop. Short recordings end naturally; long recordings stop at their phase boundary. Phase envelopes fade in for up to 150 ms and fade out over the final second; phases under two seconds use proportional fades. Each phase reaches zero before the next starts. There is no crossfade. A separate master gain controls volume without resetting those envelopes.
+**Audio behavior:** Start and Preview unlock audio through user interaction. Default synthesis creates live oscillator voices, with no audio downloads, fixed sample cutoff, reverb or post-phase tail. Selecting recording mode preloads/decodes assigned files and caches them for this page visit. Missing or unsupported recordings fall back individually to the new synthesis. Settings reports the active mode or fallback. Autoplay/API failure leaves the exercise silent. Recordings never loop: short files end naturally, and long files stop at their phase boundary. Phase envelopes fade in for up to 150 ms and fade out over the final second; phases under two seconds use proportional fades. Each phase reaches zero before the next starts. There is no crossfade. A separate master gain controls volume without resetting those envelopes.
 
-Pause/stop/exit cancel the scheduler and queued sources and release active audio over at most 50 ms. Resume/unmute seek to the current phase offset and re-envelope its remaining time; a recording that already ended stays silent. Newly started audio waits for any cancellation release to finish, so rapid controls do not cause overlap. Background changes do not restart audio or the breathing clock. Session completion cancels all further cues. Tab hiding still pauses safely.
+Pause/stop/exit cancel the scheduler and queued sources and release active audio over at most 50 ms. Resume/unmute re-envelope the current phase from its elapsed offset. Synthesized partial decay and oscillator phase resume at the elapsed offset, preserving the beating pattern without a new mallet strike. Recordings seek to that offset; a recording that already ended stays silent. Newly started audio waits for any cancellation release to finish, so rapid controls do not cause overlap. Background changes do not restart audio or the breathing clock. Session completion cancels all further cues. Tab hiding still pauses safely.
 
 The pure timing/audio tests include short/long phases, four role assignments, zero phases, no looping/overlap, independent master volume, cancellation, and resumed offsets. Browser tests cover the existing UI, image selection/randomness, controls and GitHub Pages paths. A separate browser test bundles the actual audio engine into a test-only harness, decodes temporary WAV responses, and renders the Web Audio graph offline to measure silence at phase boundaries. Those test WAVs are never shipped as app media. For final subjective loudness and mobile codec checks, preview your own recordings on the deployed site.
+
+## Synthesized singing bowls
+
+The default uses native Web Audio oscillators, with this exact phase mapping:
+
+| Phase | Note | Fundamental |
+| --- | --- | --- |
+| Inhale | C4 | 261.63 Hz |
+| Hold after inhale | G3 | 196.00 Hz |
+| Exhale | C4 | 261.63 Hz |
+| Hold after exhale | E4 | 329.63 Hz |
+
+Inhale/exhale use identical parameters. Each voice has four inharmonic partials (ratios 1, 2.71, 5.15 and 8.3), with a dominant exactly tuned oscillator and a quieter, slightly detuned companion. Upper partials are deliberately quieter and decay faster; a low sustained floor keeps long phases audible without generating long audio buffers. A small low-note level correction keeps the three notes close in level. The existing phase envelope supplies a gentle 150 ms onset (proportional for very short phases), final-second fade, and exact zero at the boundary. Every oscillator stops there; all oscillator and per-partial gain connections disconnect on completion. Cancellation still uses the existing maximum 50 ms release, and new voices wait for release silence. No crossfade, mallet noise, reverb, delays, external libraries, or paid services are used.
+
+The paired-partial model is adapted from [Olivier Giulieri's Tibetan Singing Bowls](https://evoluteur.github.io/tibetan-singing-bowls/), after inspecting its implementation and MIT license. Attribution and the full permission notice are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and [the license file](third-party/tibetan-singing-bowls-LICENSE.txt). Vite retains the full MIT notice in the distributed JavaScript. The reference's UI, sound bath, mallet clink, and reverb graph are not included.
+
+Tests additionally verify all four note mappings, the same C4 timbre for inhale/exhale (within browser floating-point precision), resumed decay, long/short/skipped phases, master independence, cancellation and node cleanup. Real browser offline audio renders check silence at every phase boundary, no clipping, and RMS levels within 2 dB across G3/C4/E4 over a five-second note. These signal checks support consistency; perceived warmth/loudness should also be checked on your phone or headphones at a comfortable volume.
