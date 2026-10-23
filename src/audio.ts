@@ -2,8 +2,8 @@ import {phaseAt, validRhythm, type Rhythm} from './engine.ts';
 import {phaseEnvelope} from './audio-envelope.ts';
 import type {SoundSet, AudioMode} from './audio-types.ts';
 import {phaseRoles} from './audio-types.ts';
-import {createSingingBowl} from './bowl-synth.ts';
-interface Voice { sources: AudioScheduledSourceNode[]; gain: GainNode; start: number; end: number; levelAt: (time:number)=>number }
+import {createSingingBowl,referenceVolumeGain} from './bowl-synth.ts';
+interface Voice { sources: AudioScheduledSourceNode[]; gain: GainNode; start: number; end: number; levelAt: (time:number)=>number; volume?:GainNode; synthesized:boolean }
 
 export class BowlAudio {
  private context?: AudioContext;
@@ -20,16 +20,17 @@ export class BowlAudio {
  async unlock() {
   try {
    this.context ??= new AudioContext();
-   if(!this.master){this.master=this.context.createGain();this.master.gain.value=this.volume;this.master.connect(this.context.destination)}
+   if(!this.master){this.master=this.context.createGain();this.master.gain.value=1;this.master.connect(this.context.destination)}
    await this.context.resume();
   } catch { /* No audio capability: the exercise continues silently. */ }
  }
  setVolume(volume:number) {
   this.volume=volume;
-  if(this.context&&this.master){const t=this.context.currentTime;this.master.gain.cancelScheduledValues(t);this.master.gain.setTargetAtTime(volume,t,0.02)}
+  if(this.context)for(const voice of this.voices)voice.volume?.gain.setTargetAtTime(voice.synthesized?referenceVolumeGain(volume):volume,this.context.currentTime,0.05);
  }
  async prepare(set:SoundSet,mode:AudioMode='synthesized') {
   this.mode=mode;
+  this.setVolume(this.volume);
   this.loadState=mode==='synthesized'?'synthesized':'fallback';
   const c=this.context;if(!c||mode==='synthesized')return;
   await Promise.all([...new Set(Object.values(set.recordings).filter((url):url is string=>Boolean(url)))].map(async url=>{
@@ -46,22 +47,23 @@ export class BowlAudio {
   const buffer=this.mode==='recorded'&&url?this.buffers.get(url):undefined;
   // A recording that already ended before pause stays silent on resume.
   if(buffer&&offset>=buffer.duration)return;
-  const envelope=phaseEnvelope(duration,offset);if(envelope.end<=0)return;
+  const envelope=phaseEnvelope(duration,offset,!buffer);if(envelope.end<=0)return;
   const gain=c.createGain();gain.connect(this.master);
-  let sources: AudioScheduledSourceNode[], partialGains: GainNode[]=[];
+  let sources: AudioScheduledSourceNode[], partialNodes:AudioNode[]=[], sourceOffsets=new Map<AudioScheduledSourceNode,number>(),volume:GainNode|undefined,sourceLifetimes=new Map<AudioScheduledSourceNode,number>();
   try {
    if(buffer){
     const source=c.createBufferSource();source.buffer=buffer;source.loop=false;source.connect(gain);sources=[source];
+    volume=c.createGain();volume.gain.value=this.volume;gain.disconnect();gain.connect(volume);volume.connect(this.master);partialNodes=[volume];
    } else {
-    const bowl=createSingingBowl(c,gain,set.frequencies[phaseRoles[index]],at,offset);
-    sources=bowl.sources;partialGains=bowl.gains;
+    const bowl=createSingingBowl(c,gain,set.frequencies[phaseRoles[index]],at,offset,{volume:this.volume});
+    sources=bowl.sources;partialNodes=bowl.nodes;sourceOffsets=bowl.offsets;volume=bowl.volume;sourceLifetimes=bowl.lifetimes;
    }
   } catch {gain.disconnect();return; /* Failed audio leaves the breathing clock untouched. */}
   gain.gain.setValueAtTime(0,at);
   gain.gain.linearRampToValueAtTime(envelope.peak,at+envelope.attack);
   gain.gain.setValueAtTime(envelope.peak,at+envelope.fadeStart);
   gain.gain.linearRampToValueAtTime(0,at+envelope.end);
-  const voice:Voice={sources,gain,start:at,end:at+envelope.end,levelAt:(time)=>{
+  const voice:Voice={sources,gain,volume,synthesized:!buffer,start:at,end:at+envelope.end,levelAt:(time)=>{
    const t=time-at;
    if(t<0||t>=envelope.end)return 0;
    if(t<envelope.attack)return envelope.peak*t/envelope.attack;
@@ -72,10 +74,10 @@ export class BowlAudio {
   sources.forEach(source=>{
    source.onended=()=>{
     source.disconnect();
-    if(--active===0){partialGains.forEach(node=>node.disconnect());gain.disconnect();this.voices.delete(voice)}
+    if(--active===0){partialNodes.forEach(node=>node.disconnect());gain.disconnect();this.voices.delete(voice)}
    };
-   if(buffer)(source as AudioBufferSourceNode).start(at,offset);else (source as OscillatorNode).start(at);
-   source.stop(at+Math.min(envelope.end,buffer?buffer.duration-offset:envelope.end));
+   if(buffer)(source as AudioBufferSourceNode).start(at,offset);else if(sourceOffsets.has(source))(source as AudioBufferSourceNode).start(at,sourceOffsets.get(source));else (source as OscillatorNode).start(at);
+   source.stop(at+Math.min(envelope.end,buffer?buffer.duration-offset:(sourceLifetimes.get(source)??envelope.end)));
   });
  }
  run(set:SoundSet,rhythm:Rhythm,elapsedMs:number,endMs:number) {

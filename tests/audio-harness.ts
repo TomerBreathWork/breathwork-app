@@ -2,3 +2,5 @@
 export {BowlAudio} from '../src/audio';
 export {createSingingBowl} from '../src/bowl-synth';
 export {phaseNotes,phaseRoles} from '../src/audio-types';
+
+export {referenceStrike} from './reference-strike.js';

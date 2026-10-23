@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {BowlAudio} from './audio.ts';
 import {phaseEnvelope} from './audio-envelope.ts';
 import {phaseNotes,phaseRoles} from './audio-types.ts';
-import {createSingingBowl} from './bowl-synth.ts';
+import {createSingingBowl,bowlPartials,referenceMix,referenceVolumeGain} from './bowl-synth.ts';
 
 const set={id:'test',name:'Recorded bowls',recordings:{inhale:'inhale.wav',holdAfterInhale:'hold.wav',exhale:'exhale.wav',holdAfterExhale:'hold.wav'},frequencies:Object.fromEntries(phaseRoles.map(role=>[role,phaseNotes[role].frequency]))};
 class Param {
@@ -22,8 +22,12 @@ class Source {
 }
 class Oscillator extends Source {frequency=new Param();type='sine';setPeriodicWave(wave){this.wave=wave}}
 class Context {
- currentTime=0;state='running';sampleRate=8000;destination={};sources=[];oscillators=[];gains=[];decodes=0;
+ currentTime=0;state='running';sampleRate=8000;destination={};sources=[];oscillators=[];gains=[];effects=[];constants=[];decodes=0;
  async resume(){}
+ createConstantSource(){const source=new Source();source.offset=new Param();this.constants.push(source);return source}
+ createConvolver(){const effect=new Gain();this.effects.push(effect);return effect}
+ createBiquadFilter(){const effect=new Gain();effect.frequency=new Param();effect.Q=new Param();this.effects.push(effect);return effect}
+ createDynamicsCompressor(){const effect=new Gain();effect.threshold=new Param();effect.ratio=new Param();this.effects.push(effect);return effect}
  createPeriodicWave(real,imag,options){return {real,imag,options}}
  createGain(){const gain=new Gain();this.gains.push(gain);return gain}
  createOscillator(){const source=new Oscillator();this.oscillators.push(source);return source}
@@ -91,12 +95,12 @@ test('pause cancels future source, resume uses current phase offset, master is i
  const resumed=c.sources[count];assert(Math.abs(resumed.offset-4.8)<.001);
  assert(Math.abs(resumed.stops[0]-10.2)<.001);
  const events=resumed.gain.gain.events.slice();audio.setVolume(.1);
- assert.deepEqual(resumed.gain.gain.events,events);assert.equal(c.gains[0].gain.events.at(-1)[1],.1);
+ assert.deepEqual(resumed.gain.gain.events,events);assert.equal(resumed.gain.connected.gain.events.at(-1)[1],.1);
 });
 test('missing recordings use fallback; stop cancels all future playback',async t=>{
  const {audio,c,advance}=await setup(t,{fail:true});assert.equal(audio.recordingStatus,'fallback');
  audio.run(set,[1,1,1,1],0,4000);assert.equal(c.oscillators.length,8);
- audio.stop();advance(3);assert.equal(c.oscillators.length,8);assert.equal(c.sources.length,0);
+ audio.stop();advance(3);assert.equal(c.oscillators.length,8);assert(c.sources.every(source=>source.buffer.duration===.03));
 });
 test('the second hold can use an independent recording',async t=>{
  const {audio,c,advance}=await setup(t);
@@ -113,9 +117,9 @@ test('default synthesis maps C4/G3/C4/E4 without loading any recordings',async t
  assert.equal(audio.recordingStatus,'synthesized');assert.equal(fetched.length,loaded);
  audio.run(set,[1,1,1,1],0,4000);
  for(const time of [.8,1.8,2.8])advance(time);
- assert.equal(c.oscillators.length,32);assert.equal(c.sources.length,0);
+ assert.equal(c.oscillators.length,32);assert(c.sources.every(source=>source.buffer.duration===.03));
  assert.deepEqual(c.oscillators.filter((_,i)=>i%8===0).map(o=>o.frequency.value),[261.63,196,261.63,329.63]);
- assert.deepEqual(c.oscillators.slice(0,8).map(o=>o.frequency.value),c.oscillators.slice(16,24).map(o=>o.frequency.value));
+ assert.deepEqual(c.oscillators.slice(0,8).filter((_,i)=>i%2===0).map(o=>o.frequency.value),c.oscillators.slice(16,24).filter((_,i)=>i%2===0).map(o=>o.frequency.value));
  for(let voice=0;voice<3;voice++)assert.equal(c.oscillators[voice*8].stops[0],c.oscillators[(voice+1)*8].startAt);
  advance(4);assert.equal(c.oscillators.length,32);
 });
@@ -129,24 +133,39 @@ test('synthesized short/zero phases, rapid resume and node cleanup have no overl
  assert(Math.abs(resumed.stops[0]-.5)<.00001);
  const count=c.oscillators.length;audio.setVolume(.4);assert.equal(c.oscillators.length,count);
  audio.stop();advance(5);assert.equal(c.oscillators.length,count);
- for(const oscillator of c.oscillators)oscillator.onended();
+ for(const source of [...c.oscillators,...c.sources,...c.constants])source.onended();
  assert(c.oscillators.every(source=>source.disconnected));
  assert(c.gains.slice(1).every(gain=>gain.disconnected));
 });
-test('long synthesized phases sustain beyond the old four-second sample limit',async t=>{
+test('long phases retain upstream natural oscillator lifetime and reverb tail',async t=>{
  const {audio,c}=await setup(t);await audio.prepare(set);
  audio.run(set,[120,0,0,0],0,120000);
  assert.equal(c.oscillators.length,8);
- assert(c.oscillators.every(source=>source.stops[0]===120));
+ assert(c.oscillators.every(source=>Math.abs(source.stops[0]-24.3)<1e-9));
+ assert(Math.abs(c.constants[0].stops[0]-27.9)<1e-9);
 });
 
 test('resume retains natural decay and oscillator phase instead of a fresh strike',()=>{
  const context=new Context(),destination=new Gain();
  const fresh=createSingingBowl(context,destination,261.63,0,0);
  const resumed=createSingingBowl(context,destination,261.63,10,2);
- assert(resumed.gains[0].gain.events[0][1]<fresh.gains[0].gain.events[0][1]);
+ assert.equal(fresh.sources.length,10);assert.equal(resumed.sources.length,9);
+ assert(Math.abs(resumed.gains[6].gain.events[0][1]-Math.exp(-(2-.004)/3.4))<1e-9);
  const phase=(2*Math.PI*261.63*2)%(2*Math.PI);
  assert(Math.abs(resumed.sources[0].wave.real[1]-Math.sin(phase))<1e-6);
  assert(Math.abs(resumed.sources[0].wave.imag[1]-Math.cos(phase))<1e-6);
  assert.equal(resumed.sources[0].wave.options.disableNormalization,true);
+});
+
+test('struck bowl uses original bowls.js partials, effect settings and attack',()=>{
+ assert.deepEqual(bowlPartials,[{ratio:1,amp:1,beat:.55,tau:3.4},{ratio:2.71,amp:.5,beat:1.3,tau:1.9},{ratio:5.15,amp:.26,beat:2.4,tau:1.1},{ratio:8.3,amp:.11,beat:3.7,tau:.6}]);
+ assert.deepEqual(referenceMix,{reverb:.35,threshold:-16,ratio:6,attack:.004,impulseSeconds:3.6,impulseDecay:2.6});
+ assert(Math.abs(referenceVolumeGain(.35)-Math.pow(.7,1.6))<1e-9);
+ const context=new Context(),destination=new Gain();
+ const bowl=createSingingBowl(context,destination,261.63,0,0,{random:()=>.5});
+ assert.equal(bowl.gains[1].gain.value,.8425);assert.equal(bowl.gains[2].gain.value,.385);
+ assert.deepEqual(bowl.gains[6].gain.events,[['set',0,0],['ramp',1,.004],['target',0,.004,3.4]]);
+ const compressor=context.effects.find(effect=>effect.threshold);
+ assert.equal(compressor.threshold.value,-16);assert.equal(compressor.ratio.value,6);assert.equal(compressor.connected,destination);
+ assert.equal(phaseEnvelope(5,0,true).attack,0);assert.equal(phaseEnvelope(5,0,true).fadeStart,4);
 });

@@ -21,56 +21,85 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-/**
- * Soft modal bowl synthesis, adapted from the paired-partial approach in
- * evoluteur/tibetan-singing-bowls (MIT, Olivier Giulieri, 2026).
- * See third-party/tibetan-singing-bowls-LICENSE.txt and THIRD_PARTY_NOTICES.md.
- * No mallet noise, random pitch drift, compressor, delay, or reverb tail.
+/** Faithful struck-bowl adaptation of Olivier Giulieri's bowls.js (MIT).
+ * Differences: exact tuning (no random pitch drift), resume seeking without a
+ * second strike, and all effects routed through the caller's phase gate.
  */
 export const bowlPartials = [
- {ratio:1, amplitude:0.74, beat:0.45, decay:7, floor:0.16},
- {ratio:2.71, amplitude:0.18, beat:0.8, decay:3.8, floor:0.08},
- {ratio:5.15, amplitude:0.055, beat:1.3, decay:2, floor:0.03},
- {ratio:8.3, amplitude:0.015, beat:1.9, decay:1.2, floor:0.01},
+ {ratio:1, amp:1, beat:0.55, tau:3.4},
+ {ratio:2.71, amp:0.5, beat:1.3, tau:1.9},
+ {ratio:5.15, amp:0.26, beat:2.4, tau:1.1},
+ {ratio:8.3, amp:0.11, beat:3.7, tau:0.6},
 ] as const;
-
-export interface BowlNodes { sources: OscillatorNode[]; gains: GainNode[] }
-export function createSingingBowl(context: BaseAudioContext, destination: AudioNode, frequency: number, at: number, offset: number): BowlNodes {
- const sources: OscillatorNode[] = [], gains: GainNode[] = [];
- // A small low-note correction keeps G3/C4/E4 close in perceived level.
- // Sum of partial peaks stays below 0.3 before the independent master volume.
- const level=0.28*Math.pow(261.63/frequency,0.12);
+export const referenceMix = {reverb:0.35, threshold:-16, ratio:6, attack:0.004, impulseSeconds:3.6, impulseDecay:2.6};
+const impulses = new WeakMap<BaseAudioContext,AudioBuffer>();
+// Keep the existing slider/prefs: its original 35% default maps to the reference's
+// 70% default. Zero and maximum still map to zero and unity, before compression.
+export function referenceVolumeGain(volume:number) {return Math.pow(volume,1.6*Math.log(0.7)/Math.log(0.35))}
+export interface BowlNodes {
+ sources: AudioScheduledSourceNode[];
+ gains: GainNode[];
+ nodes: AudioNode[];
+ offsets: Map<AudioScheduledSourceNode,number>;
+ volume: GainNode;
+ lifetimes: Map<AudioScheduledSourceNode,number>;
+}
+export function createSingingBowl(context: BaseAudioContext, destination: AudioNode, frequency: number, at: number, offset: number, options: {volume?:number;random?:()=>number} = {}): BowlNodes {
+ const random=options.random||Math.random;
+ const sources: AudioScheduledSourceNode[]=[],gains:GainNode[]=[],nodes:AudioNode[]=[],offsets=new Map<AudioScheduledSourceNode,number>(),lifetimes=new Map<AudioScheduledSourceNode,number>();
+ const gain=(value=1)=>{const g=context.createGain();g.gain.value=value;gains.push(g);nodes.push(g);return g};
  try {
+  // Original impulse(): identical stereo noise, low-pass smoothing, length/decay.
+  let impulse=impulses.get(context);
+  if(!impulse){
+   const len=Math.floor(context.sampleRate*referenceMix.impulseSeconds);
+   impulse=context.createBuffer(2,len,context.sampleRate);
+   for(let ch=0;ch<2;ch++){
+    const data=impulse.getChannelData(ch);let lp=0;
+    for(let i=0;i<len;i++){lp+=0.35*(random()*2-1-lp);data[i]=lp*Math.pow(1-i/len,referenceMix.impulseDecay)*1.6}
+   }
+   impulses.set(context,impulse);
+  }
+  const bus=gain(),dry=gain(1-0.45*referenceMix.reverb),wet=gain(referenceMix.reverb*1.1);
+  const convolver=context.createConvolver();nodes.push(convolver);convolver.buffer=impulse;
+  const volume=gain(referenceVolumeGain(options.volume??0.35));
+  const compressor=context.createDynamicsCompressor();nodes.push(compressor);
+  compressor.threshold.value=referenceMix.threshold;compressor.ratio.value=referenceMix.ratio;
+  bus.connect(dry);dry.connect(volume);bus.connect(convolver);convolver.connect(wet);wet.connect(volume);
+  volume.connect(compressor);compressor.connect(destination);
+  const out=gain(0.2);out.connect(bus);
   for(const partial of bowlPartials){
-   const envelope=context.createGain();gains.push(envelope);
-   const peak=level*partial.amplitude;
-   const floor=peak*partial.floor;
-   const resumed=floor+(peak-floor)*Math.exp(-offset/partial.decay);
-   envelope.gain.setValueAtTime(resumed,at);
-   envelope.gain.setTargetAtTime(floor,at,partial.decay);
-   envelope.connect(destination);
-   // The dominant oscillator is tuned exactly to the requested partial;
-   // its quieter companion adds subtle natural beating, not a loud tremolo.
-   for(const [detune,weight] of [[0,0.8],[partial.beat,0.2]]){
-    const oscillator=context.createOscillator(),balance=context.createGain();
-    sources.push(oscillator);gains.push(balance);
-    oscillator.type='sine';oscillator.frequency.value=frequency*partial.ratio+detune;
-    if(offset>0){
-     // Seek oscillator phase too: resume continues the existing beating pattern,
-     // rather than resetting the pair to the loudest point of a fresh strike.
-     const phase=(2*Math.PI*(frequency*partial.ratio+detune)*offset)%(2*Math.PI);
-     oscillator.setPeriodicWave(context.createPeriodicWave(
-      new Float32Array([0,Math.sin(phase)]),new Float32Array([0,Math.cos(phase)]),
-      {disableNormalization:true},
-     ));
-    }
-    balance.gain.value=weight;
-    oscillator.connect(balance);balance.connect(envelope);
+   const pg=gain(partial.amp),env=gain();pg.connect(env);env.connect(out);
+   if(offset<referenceMix.attack){
+    env.gain.setValueAtTime(offset/referenceMix.attack,at);
+    env.gain.linearRampToValueAtTime(1,at+referenceMix.attack-offset);
+    env.gain.setTargetAtTime(0,at+referenceMix.attack-offset,partial.tau);
+   } else {
+    env.gain.setValueAtTime(Math.exp(-(offset-referenceMix.attack)/partial.tau),at);
+    env.gain.setTargetAtTime(0,at,partial.tau);
+   }
+   // Original equal-strength detuned pairs; retain its beat jitter but not pitch drift.
+   for(const d of [0,partial.beat*(0.8+random()*0.4)]){
+    const oscillator=context.createOscillator();sources.push(oscillator);
+    const f=frequency*partial.ratio+d;oscillator.type='sine';oscillator.frequency.value=f;
+    if(offset>0){const phase=(2*Math.PI*f*offset)%(2*Math.PI);oscillator.setPeriodicWave(context.createPeriodicWave(new Float32Array([0,Math.sin(phase)]),new Float32Array([0,Math.cos(phase)]),{disableNormalization:true}))}
+    oscillator.connect(pg);lifetimes.set(oscillator,Math.max(0,3.4*7+0.5-offset));
    }
   }
-  return {sources,gains};
- } catch(error){
-  sources.forEach(node=>node.disconnect());gains.forEach(node=>node.disconnect());
-  throw error;
- }
+  // Original clink(): 30 ms cubic-decay noise, 2600 Hz bandpass/Q 0.8, gain 0.10.
+  // Only at the phase strike, never on resume/unmute after the transient ended.
+  if(offset<0.03){
+   const len=Math.floor(context.sampleRate*0.03),buffer=context.createBuffer(1,len,context.sampleRate),data=buffer.getChannelData(0);
+   for(let i=0;i<len;i++)data[i]=(random()*2-1)*Math.pow(1-i/len,3);
+   const source=context.createBufferSource();source.buffer=buffer;source.loop=false;sources.push(source);offsets.set(source,offset);
+   const bp=context.createBiquadFilter();nodes.push(bp);bp.type='bandpass';bp.frequency.value=2600;bp.Q.value=0.8;
+   const clinkGain=gain(0.10);source.connect(bp);bp.connect(clinkGain);clinkGain.connect(bus);
+  }
+  // Match upstream's 24.3 s oscillator lifetime, retaining only its reverb tail.
+  // A zero-valued native source disposes the effect graph on the audio clock,
+  // even if the main thread is stalled. It produces no sound.
+  const lifetime=context.createConstantSource();lifetime.offset.value=0;lifetime.connect(destination);
+  sources.push(lifetime);lifetimes.set(lifetime,Math.max(0,3.4*7+0.5+referenceMix.impulseSeconds-offset));
+  return {sources,gains,nodes,offsets,volume,lifetimes};
+ } catch(error){sources.forEach(node=>node.disconnect());nodes.forEach(node=>node.disconnect());throw error}
 }

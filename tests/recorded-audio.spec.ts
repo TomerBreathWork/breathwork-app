@@ -72,7 +72,7 @@ test('synthesized bowl envelopes render silence at boundaries, without recording
  expect(fundamentals).toHaveLength(4);
  [261.63,196,261.63,329.63].forEach((frequency,i)=>expect(fundamentals[i]).toBeCloseTo(frequency,4));
  for(const sample of rendered.boundaries)expect(Math.abs(sample)).toBeLessThan(.002);
- expect(rendered.peak).toBeGreaterThan(.01);expect(rendered.peak).toBeLessThan(.3);
+ expect(rendered.peak).toBeGreaterThan(.01);expect(rendered.peak).toBeLessThan(1);
  expect(rendered.silenceAfter).toBe(0);
 });
 test('rendered C4 voices match and G3/C4/E4 have comparable levels and no clipping',async({page})=>{
@@ -81,13 +81,14 @@ test('rendered C4 voices match and G3/C4/E4 have comparable levels and no clippi
   const rate=24000,results:{rms:number;peak:number;samples:number[]}[]=[];
   for(const frequency of [261.63,196,261.63,329.63]){
    const context=new OfflineAudioContext(1,rate*6,rate),envelope=context.createGain();
-   envelope.connect(context.destination);envelope.gain.setValueAtTime(0,0);envelope.gain.linearRampToValueAtTime(1,.15);envelope.gain.setValueAtTime(1,4);envelope.gain.linearRampToValueAtTime(0,5);
-   const voice=(window as any).AudioTest.createSingingBowl(context,envelope,frequency,0,0);
+   envelope.connect(context.destination);envelope.gain.setValueAtTime(1,0);envelope.gain.setValueAtTime(1,4);envelope.gain.linearRampToValueAtTime(0,5);
+   let seed=12345;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+   const voice=(window as any).AudioTest.createSingingBowl(context,envelope,frequency,0,0,{random});
    voice.sources.forEach((source:OscillatorNode)=>{source.start(0);source.stop(5)});
    const output=await context.startRendering(),data=output.getChannelData(0);
    let energy=0,peak=0;for(let i=0;i<rate*5;i++){energy+=data[i]*data[i];peak=Math.max(peak,Math.abs(data[i]))}
    results.push({rms:Math.sqrt(energy/(rate*5)),peak,samples:Array.from(data.slice(0,4096))});
-   voice.sources.forEach((source:OscillatorNode)=>source.disconnect());voice.gains.forEach((gain:GainNode)=>gain.disconnect());envelope.disconnect();
+   voice.sources.forEach((source:OscillatorNode)=>source.disconnect());voice.nodes.forEach((node:AudioNode)=>node.disconnect());envelope.disconnect();
   }
   return results;
  });
@@ -96,5 +97,27 @@ test('rendered C4 voices match and G3/C4/E4 have comparable levels and no clippi
  expect(difference).toBeLessThan(1e-6);
  const rms=results.map(result=>result.rms);
  expect(20*Math.log10(Math.max(...rms)/Math.min(...rms))).toBeLessThan(2);
- for(const result of results){expect(result.peak).toBeGreaterThan(.1);expect(result.peak).toBeLessThan(.3)}
+ for(const result of results){expect(result.peak).toBeGreaterThan(.1);expect(result.peak).toBeLessThan(1)}
+});
+
+test('struck bowl audio matches extracted upstream attack, resonance, reverb and compression',async({page})=>{
+ await page.goto('./');await page.addScriptTag({content:audioCode});
+ const comparison=await page.evaluate(async()=>{
+  const rate=24000,signals:Float32Array[]=[];
+  for(const reference of [true,false]){
+   const context=new OfflineAudioContext(2,rate*2,rate);
+   let seed=54321;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+   if(reference)(window as any).AudioTest.referenceStrike(context,context.destination,261.63,random);
+   else {
+    const voice=(window as any).AudioTest.createSingingBowl(context,context.destination,261.63,0,0,{random});
+    voice.sources.forEach((source:AudioScheduledSourceNode)=>{source.start(0);source.stop(2)});
+   }
+   signals.push((await context.startRendering()).getChannelData(0));
+  }
+  let difference=0,energy=0;
+  for(let i=0;i<signals[0].length;i++){difference=Math.max(difference,Math.abs(signals[0][i]-signals[1][i]));if(i<rate*.05)energy+=signals[1][i]**2}
+  return{difference,attackRms:Math.sqrt(energy/(rate*.05))};
+ });
+ expect(comparison.difference).toBeLessThan(1e-5);
+ expect(comparison.attackRms).toBeGreaterThan(.03);
 });
