@@ -1,7 +1,7 @@
 import {test,expect} from '@playwright/test';
 test('configure, persist, start, pause, resume and stop',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto('/');
+ await page.goto('./');
  await page.getByRole('button',{name:'Box breathing'}).click();
  await page.reload();
  await expect(page.getByRole('spinbutton',{name:'Hold after inhale seconds'})).toHaveValue('4');
@@ -25,7 +25,7 @@ test('configure, persist, start, pause, resume and stop',async({page})=>{
  expect(errors).toEqual([]);
 });
 test('zero phases skip and completion respects end of phase',async({page})=>{
- await page.goto('/');
+ await page.goto('./');
  await page.getByRole('button',{name:'Evening unwind'}).click();
  await page.locator('#duration').fill('1');
  await page.clock.install();
@@ -36,7 +36,7 @@ test('zero phases skip and completion respects end of phase',async({page})=>{
  await expect(page.locator('.phase-guidance')).toHaveText('Session Complete – Take a Moment');
 });
 test('invalid settings block start and image failure falls back safely',async({page})=>{
- await page.route('**/media/*.webp',r=>r.abort());await page.goto('/');
+ await page.route('**/media/*.webp',r=>r.abort());await page.goto('./');
  for(const name of ['Inhale seconds','Exhale seconds'])await page.getByRole('spinbutton',{name,exact:true}).fill('0');
  await expect(page.getByRole('button',{name:'Begin your practice'})).toBeDisabled();
  await expect(page.getByRole('alert')).toBeVisible();
@@ -46,7 +46,7 @@ test('invalid settings block start and image failure falls back safely',async({p
  await expect(page.locator('.scenery')).toHaveCount(0);
 });
 test('mobile fits viewport and preferences have no horizontal overflow',async({page})=>{
- await page.setViewportSize({width:375,height:812});await page.goto('/');
+ await page.setViewportSize({width:375,height:812});await page.goto('./');
  await page.getByRole('button',{name:'Atmosphere & sound'}).click();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.screenshot({path:'/tmp/still-mobile.png',fullPage:true});
@@ -55,7 +55,7 @@ test('mobile fits viewport and preferences have no horizontal overflow',async({p
  await page.screenshot({path:'/tmp/still-session.png',fullPage:true});
 });
 test('sound begins only on interaction, skips holds, and hidden tab pauses',async({page})=>{
- await page.goto('/');
+ await page.goto('./');
  await page.evaluate(()=>{
   const Native=window.AudioContext;
   (window as any).cueCount=0;
@@ -75,4 +75,20 @@ test('sound begins only on interaction, skips holds, and hidden tab pauses',asyn
  expect(await page.evaluate(()=>(window as any).cueCount)).toBe(6);
  await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'))});
  await expect(page.getByRole('heading',{name:'Paused',exact:true})).toBeVisible();
+});
+
+test('repository subpath loads scripts, styles and both local images',async({page,request})=>{
+ const failed:string[]=[];
+ page.on('response',r=>{if(r.status()>=400)failed.push(r.url())});
+ await page.goto('./');
+ await expect(page).toHaveURL(/\/breathwork-app\/$/);
+ await expect(page.getByRole('heading',{name:'Make space for yourself'})).toBeVisible();
+ await expect.poll(()=>page.locator('.landscape-card img').evaluate((img:HTMLImageElement)=>img.naturalWidth)).toBeGreaterThan(0);
+ for(const name of ['alpine','coast']){
+  const response=await request.get(`media/${name}.webp`);
+  expect(response.status()).toBe(200);
+  expect(response.headers()['content-type']).toContain('image/webp');
+ }
+ expect(await page.locator('.start-button').evaluate(el=>getComputedStyle(el).backgroundColor)).toBe('rgb(55, 87, 68)');
+ expect(failed).toEqual([]);
 });
