@@ -84,7 +84,7 @@ The browser tests start a production preview on port 5174 and exercise `/breathw
 
 ## Local photographs and recorded bowls
 
-No photographs or recorded bowls have been uploaded yet. The existing illustrations and synthesized sounds remain functional fallbacks. No service subscriptions or API credentials are needed.
+Five photographs (`1.webp`–`5.webp`) and three recordings (`inhale 4.MP3`, `hold 4.MP3`, `exhale 4.MP3`) are registered in the manifest. Both holds share the hold recording. The existing illustrations and synthesized sounds remain functional fallbacks. No service subscriptions or API credentials are needed.
 
 You can add media directly through GitHub's **Add file → Upload files** in these folders, then edit the manifest and commit to `main`. The existing Actions workflow rebuilds and deploys your updates.
 

@@ -1,19 +1,28 @@
 import manifest from '../public/media/manifest.json';
+import {resolveMediaPath} from './media-path';
 
 export interface MediaAsset { id: string; name: string; description: string; url: string; kind: 'image'; published: boolean; order: number }
 export type {PhaseRole, SoundSet} from './audio-types';
 import {phaseRoles, type PhaseRole, type SoundSet} from './audio-types';
 interface BackgroundEntry { id: string; name: string; description?: string; file: string; published?: boolean }
 // All configured files are local public assets. A future provider can supply published URLs.
-export function mediaUrl(file: string): string {
- if (file.startsWith('/') || file.split('/').includes('..') || !/^media\/[\w .\-/]+\.(jpe?g|png|webp|mp3|wav|ogg)$/i.test(file)) throw new Error(`Invalid local media path: ${file}`);
- return `${import.meta.env.BASE_URL}${file.split('/').map(encodeURIComponent).join('/')}`;
+export function mediaUrl(file: unknown): string | null {
+ return resolveMediaPath(file,import.meta.env.BASE_URL);
 }
 export const fallbackAssets: MediaAsset[] = [
- {id:'alpine',name:'Alpine stillness',description:'Illustrated mountain lake in soft morning light',url:mediaUrl('media/alpine.webp'),kind:'image',published:true,order:0},
- {id:'coast',name:'Quiet coast',description:'Illustrated open sea',url:mediaUrl('media/coast.webp'),kind:'image',published:true,order:1}
+ {id:'alpine',name:'Alpine stillness',description:'Illustrated mountain lake in soft morning light',url:mediaUrl('media/alpine.webp')!,kind:'image',published:true,order:0},
+ {id:'coast',name:'Quiet coast',description:'Illustrated open sea',url:mediaUrl('media/coast.webp')!,kind:'image',published:true,order:1}
 ];
-const photographs: MediaAsset[] = (manifest.backgrounds as BackgroundEntry[]).filter(a=>a.published!==false).map((a,order)=>({id:a.id,name:a.name,description:a.description||a.name,url:mediaUrl(a.file),kind:'image',published:true,order}));
+const entries: unknown[] = Array.isArray(manifest.backgrounds) ? manifest.backgrounds : [];
+const usedIds = new Set(['random','gradient',...fallbackAssets.map(a=>a.id)]);
+const photographs: MediaAsset[] = entries.flatMap((entry,order)=>{
+ if(!entry||typeof entry!=='object')return [];
+ const a=entry as BackgroundEntry;
+ const url=mediaUrl(a.file);
+ if(a.published===false||typeof a.id!=='string'||!a.id.trim()||usedIds.has(a.id)||typeof a.name!=='string'||!a.name.trim()||!url)return [];
+ usedIds.add(a.id);
+ return [{id:a.id,name:a.name,description:typeof a.description==='string'?a.description:a.name,url,kind:'image' as const,published:true,order}];
+});
 export const mediaAssets = photographs.length ? photographs : fallbackAssets;
 export const selectableBackgrounds = [...mediaAssets,...fallbackAssets.filter(a=>!mediaAssets.some(b=>b.id===a.id))];
 export function chooseBackground(selection: string, previous: string, random = Math.random): MediaAsset | undefined {
@@ -24,7 +33,7 @@ export function chooseBackground(selection: string, previous: string, random = M
 }
 export const soundSets: SoundSet[] = [{
  id:'bowls',name:'Tibetan Bowls',
- recordings:Object.fromEntries(phaseRoles.map(role=>[role,manifest.recordings[role] ? mediaUrl(manifest.recordings[role]!) : null])) as Record<PhaseRole,string|null>,
+ recordings:Object.fromEntries(phaseRoles.map(role=>[role,mediaUrl(manifest.recordings?.[role])])) as Record<PhaseRole,string|null>,
  frequencies:{inhale:261.63,holdAfterInhale:329.63,exhale:196,holdAfterExhale:329.63}
 }];
 export const hasRecordings=Object.values(soundSets[0].recordings).some(Boolean);
