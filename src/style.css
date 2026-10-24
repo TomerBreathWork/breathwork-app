@@ -184,7 +184,7 @@ select:focus-visible {
 }
 .presets {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 .preset {
@@ -202,6 +202,9 @@ select:focus-visible {
   transition:
     background 0.2s,
     border-color 0.2s;
+}
+.preset:first-child {
+  grid-column: span 2;
 }
 .preset strong {
   font-weight: 500;
@@ -890,18 +893,33 @@ select:focus-visible {
   font-size: 0.75rem;
 }
 
-/* Free-floating stacked branding; text shadows keep it legible on photographs. */
+/* Sunlight through mist: a feathered halo, never a branding card. */
+.app-header::before {
+  content: "";
+  position: absolute;
+  inset: -55px 0 -32px;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at 50% 42%,
+    #fff9e4f5 0%,
+    #f7e9c9d9 28%,
+    #f6f1e88c 48%,
+    #f6f1e800 74%
+  );
+  filter: blur(22px);
+}
 .brand h1,
 .attribution,
 .tagline,
 .language-picker {
-  color: #f6f1e8;
+  color: var(--teal);
   text-shadow:
-    0 1px 4px #102f2fe6,
-    0 0 14px #102f2faa;
+    0 1px 2px #fffaf0,
+    0 0 10px #f6f1e8c9;
 }
 .brand-mark {
-  filter: drop-shadow(0 1px 2px #f6f1e8b3);
+  filter: drop-shadow(0 1px 3px #fff8e0);
 }
 
 .session {
@@ -910,12 +928,56 @@ select:focus-visible {
 .session .scenery {
   opacity: var(--practice-background-opacity);
 }
-.attribution,
-.tagline {
-  text-shadow:
-    0 1px 3px #102f2f,
-    0 0 8px #102f2fc4;
-}
 .breath-circle[data-phase="preparation"] .circle-label h2 {
   font-size: clamp(1.35rem, 5vw, 1.8rem);
+}
+
+/* Keep optional guidance available to screen readers without visual clutter. */
+.session-intro,
+.phase-guidance,
+.preset span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.remaining {
+  width: 96px;
+  min-width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  padding: 10px 7px;
+  justify-content: center;
+  gap: 4px;
+  border: 1px solid #f6f1e8bb;
+  box-shadow: 0 0 0 3px #19484a66;
+}
+.remaining-value {
+  font-size: 1.4rem;
+  letter-spacing: 0.5px;
+}
+.remaining > span:last-child {
+  font-size: 0.7rem;
+}
+.duration-chip input {
+  width: 39px;
+  font-size: 0.95rem;
+}
+.phase-row {
+  grid-template-columns: minmax(95px, 1.2fr) minmax(40px, 1.3fr) 72px;
+}
+@media (max-width: 355px) {
+  .presets {
+    gap: 5px;
+  }
+  .preset {
+    padding-inline: 3px;
+  }
+  .phase-row {
+    grid-template-columns: minmax(87px, 1.15fr) minmax(30px, 1fr) 70px;
+  }
 }

@@ -75,7 +75,7 @@ export function SettingsPanel({
                 type="range"
                 min="0"
                 max="120"
-                step="1"
+                step="0.5"
                 value={Number.isFinite(value) ? value : 0}
                 onChange={(e) => update(Number(e.target.value))}
                 aria-label={t(key)}
@@ -88,9 +88,10 @@ export function SettingsPanel({
               <label className="duration-chip">
                 <input
                   type="number"
+                  inputMode="decimal"
                   min="0"
                   max="120"
-                  step="1"
+                  step="0.5"
                   aria-label={t("phaseSeconds", { phase: t(key) })}
                   value={Number.isNaN(value) ? "" : value}
                   onChange={(e) =>

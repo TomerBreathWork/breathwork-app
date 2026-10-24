@@ -9,6 +9,7 @@ Generated from `src/locales/{en,he,ja}.json`. Run `node scripts/generate-transla
 | tagline | Breathe. Be Present. Feel Better. | לנשום. להיות ברגע. להרגיש טוב יותר. | 呼吸して、今を感じて、心地よく。 |
 | language | Language | שפה | 言語 |
 | presets | Find your rhythm | מצאו את הקצב שלכם | 自分のリズムで |
+| coherentBreathing | Coherent Breathing | נשימה קוהרנטית | コヒーレント呼吸 |
 | slowSteady | Slow & steady | לאט ובנחת | ゆっくり穏やかに |
 | boxBreathing | Box breathing | נשימה מרובעת | ボックス呼吸 |
 | eveningUnwind | Evening unwind | רגיעה בערב | 夜のリラックス |
@@ -26,7 +27,7 @@ Generated from `src/locales/{en,he,ja}.json`. Run `node scripts/generate-transla
 | minutes | min | דק׳ | 分 |
 | sessionLength | Session length | משך התרגול | セッション時間 |
 | advanced | Advanced Options | אפשרויות מתקדמות | 詳細設定 |
-| start | Start Session | התחלת תרגול | セッション開始 |
+| start | Start Practice | התחלת תרגול | セッション開始 |
 | preparing | Preparing audio… | מכינים את הצלילים… | サウンドを準備中… |
 | restart | Restart | התחלה מחדש | 最初から |
 | pause | Pause | השהיה | 一時停止 |
@@ -41,7 +42,7 @@ Generated from `src/locales/{en,he,ja}.json`. Run `node scripts/generate-transla
 | phaseCountdown | Current phase countdown | ספירה לאחור של השלב | 現在のステップの残り時間 |
 | safety | Breathe gently. Stop if you feel uncomfortable. | נשמו בנחת. הפסיקו אם מתעוררת אי־נוחות. | 無理せず呼吸を。不快に感じたら中止してください。 |
 | zeroHint | Set a phase to 0 to skip it. | ערך 0 מדלג על השלב. | 0秒のステップはスキップします。 |
-| finishHint | We finish the current phase, so the session may run a little longer. | התרגול מסתיים בסוף השלב הפעיל, ולכן עשוי להתארך מעט. | 今のステップが終わるまで続くため、少し長くなることがあります。 |
+| finishHint | We complete the final breathing cycle, so your session may run a little longer. | נסיים מחזור נשימה מלא, ולכן התרגול עשוי להימשך מעט יותר. | 最後の呼吸サイクルを終えてから終了するため、設定時間より少し長くなる場合があります。 |
 | error | Use 0–120 seconds per phase, with at least one phase above 0, and a session of 1–120 minutes. | בחרו 0–120 שניות לכל שלב, עם לפחות שלב אחד מעל 0, ומשך תרגול של 1–120 דקות. | 各ステップは0〜120秒、少なくとも1つは0秒より長く、セッションは1〜120分に設定してください。 |
 | sound | Sound | צליל | サウンド |
 | synthesized | Tibetan bowls | קערות טיבטיות | チベタンボウル |

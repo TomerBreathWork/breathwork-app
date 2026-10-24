@@ -1,4 +1,4 @@
-import {phaseAt, validRhythm, type Rhythm} from './engine.ts';
+import {phaseAt, validRhythm, phaseMilliseconds, type Rhythm} from './engine.ts';
 import {phaseEnvelope} from './audio-envelope.ts';
 import type {SoundSet, AudioMode} from './audio-types.ts';
 import {phaseRoles} from './audio-types.ts';
@@ -32,6 +32,12 @@ export class BowlAudio {
  private initialRun = true;
  private loadState: 'synthesized'|'fallback'|'recorded'|'partial' = 'synthesized';
  get recordingStatus() { return this.loadState; }
+ // Prepare the unchanged model while settings are visible. A suspended context
+ // determines the device sample rate; only unlock() resumes it on user input.
+ async warmup(set:SoundSet) {
+  try { this.context ??= new AudioContext(); await this.prepareSynthesis(set); }
+  catch { /* Start still attempts the normal recording/silent fallback. */ }
+ }
  async unlock() {
   try {
    this.context ??= new AudioContext();
@@ -122,7 +128,7 @@ export class BowlAudio {
    let queued=0;
    while(cursor<endMs&&cursor<=now+250&&queued++<64){
     const phase=phaseAt(cursor+1e-6,rhythm);
-    const duration=rhythm[phase.index];
+    const duration=phaseMilliseconds(rhythm[phase.index])/1000;
     const next=cursor+1e-6+phase.remaining*1000;
     const offset=Math.max(0,duration-(next-cursor)/1000);
     this.schedule(set,phase.index,audioOrigin+cursor/1000,duration,offset,!resuming||!first);

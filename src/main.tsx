@@ -14,12 +14,7 @@ import "./style.css";
 const settingsBackground = mediaUrl("media/backgrounds/3.webp")!;
 function App() {
   const [settings, setSettings] = useState<Settings>(loadSettings);
-  const [custom, setCustom] = useState(
-    () =>
-      !presets.some((preset) =>
-        preset.rhythm.every((n, index) => settings.rhythm[index] === n),
-      ),
-  );
+  const custom = settings.preset === "custom";
   const [background, setBackground] = useState(settingsBackground);
   const [failedImage, setFailedImage] = useState("");
   const previousImage = useRef("");
@@ -48,7 +43,7 @@ function App() {
   function patch(patch: Partial<Settings>) {
     if (patch.rhythm !== undefined || patch.minutes !== undefined)
       session.cancelPreparation();
-    if (patch.rhythm !== undefined) setCustom(true);
+    if (patch.rhythm !== undefined) patch.preset = "custom";
     if (patch.sound !== undefined) void session.changeSound(patch.sound);
     if (patch.background !== undefined) selectBackground(patch.background);
     setSettings((value) => ({ ...value, ...patch }));
@@ -59,13 +54,17 @@ function App() {
   }
   function onPreset(rhythm: Rhythm) {
     session.cancelPreparation();
-    setCustom(false);
-    setSettings((value) => ({ ...value, rhythm }));
+    setSettings((value) => ({
+      ...value,
+      rhythm,
+      preset:
+        presets.find((p) => p.rhythm.every((n, i) => rhythm[i] === n))?.key ||
+        "custom",
+    }));
   }
   function reset() {
     session.cancelPreparation();
     setSettings({ ...appDefaults });
-    setCustom(false);
     session.setMuted(false);
     selectBackground(appDefaults.background);
   }
@@ -109,7 +108,7 @@ function App() {
             t={t}
             settings={settings}
             custom={custom}
-            onCustom={() => setCustom(true)}
+            onCustom={() => patch({ preset: "custom" })}
             onPreset={onPreset}
             patch={patch}
             advanced={advanced}

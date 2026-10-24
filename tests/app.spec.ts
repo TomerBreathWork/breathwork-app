@@ -12,7 +12,7 @@ test('configure, persist, start, pause, resume and stop',async({page})=>{
  await page.getByRole('button',{name:'Advanced Options'}).click();
  await page.getByRole('combobox',{name:'Sound',exact:true}).selectOption('silent');
 
- await page.getByRole('button',{name:'Start Session'}).click();await finishPreparation(page);
+ await page.getByRole('button',{name:'Start Practice'}).click();await finishPreparation(page);
  await expect(page.locator('.session')).toBeVisible();
  await expect(page.getByRole('heading',{name:'Inhale',exact:true})).toBeVisible();
  await page.clock.runFor(2000);
@@ -23,6 +23,7 @@ test('configure, persist, start, pause, resume and stop',async({page})=>{
  await page.clock.runFor(5000);
  await expect(page.locator('.water')).toHaveAttribute('style',frozen!);
  await page.getByRole('button',{name:'Resume'}).click();
+ await expect(page.getByRole('button',{name:'Pause',exact:true})).toBeVisible();
  await page.clock.runFor(2200);
  await expect(page.getByRole('heading',{name:'Hold',exact:true})).toBeVisible();
  await expect(page.locator('.ring-progress')).toBeVisible();
@@ -30,27 +31,27 @@ test('configure, persist, start, pause, resume and stop',async({page})=>{
  await expect(page.locator('.settings-panel')).toBeVisible();
  expect(errors).toEqual([]);
 });
-test('zero phases skip and completion respects end of phase',async({page})=>{
+test('zero phases skip and completion respects the whole final cycle',async({page})=>{
  await page.goto('./');
  await page.getByRole('button',{name:'Evening unwind'}).click();
  await page.locator('#duration').fill('1');
 
- await page.getByRole('button',{name:'Start Session'}).click();await finishPreparation(page);
+ await page.getByRole('button',{name:'Start Practice'}).click();await finishPreparation(page);
  await expect(page.locator('.session')).toBeVisible();
  await page.clock.fastForward(60050);
  await expect(page.locator('.breath-circle')).not.toHaveAttribute('data-status','completed');
- await page.clock.runFor(1100);
+ await page.clock.runFor(16000);
  await expect(page.getByRole('heading',{name:'Session complete',exact:true})).toBeVisible();
  await expect(page.locator('.remaining-value')).toHaveText('00:00');
 });
 test('invalid settings block start and image failure falls back safely',async({page})=>{
  await page.route(/\/media\/.*\.webp$/,r=>r.abort());await page.goto('./');
  for(const name of ['Inhale seconds','Exhale seconds'])await page.getByRole('spinbutton',{name,exact:true}).fill('0');
- await expect(page.getByRole('button',{name:'Start Session'})).toBeDisabled();
+ await expect(page.getByRole('button',{name:'Start Practice'})).toBeDisabled();
  await expect(page.getByRole('alert')).toBeVisible();
  await advanced(page);
  await page.getByRole('button',{name:'Reset defaults'}).click();
- await page.getByRole('button',{name:'Start Session'}).click();await finishPreparation(page);
+ await page.getByRole('button',{name:'Start Practice'}).click();await finishPreparation(page);
  await expect(page.locator('.session')).toBeVisible();
  await expect(page.getByRole('heading',{name:'Inhale',exact:true})).toBeVisible();
  await expect(page.locator('.scenery')).toHaveCount(0);
@@ -60,26 +61,26 @@ test('mobile fits viewport and preferences have no horizontal overflow',async({p
  await page.getByRole('button',{name:'Advanced Options'}).click();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.screenshot({path:'/tmp/still-mobile.png',fullPage:true});
- await page.getByRole('button',{name:'Start Session'}).click();await finishPreparation(page);
+ await page.getByRole('button',{name:'Start Practice'}).click();await finishPreparation(page);
  await expect(page.locator('.session')).toBeVisible();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.screenshot({path:'/tmp/still-session.png',fullPage:true});
 });
 test('sound begins only on interaction, skips holds, and hidden tab pauses',async({page})=>{
- await page.goto('./');
- await page.evaluate(()=>{
+ await page.addInitScript(()=>{
   const Native=window.AudioContext;
   (window as any).cueCount=0;
   window.AudioContext=class extends Native {
    createBufferSource(){(window as any).cueCount++;return super.createBufferSource()}
   };
  });
+ await page.goto('./');
  expect(await page.evaluate(()=>(window as any).cueCount)).toBe(0);
 
- await page.getByRole('button',{name:'Start Session'}).click();await finishPreparation(page);
+ await page.getByRole('button',{name:'Start Practice'}).click();await finishPreparation(page);
  await expect(page.locator('.session')).toBeVisible();
  await expect.poll(()=>page.evaluate(()=>(window as any).cueCount)).toBe(1);
- await page.clock.runFor(4100);
+ await page.clock.runFor(5600);
  await expect(page.getByRole('heading',{name:'Exhale',exact:true})).toBeVisible();
  expect(await page.evaluate(()=>(window as any).cueCount)).toBe(2);
  await advanced(page);
@@ -108,7 +109,7 @@ test('repository subpath loads scripts, styles and both local images',async({pag
 
 test('background stays fixed until changed; random mode avoids immediate repeats',async({page})=>{
  await page.goto('./');
- await page.getByRole('button',{name:'Start Session'}).click();await finishPreparation(page);
+ await page.getByRole('button',{name:'Start Practice'}).click();await finishPreparation(page);
  await expect(page.locator('.session')).toBeVisible();
  const first=await page.locator('.scenery').getAttribute('src');
  await page.clock.runFor(11000);
@@ -120,19 +121,19 @@ test('background stays fixed until changed; random mode avoids immediate repeats
  await page.getByRole('combobox',{name:'Background'}).selectOption('random');
  const previous=await page.locator('.scenery').getAttribute('src');
  await page.getByRole('button',{name:'Stop',exact:true}).click();
- await page.getByRole('button',{name:'Start Session'}).click();await finishPreparation(page);
+ await page.getByRole('button',{name:'Start Practice'}).click();await finishPreparation(page);
  await expect(page.locator('.session')).toBeVisible();
  await expect(page.locator('.scenery')).not.toHaveAttribute('src',previous!);
 });
 test('resume and unmute restore phase audio; volume changes do not restart a voice',async({page})=>{
- await page.goto('./');
- await page.evaluate(()=>{
+ await page.addInitScript(()=>{
   const Native=window.AudioContext;(window as any).voices=[];
   window.AudioContext=class extends Native {
    createBufferSource(){const s=super.createBufferSource();(window as any).voices.push(s);return s}
   };
  });
- await page.getByRole('button',{name:'Start Session'}).click();await finishPreparation(page);
+ await page.goto('./');
+ await page.getByRole('button',{name:'Start Practice'}).click();await finishPreparation(page);
  await expect(page.locator('.session')).toBeVisible();
  await page.clock.runFor(1000);await page.getByRole('button',{name:'Pause',exact:true}).click();
  const count=await page.evaluate(()=>(window as any).voices.length);
@@ -152,7 +153,7 @@ test('resume and unmute restore phase audio; volume changes do not restart a voi
 test('unavailable Web Audio does not prevent silent breathing practice',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
  await page.addInitScript(()=>Object.defineProperty(window,'AudioContext',{value:undefined,configurable:true}));
- await page.goto('./');await page.getByRole('button',{name:'Start Session'}).click();await finishPreparation(page);
+ await page.goto('./');await page.getByRole('button',{name:'Start Practice'}).click();await finishPreparation(page);
  await expect(page.locator('.session')).toBeVisible();
  await expect(page.getByRole('heading',{name:'Inhale',exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Pause',exact:true}).click();
@@ -165,7 +166,7 @@ test('all five uploaded photographs load and generated backgrounds are not selec
  await page.goto('./');
  await page.getByRole('button',{name:'Advanced Options'}).click();
  await page.getByRole('combobox',{name:'Sound',exact:true}).selectOption('silent');
- await page.getByRole('button',{name:'Start Session'}).click();await finishPreparation(page);
+ await page.getByRole('button',{name:'Start Practice'}).click();await finishPreparation(page);
  await expect(page.locator('.session')).toBeVisible();
  await advanced(page);
  const scenery=page.getByRole('combobox',{name:'Background'});
@@ -195,7 +196,7 @@ test('missing recordings use synthesized fallback without blocking the session',
  await page.goto('./');
  await page.getByRole('button',{name:'Advanced Options'}).click();
  await page.getByRole('combobox',{name:'Sound',exact:true}).selectOption('recordings');
- await page.getByRole('button',{name:'Start Session'}).click();await finishPreparation(page);
+ await page.getByRole('button',{name:'Start Practice'}).click();await finishPreparation(page);
  await expect(page.locator('.session')).toBeVisible();
  await page.getByRole('button',{name:'Stop',exact:true}).click();
  await advanced(page);
@@ -203,13 +204,13 @@ test('missing recordings use synthesized fallback without blocking the session',
 });
 
 test('hiding the page during initial audio preparation starts paused without a cue',async({page})=>{
- await page.goto('./');
- await page.evaluate(()=>{
+ await page.addInitScript(()=>{
   const Native=window.AudioContext;(window as any).cueCount=0;
   window.AudioContext=class extends Native{createBufferSource(){(window as any).cueCount++;return super.createBufferSource()}};
   Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});
  });
- await page.getByRole('button',{name:'Start Session'}).click();await finishPreparation(page);
+ await page.goto('./');
+ await page.getByRole('button',{name:'Start Practice'}).click();await finishPreparation(page);
  await expect(page.getByRole('heading',{name:'Paused',exact:true})).toBeVisible();
  expect(await page.evaluate(()=>(window as any).cueCount)).toBe(0);
  await page.evaluate(()=>Object.defineProperty(document,'hidden',{configurable:true,get:()=>false}));

@@ -39,7 +39,7 @@ export const soundSets: SoundSet[] = [{
  frequencies:Object.fromEntries(phaseRoles.map(role=>[role,phaseNotes[role].frequency])) as Record<PhaseRole,number>
 }];
 export const hasRecordings=Object.values(soundSets[0].recordings).some(Boolean);
-export const appDefaults = {rhythm:[4,0,6,0] as [number,number,number,number],minutes:5,background:'random',sound:'bowls',volume:0.35};
+export const appDefaults = {preset:'coherentBreathing',rhythm:[5.5,0,5.5,0] as [number,number,number,number],minutes:5,background:'random',sound:'bowls',volume:0.35};
 export const mediaLibrary = { async listPublished() { return mediaAssets.filter(a=>a.published); } };
 export interface AccessProvider { canPractice(): Promise<boolean> }
 export const freeAccess: AccessProvider = { async canPractice() { return true; } };

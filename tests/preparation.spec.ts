@@ -21,8 +21,7 @@ for(const [language,t]of Object.entries({en,he,ja})){
  });
 }
 test('preparation pause/resume/restart/stop preserve time and never trigger sound',async({page})=>{
- await page.goto('./');
- await page.evaluate(()=>{
+ await page.addInitScript(()=>{
   const Native=window.AudioContext;(window as any).notes=[];const notes=new Map<AudioBuffer,number>(),Offline=window.OfflineAudioContext;
   window.OfflineAudioContext=class extends Offline{
    frequency=0;
@@ -31,10 +30,10 @@ test('preparation pause/resume/restart/stop preserve time and never trigger soun
   };
   window.AudioContext=class extends Native{createBufferSource(){const source=super.createBufferSource(),start=source.start.bind(source);source.start=(...args)=>{(window as any).notes.push(notes.get(source.buffer!));start(...args)};return source}};
  });
- await page.getByRole('button',{name:en.start,exact:true}).click();await expect(page.locator('.session-panel')).toBeVisible();
+ await page.goto('./');await page.getByRole('button',{name:en.start,exact:true}).click();await expect(page.locator('.session-panel')).toBeVisible();
  expect(await page.evaluate(()=>(window as any).notes)).toEqual([]);
  await page.clock.runFor(2000);await page.getByRole('button',{name:en.pause,exact:true}).click();const count=await page.locator('.phase-count').innerText();
- await page.clock.runFor(8000);await expect(page.locator('.phase-count')).toHaveText(count);await expect(page.locator('.remaining-value')).toHaveText('05:00');
+ await page.clock.runFor(8000);await expect(page.locator('.phase-count')).toHaveText(count);await expect(page.locator('.remaining-value')).toHaveText('05:08');
  await page.getByRole('button',{name:en.resume,exact:true}).click();await page.clock.runFor(1020);await expect(page.locator('.phase-count')).toHaveText('2');
  await page.getByRole('button',{name:en.restart,exact:true}).click();await expect(page.locator('.phase-count')).toHaveText('5');
  await expect(page.locator('.session-panel')).toHaveAttribute('aria-busy','false',{timeout:15000});

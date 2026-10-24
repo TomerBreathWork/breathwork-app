@@ -5,7 +5,7 @@ export const bowlDuration = 3.4*7+0.5+3.6;
  * Volume and the original compressor stay live, after this buffer and before
  * the phase gate. This is a rendering of the actual model, not sampled third-
  * party media or a replacement synthesis algorithm. One stereo buffer per note
- * is cached by BowlAudio; both C4 roles share the same signal.
+ * is cached by BowlAudio; both E4 hold roles share the same signal.
  */
 export async function renderBowl(context: BaseAudioContext,frequency:number,options:{random?:()=>number}={}):Promise<AudioBuffer> {
  const impulse=prepareBowlImpulse(context,options.random);

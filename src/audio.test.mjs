@@ -196,3 +196,18 @@ test('unsupported offline rendering falls back to the retained recordings',async
  assert.equal(audio.recordingStatus,'recorded');audio.run(set,[4,0,4,0],0,8000);
  assert.equal(c.sources[0].buffer.duration,20);
 });
+
+test('six coherent cycles schedule twelve half-second-precise strikes, with no holds or final extra cue',async t=>{
+ const {audio,c,advance}=await setup(t);await audio.prepare(set);
+ audio.run(set,[5.5,0,5.5,0],0,66000);
+ for(let time=.25;time<=66;time+=.25)advance(time);
+ assert.equal(c.sources.length,12);
+ assert.deepEqual(c.sources.map(s=>s.startAt),Array.from({length:12},(_,i)=>i*5.5));
+ assert.deepEqual(c.sources.map(s=>s.buffer.frequency),Array.from({length:12},(_,i)=>i%2?261.63:392));
+ for(let i=0;i<12;i++){
+  assert.equal(c.sources[i].stops[0],(i+1)*5.5);
+  const envelope=c.sources[i].gain.connected.connected.gain.events;
+  assert.deepEqual(envelope.at(-1),['ramp',0,(i+1)*5.5]);
+ }
+ advance(100);assert.equal(c.sources.length,12);
+});

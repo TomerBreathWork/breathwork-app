@@ -70,11 +70,7 @@ export function SessionPanel({
           <span>{t("remaining")}</span>
         </div>
         <div className="session-controls">
-          <button
-            className="side-button"
-            disabled={preparing && preparationProgress === undefined}
-            onClick={restart}
-          >
+          <button className="side-button" onClick={restart}>
             <Icon name="restart" />
             {t("restart")}
           </button>
@@ -85,17 +81,10 @@ export function SessionPanel({
           ) : (
             <button
               className="primary-control"
-              disabled={preparing && preparationProgress === undefined}
               onClick={status === "running" ? pause : resume}
             >
               <Icon name={status === "running" ? "pause" : "play"} />
-              {t(
-                preparing && preparationProgress === undefined
-                  ? "preparing"
-                  : status === "running"
-                    ? "pause"
-                    : "resume",
-              )}
+              {t(status === "running" ? "pause" : "resume")}
             </button>
           )}
           <button className="side-button" onClick={stop}>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { phaseAt, finishAt, validRhythm } from "./engine";
+import { phaseAt, finishAt, validRhythm, type Rhythm } from "./engine";
 import { BowlAudio } from "./audio";
 import { soundSets } from "./media";
 import type { Settings } from "./settings";
@@ -14,10 +14,15 @@ export function useBreathingSession(settings: Settings) {
     [revision, setRevision] = useState(0);
   const [audioStatus, setAudioStatus] =
     useState<TranslationKey>("audioInitial");
+  const [preloading, setPreloading] = useState(false);
   const [inPreparation, setInPreparation] = useState(false),
     [preparationElapsed, setPreparationElapsed] = useState(0);
-  const preparation = useRef(false),
-    audioReady = useRef(false);
+  const [configuration, setConfiguration] = useState<{
+    rhythm: Rhythm;
+    end: number;
+  } | null>(null);
+  const rhythm = configuration?.rhythm ?? settings.rhythm;
+  const preparation = useRef(false);
   const needsContinuation = useRef(false);
   const audio = useRef(new BowlAudio()),
     operation = useRef(0),
@@ -30,7 +35,9 @@ export function useBreathingSession(settings: Settings) {
     Number.isFinite(settings.minutes) &&
     settings.minutes >= 1 &&
     settings.minutes <= 120;
-  const end = timingValid ? finishAt(settings.minutes, settings.rhythm) : 0;
+  const end =
+    configuration?.end ??
+    (timingValid ? finishAt(settings.minutes, settings.rhythm) : 0);
   const endRef = useRef(end);
   endRef.current = end;
   function transition(next: SessionStatus) {
@@ -52,9 +59,10 @@ export function useBreathingSession(settings: Settings) {
               ? performance.now() - origin.current
               : 0),
         );
-  const phase = timingValid
-    ? phaseAt(Math.min(elapsed, Math.max(0, end - 0.01)), settings.rhythm)
-    : { index: 0, progress: 0, remaining: 0, key: "" };
+  const phase =
+    configuration || timingValid
+      ? phaseAt(Math.min(elapsed, Math.max(0, end - 0.01)), rhythm)
+      : { index: 0, progress: 0, remaining: 0, key: "" };
   useEffect(() => {
     if (status !== "running") return;
     let frame = 0;
@@ -62,12 +70,13 @@ export function useBreathingSession(settings: Settings) {
       const now = base.current + performance.now() - origin.current;
       if (preparation.current) {
         setPreparationElapsed(Math.min(5000, now));
-        if (now >= 5000 && audioReady.current) {
+        if (now >= 5000) {
           preparation.current = false;
           setInPreparation(false);
-          base.current = 0;
+          // Preserve the deadline instead of moving the clock to the next frame.
+          base.current = Math.max(0, now - 5000);
           origin.current = performance.now();
-          setElapsed(0);
+          setElapsed(base.current);
         }
         frame = requestAnimationFrame(tick);
         return;
@@ -86,12 +95,28 @@ export function useBreathingSession(settings: Settings) {
     return () => cancelAnimationFrame(frame);
   }, [status, end]);
   useEffect(() => {
+    if (status !== "idle" || settings.sound !== "bowls") {
+      setPreloading(false);
+      return;
+    }
+    // Cache the unchanged model silently before enabling Start. Unlock still
+    // happens on user input; loading never stretches the five-second countdown.
+    let cancelled = false;
+    setPreloading(true);
+    void audio.current.warmup(soundSets[0]).finally(() => {
+      if (!cancelled) setPreloading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [settings.sound, status]);
+  useEffect(() => {
     audio.current.setVolume(settings.volume);
   }, [settings.volume]);
   useEffect(() => {
     if (status !== "running" || inPreparation) return;
     if (ready && !muted && settings.sound !== "silent")
-      audio.current.run(soundSets[0], settings.rhythm, currentElapsed(), end);
+      audio.current.run(soundSets[0], rhythm, currentElapsed(), end);
     else audio.current.stop();
     return () => audio.current.stop();
   }, [status, muted, settings.sound, ready, revision, inPreparation]);
@@ -133,10 +158,17 @@ export function useBreathingSession(settings: Settings) {
     setPreparing(false);
   }
   function start() {
+    if (!timingValid) return false;
+    setConfiguration({
+      rhythm: [...current.current.settings.rhythm] as Rhythm,
+      end: finishAt(
+        current.current.settings.minutes,
+        current.current.settings.rhythm,
+      ),
+    });
     const ticket = ++operation.current;
     audio.current.stop();
     setReady(false);
-    audioReady.current = false;
     needsContinuation.current = false;
     preparation.current = true;
     setInPreparation(true);
@@ -148,13 +180,11 @@ export function useBreathingSession(settings: Settings) {
     setPreparing(sound !== "silent");
     transition(document.hidden ? "paused" : "running");
     if (sound === "silent") {
-      audioReady.current = true;
       setReady(true);
       setAudioStatus("audioInitial");
     } else
       void prepare(sound).then((message) => {
         if (ticket !== operation.current) return;
-        audioReady.current = true;
         setReady(true);
         setAudioStatus(message);
         setPreparing(false);
@@ -168,6 +198,7 @@ export function useBreathingSession(settings: Settings) {
     setPreparationElapsed(0);
     base.current = 0;
     setElapsed(0);
+    setConfiguration(null);
     transition("idle");
   }
   function pause() {
@@ -189,12 +220,7 @@ export function useBreathingSession(settings: Settings) {
     if (ticket !== operation.current) return;
     if (needsContinuation.current && !preparation.current) {
       const now = currentElapsed();
-      audio.current.run(
-        soundSets[0],
-        current.current.settings.rhythm,
-        now,
-        now,
-      );
+      audio.current.run(soundSets[0], rhythm, now, now);
       needsContinuation.current = false;
     }
     origin.current = performance.now();
@@ -232,28 +258,19 @@ export function useBreathingSession(settings: Settings) {
       mode === "silent"
     ) {
       if (mode === "silent") {
-        audioReady.current = true;
         setReady(true);
       }
       return;
     }
     setPreparing(true);
-    audioReady.current = false;
     const message = await prepare(mode);
     if (ticket !== operation.current) return;
     const now = currentElapsed();
     // Initialize a prepared mode as a continuation, using an empty playback range.
     // The unchanged engine emits no source for this range; the next run seeks the
     // current phase instead of treating the mode change as a new session strike.
-    if (!preparation.current)
-      audio.current.run(
-        soundSets[0],
-        current.current.settings.rhythm,
-        now,
-        now,
-      );
+    if (!preparation.current) audio.current.run(soundSets[0], rhythm, now, now);
     needsContinuation.current = false;
-    audioReady.current = true;
     setAudioStatus(message);
     setReady(true);
     setRevision((value) => value + 1);
@@ -268,8 +285,8 @@ export function useBreathingSession(settings: Settings) {
     phase,
     muted,
     setMuted,
-    preparing,
-    audioStatus: preparing ? ("preparing" as const) : audioStatus,
+    preparing: preparing || preloading,
+    audioStatus: preparing || preloading ? ("preparing" as const) : audioStatus,
     start,
     stop,
     pause,

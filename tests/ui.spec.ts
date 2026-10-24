@@ -99,13 +99,13 @@ test('branding and manifest assets respect the GitHub Pages subpath',async({page
 });
 
 test('sound preview plays on settings; active preview pauses and resume seeks the phase',async({page})=>{
- await page.goto('./');
- await page.evaluate(()=>{
+ await page.addInitScript(()=>{
   const Native=window.AudioContext;(window as any).offsets=[];
   window.AudioContext=class extends Native{
    createBufferSource(){const source=super.createBufferSource(),start=source.start.bind(source);source.start=(...args)=>{(window as any).offsets.push(args[1]||0);start(...args)};return source}
   };
  });
+ await page.goto('./');
  await page.getByRole('button',{name:en.advanced,exact:true}).click();
  await page.getByRole('button',{name:en.preview,exact:true}).click();
  await expect.poll(()=>page.evaluate(()=>(window as any).offsets.length)).toBe(1);
@@ -142,8 +142,8 @@ test('random sessions use only real photographs and branding is stacked without 
  }
  const layout=await page.locator('.app-header').evaluate(header=>{
   const logo=header.querySelector('.brand-mark')!.getBoundingClientRect(),name=header.querySelector('h1')!.getBoundingClientRect(),by=header.querySelector('.attribution')!.getBoundingClientRect(),tagline=header.querySelector('.tagline')!.getBoundingClientRect();
-  return{logoBottom:logo.bottom,nameTop:name.top,nameBottom:name.bottom,byTop:by.top,byBottom:by.bottom,taglineTop:tagline.top,pseudo:getComputedStyle(header,'::before').content,background:getComputedStyle(header).backgroundColor};
+  return{logoBottom:logo.bottom,nameTop:name.top,nameBottom:name.bottom,byTop:by.top,byBottom:by.bottom,taglineTop:tagline.top,glow:getComputedStyle(header,'::before').backgroundImage,blur:getComputedStyle(header,'::before').filter,background:getComputedStyle(header).backgroundColor};
  });
  expect(layout.logoBottom).toBeLessThanOrEqual(layout.nameTop);expect(layout.nameBottom).toBeLessThanOrEqual(layout.byTop);expect(layout.byBottom).toBeLessThanOrEqual(layout.taglineTop);
- expect(layout.pseudo).toBe('none');expect(layout.background).toBe('rgba(0, 0, 0, 0)');
+ expect(layout.glow).toContain('radial-gradient');expect(layout.blur).toContain('blur');expect(layout.background).toBe('rgba(0, 0, 0, 0)');
 });

@@ -66,7 +66,7 @@ export function BreathingCircle({
           >
             {preparing
               ? Math.max(1, Math.ceil((1 - preparationProgress) * 5))
-              : Math.ceil(phase.remaining)}
+              : Math.ceil(phase.remaining * 2) / 2}
           </span>
         )}
         {hold && status === "running" && (
