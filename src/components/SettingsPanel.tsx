@@ -1,12 +1,21 @@
 import type { ReactNode, CSSProperties } from "react";
 import { presets, type Settings } from "../settings";
-import { phaseKeys, type Translator } from "../i18n";
+import { phaseKeys, type Translator, type Language } from "../i18n";
 import type { Rhythm } from "../engine";
 import type { PresetKey } from "../presets";
 import { SettingsFooter } from "./SettingsFooter";
+import {
+  phaseLimits,
+  clampPhaseDuration,
+  holdDurationToSliderPosition,
+  sliderPositionToHoldDuration,
+  nextHoldDuration,
+} from "../duration-controls";
+import { useState } from "react";
 import { Icon } from "./Icons";
 interface Props {
   t: Translator;
+  language: Language;
   settings: Settings;
   onCustom: () => void;
   onPreset: (key: PresetKey) => void;
@@ -18,6 +27,7 @@ interface Props {
 }
 export function SettingsPanel({
   t,
+  language,
   settings,
   onCustom,
   onPreset,
@@ -27,6 +37,7 @@ export function SettingsPanel({
   preparing,
   start,
 }: Props) {
+  const [editing, setEditing] = useState(false);
   return (
     <main
       className="settings-panel glass-panel"
@@ -57,6 +68,16 @@ export function SettingsPanel({
       <section className="rhythm-grid" aria-label={t("rhythmLabel")}>
         {phaseKeys.map((key, index) => {
           const value = settings.rhythm[index];
+          const hold = index === 1 || index === 3;
+          const { min, max } = phaseLimits(index);
+          const displayedValue = Number.isFinite(value)
+            ? clampPhaseDuration(index, value)
+            : min;
+          const position = hold
+            ? holdDurationToSliderPosition(displayedValue)
+            : ((displayedValue - min) / (max - min)) * 100;
+          const controlLabel =
+            language === "ja" && hold ? `${t(key)} (${index + 1})` : t(key);
           const update = (value: number) => {
             const rhythm = [...settings.rhythm] as Rhythm;
             rhythm[index] = value;
@@ -68,15 +89,53 @@ export function SettingsPanel({
               <input
                 id={`phase-${index}`}
                 type="range"
-                min="0"
-                max="120"
-                step="0.5"
-                value={Number.isFinite(value) ? value : 0}
-                onChange={(e) => update(Number(e.target.value))}
-                aria-label={t(key)}
+                min={hold ? 0 : min}
+                max={hold ? 100 : max}
+                step={hold ? "any" : "0.5"}
+                value={hold ? position : displayedValue}
+                onChange={(e) =>
+                  update(
+                    hold
+                      ? sliderPositionToHoldDuration(Number(e.target.value))
+                      : Number(e.target.value),
+                  )
+                }
+                onKeyDown={(event) => {
+                  if (!hold) return;
+                  if (
+                    [
+                      "ArrowUp",
+                      "ArrowRight",
+                      "ArrowDown",
+                      "ArrowLeft",
+                      "Home",
+                      "End",
+                    ].includes(event.key)
+                  ) {
+                    event.preventDefault();
+                    update(
+                      event.key === "Home"
+                        ? 0
+                        : event.key === "End"
+                          ? 120
+                          : nextHoldDuration(
+                              displayedValue,
+                              event.key === "ArrowUp" ||
+                                event.key === "ArrowRight"
+                                ? 1
+                                : -1,
+                            ),
+                    );
+                  }
+                }}
+                aria-label={controlLabel}
+                aria-valuemin={min}
+                aria-valuemax={max}
+                aria-valuenow={displayedValue}
+                aria-valuetext={`${displayedValue} ${t("seconds")}`}
                 style={
                   {
-                    "--range-progress": `${((value || 0) / 120) * 100}%`,
+                    "--range-progress": `${position}%`,
                   } as CSSProperties
                 }
               />
@@ -84,10 +143,25 @@ export function SettingsPanel({
                 <input
                   type="number"
                   inputMode="decimal"
-                  min="0"
-                  max="120"
+                  id={`phase-value-${index}`}
+                  min={min}
+                  max={max}
                   step="0.5"
-                  aria-label={t("phaseSeconds", { phase: t(key) })}
+                  aria-label={t("phaseSeconds", { phase: controlLabel })}
+                  aria-invalid={
+                    !Number.isFinite(value) || value < min || value > max
+                  }
+                  onFocus={() => setEditing(true)}
+                  onBlur={(event) => {
+                    setEditing(false);
+                    if (
+                      event.target.value !== "" &&
+                      Number.isFinite(Number(event.target.value))
+                    )
+                      update(
+                        clampPhaseDuration(index, Number(event.target.value)),
+                      );
+                  }}
                   value={Number.isNaN(value) ? "" : value}
                   onChange={(e) =>
                     update(e.target.value === "" ? NaN : Number(e.target.value))
@@ -120,7 +194,7 @@ export function SettingsPanel({
         </div>
       </div>
       {advanced}
-      {!valid && (
+      {!valid && !editing && (
         <p className="error" role="alert">
           {t("error")}
         </p>

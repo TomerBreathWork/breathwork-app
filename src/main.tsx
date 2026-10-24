@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { appDefaults, chooseBackground, mediaUrl } from "./media";
-import { validRhythm } from "./engine";
+import { validConfiguredRhythm } from "./duration-controls";
 import { loadSettings, type Settings } from "./settings";
 import {
   editRhythm,
@@ -29,7 +29,7 @@ function App() {
   useSessionHistory(active, session.stop);
   const displayedBackground = active ? background : settingsBackground;
   const valid =
-    validRhythm(settings.rhythm) &&
+    validConfiguredRhythm(settings.rhythm) &&
     Number.isFinite(settings.minutes) &&
     settings.minutes >= 1 &&
     settings.minutes <= 120;
@@ -112,6 +112,7 @@ function App() {
         {session.status === "idle" ? (
           <SettingsPanel
             t={t}
+            language={language}
             settings={settings}
             onCustom={onCustom}
             onPreset={onPreset}

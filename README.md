@@ -16,7 +16,7 @@ npm run dev
 
 Open the address Vite prints in your browser (normally port 5173, under `/breathwork-app/`). In a cloud editor, use its port preview for port 5173 if available. To test the production version, run `npm run build` then `npm run preview` (port 4173). Production files are in `dist/`.
 
-The app opens directly to settings. Choose an existing preset or Custom, set seconds with the sliders or numeric fields, and press **Start Practice**. A phase set to 0 is skipped. Use **Restart**, **Pause / Resume**, or **Stop** during practice. **Advanced Options**, collapsed by default on both screens, contains background, sound, mute, preview, and volume. **Reset defaults** is available there on settings. It restores Coherent Breath (5.5–0–5.5–0), with a requested minimum of 5 minutes. Language selection appears only on settings.
+The app opens directly to settings. Choose an existing preset or Custom, set seconds with the sliders or numeric fields, and press **Start Practice**. A hold set to 0 is skipped. Inhale/exhale use 0.5–40 seconds; holds use 0–120 seconds. Use **Restart**, **Pause / Resume**, or **Stop** during practice. **Advanced Options**, collapsed by default on both screens, contains background, sound, mute, preview, and volume. **Reset defaults** is available there on settings. It restores Coherent Breath (5.5–0–5.5–0), with a requested minimum of 5 minutes. Language selection appears only on settings.
 
 The requested session length is a minimum. Sessions complete a whole breathing cycle: `ceil(requestedMilliseconds / cycleMilliseconds) * cycleMilliseconds`; the countdown includes this extension from the start. Hiding the browser tab pauses safely and silences cues; resume manually on return. Refreshing ends a session, while keeping valid settings. Synthesized Tibetan Bowls is the default; it does not fetch audio files. You can select the existing recordings under Advanced Options. In recording mode, missing or undecodable files use per-role synthesis instead. Existing sound-on preferences use the new synthesis; saved silence preferences remain silent. Start or Preview unlocks browser audio; unavailable audio falls back to silence.
 
@@ -32,7 +32,7 @@ Browser tests use system Chromium when available. Otherwise run `npx playwright 
 
 Manual checks on your phone and desktop:
 
-- Try all presets and a rhythm with only one nonzero phase. All-zero and out-of-range values must block Start.
+- Try all presets, zero holds, exact manual holds and the nonlinear hold sliders. Empty/invalid inputs block Start; numeric entries clamp to their phase bounds on blur.
 - Watch water rise on inhale, hold full, fall on exhale, and hold empty. Each hold has a clockwise progress arc.
 - Pause midway; the water, countdown, and phase stay fixed. Resume should continue from that point.
 - Set a one-minute 4–7–8 session; it finishes after four complete cycles (76 seconds). Stop returns immediately to settings.
@@ -167,7 +167,7 @@ The existing application now uses a shared two-screen visual system: compact bra
 - `src/locales/en.json`, `he.json`, `ja.json`: complete typed translation dictionaries. `src/i18n.ts` handles browser detection, persistence (`breath-flow-language`), document language/direction and named substitutions.
 - [Translation review](docs/translations.md): every stable key with all three values. Regenerate with `node scripts/generate-translations.mjs`. Native-speaker review is welcome, especially for brand tone and Japanese phrasing.
 
-Collapsed settings and active screens were checked at 360×740, 375×812 and 390×844 in all three languages, with no vertical or horizontal page overflow. Smaller screens (e.g. 320×568), landscape, enlarged text, and expanded Advanced Options can scroll rather than hiding controls. Safe-area insets and dynamic viewport units are used. System Georgia/serif, Hebrew, and Japanese fallback fonts avoid external font downloads. Real-device Safari/Android browser chrome and screen-reader behavior still merit manual checks.
+Collapsed settings and active screens were checked at 360×740, 375×812 and 390×844 in all three languages, with no vertical or horizontal page overflow. Short phone layouts down to 320×568 also fit; unusually short/landscape layouts, enlarged text and explicitly expanded content use the app’s own scroll area rather than hiding controls. Safe-area insets and dynamic viewport units are used. System Georgia/serif, Hebrew, and Japanese fallback fonts avoid external font downloads. Real-device Safari/Android browser chrome and screen-reader behavior still merit manual checks.
 
 ### Original branding assets
 
@@ -196,7 +196,7 @@ Logos are approximately 17–18% larger with compact spacing preserved. Smaller 
 ### Coherent Breath, precision and full-cycle completion
 
 - New users default to **Coherent Breath**: 5.5-second inhale, no hold, 5.5-second exhale, no hold (11 seconds, approximately 5.45 cycles/minute). Its button label is Coherent Breath in every language. The four buttons are Coherent Breath, Box Breath, 4-7-8 and Custom, in one row. The former Slow & Steady configuration migrates to Custom with its durations preserved.
-- All phase sliders and numeric fields use 0.5-second steps. Manual decimal input and saved fractional values remain fractional; the circle countdown shows only the initial fractional value, then stable whole seconds (5.5 → 5 → 4 → 3 → 2 → 1), with no zero between phases. The display does not alter phase timing. Existing finer saved rhythms remain usable, with timing rounded to integer milliseconds.
+- Inhale/exhale sliders and phase numeric inputs support 0.5-second steps; the hold sliders use the precision mapping below. Manual decimal input and saved fractional values remain fractional; the circle countdown shows only the initial fractional value, then stable whole seconds (5.5 → 5 → 4 → 3 → 2 → 1), with no zero between phases. The display does not alter phase timing. Existing finer saved rhythms remain usable, with timing rounded to integer milliseconds.
 - `engine.ts` sums integer phase milliseconds and rounds up to a whole number of cycles. A 60-second minimum yields 66 seconds for an 11-second cycle, 60 for 20, 64 for 16, and 63 for 10.5. Both final holds finish when configured; zero-length holds and their cues are skipped. No additional cycle/strike begins at completion.
 - Start freezes a copy of the rhythm and calculated end time for that session. Background, volume and sound changes preserve it. Stop returns to saved settings; Restart includes preparation again. The timer includes the complete final cycle during preparation and only decreases once practice begins.
 - Saved explicit rhythms (including legacy settings without a preset ID) keep their values. An explicit Custom choice now persists even if its numbers match a preset. If no saved valid rhythm exists, only the rhythm defaults to Coherent Breath; other valid preferences are retained.
@@ -214,6 +214,29 @@ Settings now has a small footer below Start Practice and its supporting sentence
 - **Contact** opens `https://wa.me/972509266969` in a new tab with the exact localized WhatsApp draft. It only prefills the message; the user reviews and sends it. There is no messaging API or automatic send.
 - **How to Use** opens an accessible native dialog with the supplied English/Hebrew/Japanese instructions. Its body scrolls internally, keyboard focus stays within Close/content, Escape and Close dismiss it, and focus returns to the triggering button. Hebrew inherits RTL; the app name stays LTR.
 
-Japanese breathing-circle labels remain **吸う → 止める → 吐く → 止める**. Only Japanese hides the longer after-inhale/exhale subtitle; Settings keeps distinguishable accessible phase-control labels. This is text presentation only: precise half-second timing, calm countdowns, five-second preparation, full-cycle completion, audio synthesis/mapping, hold-ring movement and stationary hold water remain unchanged.
+Japanese breathing-circle labels remain **吸う → 止める → 吐く → 止める**. Japanese hides the after-inhale/exhale subtitle, and both Settings hold rows also use exactly 止める. Nonvisible numbered accessibility labels distinguish controls 2 and 4 while preserving their separate internal IDs. This is text presentation only: precise half-second timing, calm countdowns, five-second preparation, full-cycle completion, audio synthesis/mapping, hold-ring movement and stationary hold water remain unchanged.
 
 `src/presets.ts` holds pure preset migration/edit/switch logic; `SettingsFooter.tsx`, `HelpDialog.tsx` and `links.ts` implement these actions using native browser APIs with no added dependency. Translation keys and all supplied help content are reviewed in `docs/translations.md`. Tests cover migrations, Custom memory, exact button order/one-row layout, localized native-share payloads, clipboard/manual fallbacks, cancellation, WhatsApp URLs/messages, modal focus/RTL and Japanese hold display. Native share-sheet appearance and installed WhatsApp handoff should also be checked on an actual phone; browser tests verify the API payloads and standard click-to-chat links without contacting anyone.
+
+### Mobile viewport, Japanese labels and duration-control precision
+
+The earlier Japanese fix affected Practice’s shared `hold` label and subtitle only. Settings independently used `holdIn` and `holdOut`, which still held longer phrases. All Japanese hold-related keys (`holdIn`, `holdOut`, `hold`, `afterInhale`, `afterExhale`) now use **止める**. Settings renders **吸う / 止める / 吐く / 止める**; ordinal accessibility names distinguish the two otherwise identical hold controls. The existing short help instructions and Practice label policy are retained.
+
+The former intrinsic Settings height was about 684–688px at 360×640 and up to 695px at 320×568. Its `min-height: 100dvh` allowed the document to grow beyond the visible viewport. Fixed touch-control heights plus accumulated padding, header spacing and gaps caused this vertical overflow; the narrow Practice layout could also exceed its viewport. Text-entry fields below 16px could additionally trigger Safari focus zoom and apparent sideways panning.
+
+The app now has an exact dynamic-viewport shell with safe-area padding. Container queries adapt actual available content height, reducing empty spacing/card padding before reducing the short-screen header/circle. All normal collapsed screens genuinely fit; the tests check the app’s own scroll dimensions and every essential control’s bounds, in addition to document dimensions. Document overscroll is contained after fitting the content. Help scrolls inside its dialog, Advanced Options has a bounded internal area, and exceptional large-text/short-landscape content remains reachable in the app’s own vertical scroll area. Text fields/selects have at least 16px text without disabling user zoom. Tabular, fixed-space countdowns and fixed numeric-field widths prevent value updates from moving controls.
+
+`src/duration-controls.ts` separates duration from thumb position:
+
+| Hold track position | Actual hold duration | Interaction increments |
+| --- | --- | --- |
+| 0–70% | 0–30 seconds | 0.5 seconds |
+| 70–80% | 30–60 seconds | 2 seconds |
+| 80–90% | 60–90 seconds | 5 seconds |
+| 90–100% | 90–120 seconds | 10 seconds |
+
+`sliderPositionToHoldDuration()` quantizes only slider interaction; `holdDurationToSliderPosition()` is continuous and never rounds the saved/manual duration. For example, a manual 31.5 seconds stays 31.5 with a 70.5% thumb position until the user moves the slider. Arrow keys select adjacent valid stops; Home/End select 0/120. Accessibility values remain seconds, even though the hold range element itself uses normalized 0–100 positions.
+
+Inhale/exhale use linear 0.5–40-second sliders with 0.5-second steps. Numeric entries clamp to bounds on blur; temporary blank values remain editable and cannot start a session. Both current legacy rhythms and remembered Custom rhythms migrate to these bounds without resetting other preferences. Coherent Breath remains exactly 5.5/0/5.5/0. The generic timing/audio engine still supports its existing test rhythms; application configuration validates the new controls separately. Phase math, full-cycle completion, preparation, calm countdown formatting and audio synthesis/mapping are unchanged.
+
+Browser checks cover Settings, preparation and Practice in English, Hebrew and Japanese at 320×568, 360×592, 360×640, 375×667, 375×812, 390×664, 390×844, 393×660 and 412×731, including viewport resizing, safe-area-like padding, no document panning, visible footer/playback controls, stable countdown layout, exact manual persistence, migration and nonlinear keyboard/pointer behavior. Touch-emulated taps at narrow phone sizes select short holds accurately. Native WebKit could not be installed because the download domains returned HTTP 403; physical Safari/browser-chrome behavior still requires a device check.

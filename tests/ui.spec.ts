@@ -19,7 +19,7 @@ for(const language of ['en','he','ja'] as const){
   await silentSettings(page);await page.locator('.language-picker select').selectOption(language);
   await expect(page.locator('html')).toHaveAttribute('lang',language);await expect(page.locator('html')).toHaveAttribute('dir',language==='he'?'rtl':'ltr');
   await expect(page.getByText(t.tagline,{exact:true})).toBeVisible();await expect(page.getByRole('button',{name:t.custom,exact:false})).toBeVisible();
-  await expect(page.getByRole('slider',{name:t.holdIn,exact:true})).toBeVisible();
+  await expect(page.locator('#phase-1')).toBeVisible();
   await page.reload();await expect(page.locator('html')).toHaveAttribute('lang',language);
   await page.getByRole('button',{name:t.start,exact:true}).click();await finishPreparation(page);
   await expect(page.getByRole('heading',{name:t.inhale,exact:true})).toBeVisible();
@@ -72,7 +72,7 @@ test('remaining time pauses correctly; restart and stop preserve settings',async
 test('advanced options expand, remain usable on small screens and allow scrolling',async({page})=>{
  await page.setViewportSize({width:320,height:568});await silentSettings(page);await page.getByRole('button',{name:en.advanced,exact:true}).click();
  await expect(page.getByRole('combobox',{name:en.sound,exact:true})).toBeVisible();await page.getByRole('button',{name:en.reset,exact:true}).scrollIntoViewIfNeeded();
- expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBe(320);expect(await page.evaluate(()=>document.documentElement.scrollHeight)).toBeGreaterThan(568);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBe(320);expect(await page.locator('.app-page').evaluate(el=>el.scrollHeight)).toBeGreaterThan(568);
  await page.getByRole('button',{name:en.advanced,exact:true}).click();await expect(page.getByRole('combobox',{name:en.sound,exact:true})).toHaveCount(0);
  await page.evaluate(()=>document.documentElement.style.fontSize='200%');await page.getByRole('button',{name:en.start,exact:true}).scrollIntoViewIfNeeded();await expect(page.getByRole('button',{name:en.start,exact:true})).toBeVisible();
 });

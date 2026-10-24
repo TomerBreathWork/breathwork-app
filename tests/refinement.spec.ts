@@ -22,7 +22,9 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
     ).toHaveAttribute("aria-pressed", "true");
     await expect(page.locator("#phase-0")).toHaveValue("5.5");
     await expect(page.locator("#phase-2")).toHaveValue("5.5");
-    for (const input of await page.locator(".phase-row input").all())
+    for (const input of await page
+      .locator('.phase-row input[type="number"], #phase-0, #phase-2')
+      .all())
       await expect(input).toHaveAttribute("step", "0.5");
     const input = page.getByRole("spinbutton", {
       name: t.phaseSeconds.replace("{phase}", t.inhale),
@@ -206,7 +208,9 @@ test("coherent native audio skips both holds and emits exactly twelve strikes fo
   await page.clock.runFor(5020);
   await expect(page.locator(".phase-count")).toHaveText("5.5");
   for (let phase = 0; phase < 12; phase++) await page.clock.fastForward(5500);
-  await expect(page.getByRole("heading", {name: en.complete, exact: true})).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: en.complete, exact: true }),
+  ).toBeVisible();
   const notes: number[] = await page.evaluate(() => (window as any).played);
   expect(notes).toHaveLength(12);
   notes.forEach((frequency, index) =>

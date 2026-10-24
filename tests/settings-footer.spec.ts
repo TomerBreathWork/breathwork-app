@@ -142,7 +142,7 @@ for (const [key, name, rhythm] of [
       page.getByRole("button", { name, exact: true }),
     ).toHaveAttribute("aria-pressed", "true");
     for (let i = 0; i < 4; i++)
-      await expect(page.locator(`#phase-${i}`)).toHaveValue(String(rhythm[i]));
+      await expect(page.locator(`#phase-value-${i}`)).toHaveValue(String(rhythm[i]));
     await expect(page.locator("#duration")).toHaveValue("7");
     await page.reload();
     await expect(
@@ -176,7 +176,7 @@ test("editing only switches to Custom when necessary, and the last Custom rhythm
   await page.getByRole("button", { name: "4-7-8", exact: true }).click();
   await page.getByRole("button", { name: "Custom", exact: true }).click();
   await expect(inhale).toHaveValue("6.5");
-  await expect(page.locator("#phase-1")).toHaveValue("1.5");
+  await expect(page.locator("#phase-value-1")).toHaveValue("1.5");
   await page.reload();
   await expect(inhale).toHaveValue("6.5");
   await expect(

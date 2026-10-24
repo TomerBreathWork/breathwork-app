@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { phaseAt, finishAt, validRhythm, type Rhythm } from "./engine";
+import { phaseAt, finishAt, type Rhythm } from "./engine";
+import { validConfiguredRhythm } from "./duration-controls";
 import { BowlAudio } from "./audio";
 import { soundSets } from "./media";
 import type { Settings } from "./settings";
@@ -31,7 +32,7 @@ export function useBreathingSession(settings: Settings) {
   const current = useRef({ status, settings });
   current.current = { status, settings };
   const timingValid =
-    validRhythm(settings.rhythm) &&
+    validConfiguredRhythm(settings.rhythm) &&
     Number.isFinite(settings.minutes) &&
     settings.minutes >= 1 &&
     settings.minutes <= 120;

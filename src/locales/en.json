@@ -38,7 +38,7 @@
   "safety": "Breathe gently. Stop if you feel uncomfortable.",
   "zeroHint": "Set a phase to 0 to skip it.",
   "finishHint": "We complete the final breathing cycle, so your session may run a little longer.",
-  "error": "Use 0–120 seconds per phase, with at least one phase above 0, and a session of 1–120 minutes.",
+  "error": "Use 0.5–40 seconds for inhale and exhale, 0–120 seconds for holds, and a session of 1–120 minutes.",
   "sound": "Sound",
   "synthesized": "Tibetan bowls",
   "recorded": "Recorded bowls",

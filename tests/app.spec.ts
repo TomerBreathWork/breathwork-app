@@ -46,7 +46,8 @@ test('zero phases skip and completion respects the whole final cycle',async({pag
 });
 test('invalid settings block start and image failure falls back safely',async({page})=>{
  await page.route(/\/media\/.*\.webp$/,r=>r.abort());await page.goto('./');
- for(const name of ['Inhale seconds','Exhale seconds'])await page.getByRole('spinbutton',{name,exact:true}).fill('0');
+ await page.getByRole('spinbutton',{name:'Inhale seconds',exact:true}).fill('');
+ await page.getByRole('spinbutton',{name:'Inhale seconds',exact:true}).blur();
  await expect(page.getByRole('button',{name:'Start Practice'})).toBeDisabled();
  await expect(page.getByRole('alert')).toBeVisible();
  await advanced(page);

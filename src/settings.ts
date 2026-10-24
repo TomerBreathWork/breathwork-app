@@ -1,5 +1,5 @@
 import { appDefaults, selectableBackgrounds } from "./media";
-import { validRhythm, type Rhythm } from "./engine";
+import { migrateRhythm } from "./duration-controls";
 import { restorePreset, type PatternSettings } from "./presets";
 export { presets } from "./presets";
 export type Settings = typeof appDefaults &
@@ -8,10 +8,10 @@ export function loadSettings(): Settings {
   try {
     const s = JSON.parse(localStorage.getItem("still-settings") || "null");
     if (s && typeof s === "object") {
-      const rhythm = validRhythm(s.rhythm)
-        ? (s.rhythm as Rhythm)
-        : ([...appDefaults.rhythm] as Rhythm);
-      const preset = validRhythm(s.rhythm)
+      const migrated = migrateRhythm(s.rhythm);
+      const rhythm =
+        migrated ?? ([...appDefaults.rhythm] as typeof appDefaults.rhythm);
+      const preset = migrated
         ? restorePreset(s.preset, rhythm)
         : appDefaults.preset;
       return {
@@ -19,11 +19,9 @@ export function loadSettings(): Settings {
         rhythm,
         // Retired presets retain their durations as Custom; never discard a rhythm.
         preset,
-        customRhythm: validRhythm(s.customRhythm)
-          ? ([...s.customRhythm] as Rhythm)
-          : preset === "custom"
-            ? ([...rhythm] as Rhythm)
-            : undefined,
+        customRhythm:
+          migrateRhythm(s.customRhythm) ??
+          (preset === "custom" ? ([...rhythm] as typeof rhythm) : undefined),
         minutes:
           Number.isFinite(s.minutes) && s.minutes >= 1 && s.minutes <= 120
             ? s.minutes

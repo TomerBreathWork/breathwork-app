@@ -16,12 +16,12 @@ Generated from `src/locales/{en,he,ja}.json`. Run `node scripts/generate-transla
 | custom | Custom | Custom | Custom |
 | customHint | Your own rhythm | הקצב שלכם | 自分だけのリズム |
 | inhale | Inhale | שאיפה | 吸う |
-| holdIn | Hold after inhale | עצירה אחרי שאיפה | 吸った後に止める |
+| holdIn | Hold after inhale | עצירה אחרי שאיפה | 止める |
 | exhale | Exhale | נשיפה | 吐く |
-| holdOut | Hold after exhale | עצירה אחרי נשיפה | 吐いた後に止める |
+| holdOut | Hold after exhale | עצירה אחרי נשיפה | 止める |
 | hold | Hold | עצירה | 止める |
-| afterInhale | After inhale | אחרי שאיפה | 吸った後 |
-| afterExhale | After exhale | אחרי נשיפה | 吐いた後 |
+| afterInhale | After inhale | אחרי שאיפה | 止める |
+| afterExhale | After exhale | אחרי נשיפה | 止める |
 | phaseSeconds | {phase} seconds | {phase} בשניות | {phase}（秒） |
 | seconds | sec | שנ׳ | 秒 |
 | minutes | min | דק׳ | 分 |
@@ -43,7 +43,7 @@ Generated from `src/locales/{en,he,ja}.json`. Run `node scripts/generate-transla
 | safety | Breathe gently. Stop if you feel uncomfortable. | נשמו בנחת. הפסיקו אם מתעוררת אי־נוחות. | 無理せず呼吸を。不快に感じたら中止してください。 |
 | zeroHint | Set a phase to 0 to skip it. | ערך 0 מדלג על השלב. | 0秒のステップはスキップします。 |
 | finishHint | We complete the final breathing cycle, so your session may run a little longer. | נסיים מחזור נשימה מלא, ולכן התרגול עשוי להימשך מעט יותר. | 最後の呼吸サイクルを終えてから終了するため、設定時間より少し長くなる場合があります。 |
-| error | Use 0–120 seconds per phase, with at least one phase above 0, and a session of 1–120 minutes. | בחרו 0–120 שניות לכל שלב, עם לפחות שלב אחד מעל 0, ומשך תרגול של 1–120 דקות. | 各ステップは0〜120秒、少なくとも1つは0秒より長く、セッションは1〜120分に設定してください。 |
+| error | Use 0.5–40 seconds for inhale and exhale, 0–120 seconds for holds, and a session of 1–120 minutes. | בחרו 0.5–40 שניות לשאיפה ולנשיפה, 0–120 שניות לעצירות, ומשך תרגול של 1–120 דקות. | 吸う・吐く時間は0.5〜40秒、止める時間は0〜120秒、練習時間は1〜120分に設定してください。 |
 | sound | Sound | צליל | サウンド |
 | synthesized | Tibetan bowls | קערות טיבטיות | チベタンボウル |
 | recorded | Recorded bowls | קערות מוקלטות | ボウルの録音 |
