@@ -28,7 +28,8 @@
     {
       "id": "mountain-lake",
       "name": "Mountain stillness",
-      "file": "media/backgrounds/breath-flow-lake.webp"
+      "file": "media/backgrounds/breath-flow-lake.webp",
+      "published": false
     }
   ],
   "recordings": {

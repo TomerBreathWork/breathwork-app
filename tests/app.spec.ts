@@ -111,10 +111,9 @@ test('background stays fixed until changed; random mode avoids immediate repeats
  await page.clock.runFor(11000);
  await expect(page.locator('.scenery')).toHaveAttribute('src',first!);
  await advanced(page);
- await page.getByRole('combobox',{name:'Background'}).selectOption('coast');
- await expect(page.locator('.scenery')).toHaveAttribute('src',/coast.webp$/);
- await page.getByRole('combobox',{name:'Background'}).selectOption('gradient');
- await expect(page.locator('.scenery')).toHaveCount(0);
+ await page.getByRole('combobox',{name:'Background'}).selectOption('photo-4');
+ await expect(page.locator('.scenery')).toHaveAttribute('src',/backgrounds\/4.webp$/);
+ await expect(page.getByRole('combobox',{name:'Background'}).locator('option[value=gradient]')).toHaveCount(0);
  await page.getByRole('combobox',{name:'Background'}).selectOption('random');
  const previous=await page.locator('.scenery').getAttribute('src');
  await page.getByRole('button',{name:'Stop',exact:true}).click();
@@ -159,7 +158,7 @@ test('unavailable Web Audio does not prevent silent breathing practice',async({p
  expect(errors).toEqual([]);
 });
 
-test('all uploaded photographs load and coexist with built-in backgrounds',async({page})=>{
+test('all five uploaded photographs load and generated backgrounds are not selectable',async({page})=>{
  await page.goto('./');
  await page.getByRole('button',{name:'Advanced Options'}).click();
  await page.getByRole('combobox',{name:'Sound',exact:true}).selectOption('silent');
@@ -172,10 +171,7 @@ test('all uploaded photographs load and coexist with built-in backgrounds',async
   await expect(page.locator('.scenery')).toHaveAttribute('src',`/breathwork-app/media/backgrounds/${i}.webp`);
   await expect.poll(()=>page.locator('.scenery').evaluate((img:HTMLImageElement)=>img.naturalWidth)).toBeGreaterThan(0);
  }
- for(const id of ['alpine','coast']){
-  await scenery.selectOption(id);
-  await expect.poll(()=>page.locator('.scenery').evaluate((img:HTMLImageElement)=>img.naturalWidth)).toBeGreaterThan(0);
- }
+ for(const id of ['alpine','coast','mountain-lake','gradient'])await expect(scenery.locator(`option[value="${id}"]`)).toHaveCount(0);
 });
 test('the three uploaded MP3 recordings decode with spaces and uppercase extensions',async({page})=>{
  await page.goto('./');

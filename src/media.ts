@@ -10,8 +10,8 @@ export function mediaUrl(file: unknown): string | null {
  return resolveMediaPath(file,import.meta.env.BASE_URL);
 }
 export const fallbackAssets: MediaAsset[] = [
- {id:'alpine',name:'Alpine stillness',description:'Illustrated mountain lake in soft morning light',url:mediaUrl('media/alpine.webp')!,kind:'image',published:true,order:0},
- {id:'coast',name:'Quiet coast',description:'Illustrated open sea',url:mediaUrl('media/coast.webp')!,kind:'image',published:true,order:1}
+ {id:'alpine',name:'Alpine stillness',description:'Illustrated mountain lake in soft morning light',url:mediaUrl('media/alpine.webp')!,kind:'image',published:false,order:0},
+ {id:'coast',name:'Quiet coast',description:'Illustrated open sea',url:mediaUrl('media/coast.webp')!,kind:'image',published:false,order:1}
 ];
 const entries: unknown[] = Array.isArray(manifest.backgrounds) ? manifest.backgrounds : [];
 const usedIds = new Set(['random','gradient',...fallbackAssets.map(a=>a.id)]);
@@ -19,12 +19,14 @@ const photographs: MediaAsset[] = entries.flatMap((entry,order)=>{
  if(!entry||typeof entry!=='object')return [];
  const a=entry as BackgroundEntry;
  const url=mediaUrl(a.file);
+ // Only the five uploaded real photographs are eligible for session selection.
+ if(typeof a.file!=='string'||!/^media\/backgrounds\/[1-5]\.webp$/.test(a.file))return [];
  if(a.published===false||typeof a.id!=='string'||!a.id.trim()||usedIds.has(a.id)||typeof a.name!=='string'||!a.name.trim()||!url)return [];
  usedIds.add(a.id);
  return [{id:a.id,name:a.name,description:typeof a.description==='string'?a.description:a.name,url,kind:'image' as const,published:true,order}];
 });
-export const mediaAssets = photographs.length ? photographs : fallbackAssets;
-export const selectableBackgrounds = [...mediaAssets,...fallbackAssets.filter(a=>!mediaAssets.some(b=>b.id===a.id))];
+export const mediaAssets = photographs;
+export const selectableBackgrounds = mediaAssets;
 export function chooseBackground(selection: string, previous: string, random = Math.random): MediaAsset | undefined {
  if(selection !== 'random') return selectableBackgrounds.find(a=>a.id===selection);
  const other=mediaAssets.filter(a=>a.id!==previous);

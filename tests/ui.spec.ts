@@ -4,7 +4,7 @@ import he from '../src/locales/he.json' with {type:'json'};
 import ja from '../src/locales/ja.json' with {type:'json'};
 const dictionaries={en,he,ja};
 async function silentSettings(page:Page){
- await page.addInitScript(()=>{if(!localStorage.getItem('still-settings'))localStorage.setItem('still-settings',JSON.stringify({rhythm:[4,0,6,0],minutes:5,background:'mountain-lake',sound:'silent',volume:.35}))});
+ await page.addInitScript(()=>{if(!localStorage.getItem('still-settings'))localStorage.setItem('still-settings',JSON.stringify({rhythm:[4,0,6,0],minutes:5,background:'photo-3',sound:'silent',volume:.35}))});
  await page.goto('./');
 }
 async function noOverflow(page:Page,height:number){
@@ -28,7 +28,7 @@ for(const language of ['en','he','ja'] as const){
   await page.getByRole('button',{name:t.advanced,exact:true}).click();
   await expect(page.getByRole('combobox',{name:t.background,exact:true})).toBeVisible();
   await expect(page.getByRole('combobox',{name:t.sound,exact:true})).toBeVisible();
-  await expect(page.getByRole('option',{name:t.sceneLake,exact:true})).toHaveCount(1);
+  await expect(page.getByRole('option',{name:t.sceneForest,exact:true})).toHaveCount(1);
   await page.getByRole('button',{name:t.stop,exact:true}).click();await expect(page.locator('.settings-panel')).toBeVisible();
  });
  for(const viewport of [{width:360,height:740},{width:375,height:812},{width:390,height:844}]){
@@ -113,4 +113,35 @@ test('sound preview plays on settings; active preview pauses and resume seeks th
  await expect(page.getByRole('status')).toHaveText(en.audioReady);const count=await page.evaluate(()=>(window as any).offsets.length);
  await page.getByRole('button',{name:en.resume,exact:true}).click();await expect.poll(()=>page.evaluate(()=>(window as any).offsets.length)).toBe(count+1);
  expect(await page.evaluate(()=>(window as any).offsets.at(-1))).toBeGreaterThan(1);
+});
+
+
+test('settings always use forest stream regardless of saved or selected session background',async({page})=>{
+ await silentSettings(page);const fixed='/breathwork-app/media/backgrounds/3.webp';
+ await expect(page.locator('.scenery')).toHaveAttribute('src',fixed);
+ await page.getByRole('button',{name:en.advanced,exact:true}).click();
+ await page.getByRole('combobox',{name:en.background,exact:true}).selectOption('photo-1');
+ await expect(page.locator('.scenery')).toHaveAttribute('src',fixed);
+ await page.getByRole('button',{name:en.start,exact:true}).click();
+ await expect(page.locator('.scenery')).toHaveAttribute('src','/breathwork-app/media/backgrounds/1.webp');
+ await page.getByRole('button',{name:en.advanced,exact:true}).click();
+ const choices=page.getByRole('combobox',{name:en.background,exact:true});
+ expect(await choices.locator('option').evaluateAll(options=>options.map(option=>(option as HTMLOptionElement).value))).toEqual(['random','photo-1','photo-2','photo-3','photo-4','photo-5']);
+ await choices.selectOption('photo-5');await page.getByRole('button',{name:en.stop,exact:true}).click();
+ await expect(page.locator('.scenery')).toHaveAttribute('src',fixed);await page.reload();await expect(page.locator('.scenery')).toHaveAttribute('src',fixed);
+});
+test('random sessions use only real photographs and branding is stacked without a panel',async({page})=>{
+ await silentSettings(page);await page.getByRole('button',{name:en.advanced,exact:true}).click();await page.getByRole('combobox',{name:en.background,exact:true}).selectOption('random');
+ let previous='';
+ for(let i=0;i<8;i++){
+  await page.getByRole('button',{name:en.start,exact:true}).click();await expect(page.locator('.session-panel')).toBeVisible();
+  const src=await page.locator('.scenery').getAttribute('src');expect(src).toMatch(/\/media\/backgrounds\/[1-5]\.webp$/);expect(src).not.toBe(previous);previous=src!;
+  await page.getByRole('button',{name:en.stop,exact:true}).click();await expect(page.locator('.settings-panel')).toBeVisible();
+ }
+ const layout=await page.locator('.app-header').evaluate(header=>{
+  const logo=header.querySelector('.brand-mark')!.getBoundingClientRect(),name=header.querySelector('h1')!.getBoundingClientRect(),by=header.querySelector('.attribution')!.getBoundingClientRect(),tagline=header.querySelector('.tagline')!.getBoundingClientRect();
+  return{logoBottom:logo.bottom,nameTop:name.top,nameBottom:name.bottom,byTop:by.top,byBottom:by.bottom,taglineTop:tagline.top,pseudo:getComputedStyle(header,'::before').content,background:getComputedStyle(header).backgroundColor};
+ });
+ expect(layout.logoBottom).toBeLessThanOrEqual(layout.nameTop);expect(layout.nameBottom).toBeLessThanOrEqual(layout.byTop);expect(layout.byBottom).toBeLessThanOrEqual(layout.taglineTop);
+ expect(layout.pseudo).toBe('none');expect(layout.background).toBe('rgba(0, 0, 0, 0)');
 });

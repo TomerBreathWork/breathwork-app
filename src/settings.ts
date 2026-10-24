@@ -27,7 +27,6 @@ export function loadSettings(): Settings {
         ...s,
         background: [
           "random",
-          "gradient",
           ...selectableBackgrounds.map((a) => a.id),
         ].includes(s.background)
           ? s.background

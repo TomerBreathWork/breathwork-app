@@ -50,7 +50,6 @@ export function AdvancedOptions({
                   {sceneName(asset.id, index, t)}
                 </option>
               ))}
-              <option value="gradient">{t("gradient")}</option>
             </select>
           </label>
           <label>

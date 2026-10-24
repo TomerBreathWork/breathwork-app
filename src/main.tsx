@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { appDefaults, chooseBackground, selectableBackgrounds } from "./media";
+import { appDefaults, chooseBackground, mediaUrl } from "./media";
 import { validRhythm, type Rhythm } from "./engine";
 import { loadSettings, presets, type Settings } from "./settings";
 import { useLanguage } from "./i18n";
@@ -11,9 +11,7 @@ import { AdvancedOptions } from "./components/AdvancedOptions";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { SessionPanel } from "./components/SessionPanel";
 import "./style.css";
-const lake =
-  selectableBackgrounds.find((asset) => asset.id === "mountain-lake") ||
-  selectableBackgrounds[0];
+const settingsBackground = mediaUrl("media/backgrounds/3.webp")!;
 function App() {
   const [settings, setSettings] = useState<Settings>(loadSettings);
   const [custom, setCustom] = useState(
@@ -22,18 +20,14 @@ function App() {
         preset.rhythm.every((n, index) => settings.rhythm[index] === n),
       ),
   );
-  const [background, setBackground] = useState(() =>
-    settings.background === "gradient"
-      ? ""
-      : selectableBackgrounds.find((asset) => asset.id === settings.background)
-          ?.url || lake.url,
-  );
-  const [imageFailed, setImageFailed] = useState(false);
+  const [background, setBackground] = useState(settingsBackground);
+  const [failedImage, setFailedImage] = useState("");
   const previousImage = useRef("");
   const { language, setLanguage, t } = useLanguage();
   const session = useBreathingSession(settings),
     active = session.status !== "idle";
   useSessionHistory(active, session.stop);
+  const displayedBackground = active ? background : settingsBackground;
   const valid =
     validRhythm(settings.rhythm) &&
     Number.isFinite(settings.minutes) &&
@@ -46,13 +40,10 @@ function App() {
       } catch {}
   }, [settings, valid]);
   function selectBackground(selection: string, starting = false) {
-    const asset =
-      selection === "random" && !starting && !active
-        ? lake
-        : chooseBackground(selection, previousImage.current);
+    const asset = chooseBackground(selection, previousImage.current);
     setBackground(asset?.url || "");
     if (asset && (starting || active)) previousImage.current = asset.id;
-    setImageFailed(false);
+    setFailedImage("");
   }
   function patch(patch: Partial<Settings>) {
     if (patch.rhythm !== undefined || patch.minutes !== undefined)
@@ -96,13 +87,13 @@ function App() {
       dir={language === "he" ? "rtl" : "ltr"}
       lang={language}
     >
-      {background && !imageFailed && (
+      {displayedBackground && displayedBackground !== failedImage && (
         <img
           className="scenery"
-          src={background}
+          src={displayedBackground}
           alt=""
           decoding="async"
-          onError={() => setImageFailed(true)}
+          onError={() => setFailedImage(displayedBackground)}
         />
       )}
       <div className="scene-overlay" />
