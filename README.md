@@ -89,7 +89,7 @@ Five photographs (`1.webp`–`5.webp`) and three recordings (`inhale 4.MP3`, `ho
 You can add media directly through GitHub's **Add file → Upload files** in these folders, then edit the manifest and commit to `main`. The existing Actions workflow rebuilds and deploys your updates.
 
 1. Put licensed JPG/JPEG/PNG/WebP photographs in `public/media/backgrounds/`. Prefer compressed WebP, about 1600–2000 pixels wide, preferably below 500 KB. Use simple ASCII filenames (spaces, dashes and underscores are supported).
-2. Put licensed MP3/WAV/OGG recordings in `public/media/audio/`. MP3 is a broadly compatible choice for phones. Use soft, normalized recordings without harsh attacks. The synthesis mapping is inhale C4 (261.63 Hz), first hold G3 (196.00 Hz), exhale C4 (261.63 Hz), second hold E4 (329.63 Hz). Uploaded recordings keep their original pitches. No therapeutic frequency claims are made.
+2. Put licensed MP3/WAV/OGG recordings in `public/media/audio/`. MP3 is a broadly compatible choice for phones. Use soft, normalized recordings without harsh attacks. The synthesis mapping is inhale C4 (261.63 Hz), first hold G4 (392.00 Hz), exhale C4 (261.63 Hz), second hold E4 (329.63 Hz). Uploaded recordings keep their original pitches. No therapeutic frequency claims are made.
 3. Edit `public/media/manifest.json`, for example:
 
 ```json
@@ -124,7 +124,7 @@ The default prepares the original native Web Audio oscillator/reverb model local
 | Phase | Note | Fundamental |
 | --- | --- | --- |
 | Inhale | C4 | 261.63 Hz |
-| Hold after inhale | G3 | 196.00 Hz |
+| Hold after inhale | G4 | 392.00 Hz |
 | Exhale | C4 | 261.63 Hz |
 | Hold after exhale | E4 | 329.63 Hz |
 
@@ -152,4 +152,4 @@ Pause/resume seeks the same prepared signal, preserving oscillator beating, deca
 
 Attribution and the full MIT notice are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and [the license file](third-party/tibetan-singing-bowls-LICENSE.txt). The production JavaScript retains the license notice. Tests include a separate extraction of the actual upstream strike/impulse/clink code; with identical randomness and exact pitch, offline browser renders match both the model and the prepared/live-compressor playback path within floating-point tolerance over the first two seconds, in stereo. This checks the initial impact and real signal chain, not just descriptive similarities.
 
-Tests additionally verify all four note mappings, the same shared C4 signal for inhale/exhale, resumed decay, long/short/skipped phases, master independence, cancellation and node cleanup. Real browser offline audio renders check silence at every phase boundary, no clipping, and RMS levels within 2 dB across G3/C4/E4 over a five-second note. These signal checks support consistency; perceived warmth/loudness should also be checked on your phone or headphones at a comfortable volume.
+Tests additionally verify all four note mappings, the same shared C4 signal for inhale/exhale, resumed decay, long/short/skipped phases, master independence, cancellation and node cleanup. Real browser offline audio renders check silence at every phase boundary, no clipping, and RMS levels matching the unchanged upstream reference for G4/C4/E4 over a five-second note. These signal checks support consistency; perceived warmth/loudness should also be checked on your phone or headphones at a comfortable volume.

@@ -112,14 +112,14 @@ test('the second hold can use an independent recording',async t=>{
  assert.notEqual(c.sources[1].buffer,c.sources[3].buffer);
 });
 
-test('default synthesis caches exactly three notes and maps C4/G3/C4/E4',async t=>{
+test('default synthesis caches exactly three notes and maps C4/G4/C4/E4',async t=>{
  const {audio,c,fetched,renders,advance}=await setup(t);
  const loaded=fetched.length;await audio.prepare(set);await audio.prepare(set);
  assert.equal(audio.recordingStatus,'synthesized');assert.equal(fetched.length,loaded);
- assert.deepEqual(renders,[261.63,196,329.63]);
+ assert.deepEqual(renders,[261.63,392,329.63]);
  audio.run(set,[1,1,1,1],0,4000);
  for(const time of [.8,1.8,2.8])advance(time);
- assert.deepEqual(c.sources.map(source=>source.buffer.frequency),[261.63,196,261.63,329.63]);
+ assert.deepEqual(c.sources.map(source=>source.buffer.frequency),[261.63,392,261.63,329.63]);
  assert.equal(c.sources[0].buffer,c.sources[2].buffer);assert.equal(c.oscillators.length,0);
  for(let i=0;i<3;i++)assert.equal(c.sources[i].stops[0],c.sources[i+1].startAt);
  advance(4);assert.equal(c.sources.length,4);

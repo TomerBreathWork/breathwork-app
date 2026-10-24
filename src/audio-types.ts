@@ -10,7 +10,7 @@ export interface SoundSet {
 export type AudioMode = 'synthesized' | 'recorded';
 export const phaseNotes: Record<PhaseRole, {note: string; frequency: number}> = {
  inhale:{note:'C4',frequency:261.63},
- holdAfterInhale:{note:'G3',frequency:196.00},
+ holdAfterInhale:{note:'G4',frequency:392.00},
  exhale:{note:'C4',frequency:261.63},
  holdAfterExhale:{note:'E4',frequency:329.63},
 };

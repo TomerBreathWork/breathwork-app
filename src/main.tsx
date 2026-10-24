@@ -22,7 +22,7 @@ function App(){
  const [imageFailed,setImageFailed]=useState(false);
  const [muted,setMuted]=useState(false);
  const [preparing,setPreparing]=useState(false);
- const [audioStatus,setAudioStatus]=useState('Synthesized singing bowls · C4 / G3 / C4 / E4');
+ const [audioStatus,setAudioStatus]=useState('Synthesized singing bowls · C4 / G4 / C4 / E4');
  const operation=useRef(0);
  const audio=useRef(new BowlAudio());
  const base=useRef(0), origin=useRef(0),previousImage=useRef('');
@@ -55,7 +55,7 @@ function App(){
   await audio.current.unlock();
   await audio.current.prepare(soundSets[0],settings.sound==='recordings'?'recorded':'synthesized');
   const status=audio.current.recordingStatus;
-  setAudioStatus(status==='synthesized'?'Synthesized singing bowls · C4 / G3 / C4 / E4':status==='recorded'?'Recorded Tibetan bowls':status==='partial'?'Recordings + synthesized fallback':'Recordings unavailable · synthesized fallback');
+  setAudioStatus(status==='synthesized'?'Synthesized singing bowls · C4 / G4 / C4 / E4':status==='recorded'?'Recorded Tibetan bowls':status==='partial'?'Recordings + synthesized fallback':'Recordings unavailable · synthesized fallback');
  }
  async function start(){
   if(!valid||preparing)return;
