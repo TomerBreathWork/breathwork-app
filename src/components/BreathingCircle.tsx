@@ -1,4 +1,4 @@
-import type { Translator } from "../i18n";
+import type { Language, Translator } from "../i18n";
 import { phaseCountdown } from "../countdown";
 type Status = "running" | "paused" | "completed";
 export function BreathingCircle({
@@ -6,12 +6,12 @@ export function BreathingCircle({
   status,
   phase,
   preparationProgress,
-  showHoldDetail = true,
+  language,
 }: {
   t: Translator;
   status: Status;
   preparationProgress?: number;
-  showHoldDetail?: boolean;
+  language: Language;
   phase: {
     index: number;
     progress: number;
@@ -77,7 +77,8 @@ export function BreathingCircle({
               : phaseCountdown(phase.remaining, phase.duration)}
           </span>
         )}
-        {hold && status === "running" && showHoldDetail && (
+        {/* Japanese uses only the shared short hold label, never a phase subtitle. */}
+        {hold && status === "running" && language !== "ja" && (
           <small>{t(phase.index === 1 ? "afterInhale" : "afterExhale")}</small>
         )}
       </div>

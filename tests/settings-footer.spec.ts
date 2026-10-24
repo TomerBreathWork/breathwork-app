@@ -271,33 +271,43 @@ test("native share cancellation is quiet; other failures offer the copy fallback
     page.getByRole("button", { name: en.copyLink, exact: true }),
   ).toBeVisible();
 });
-test("Japanese holds show only 止める while water stays stationary and the phase order remains intact", async ({
-  page,
-}) => {
-  await page.clock.install({ time: new Date("2026-10-24T12:00:00Z") });
-  await page.clock.pauseAt(new Date("2026-10-24T12:00:01Z"));
-  await settings(page, "ja", {
-    preset: "boxBreathing",
-    rhythm: [4, 4, 4, 4],
-    minutes: 1,
-    sound: "silent",
+for (const [preset, rhythm] of [
+  ["coherentBreathing", [5.5, 0, 5.5, 0]],
+  ["boxBreathing", [4, 4, 4, 4]],
+  ["eveningUnwind", [4, 7, 8, 0]],
+  ["custom", [3.5, 1.5, 4.5, 0.5]],
+] as const) {
+  test(`${preset}: switching to Japanese renders only short phase labels in Practice`, async ({
+    page,
+  }) => {
+    await page.clock.install({ time: new Date("2026-10-24T12:00:00Z") });
+    await page.clock.pauseAt(new Date("2026-10-24T12:00:01Z"));
+    await settings(page, "en", { preset, rhythm, minutes: 1, sound: "silent" });
+    await page.locator(".language-picker select").selectOption("ja");
+    await page.getByRole("button", { name: ja.start, exact: true }).click();
+    await page.clock.runFor(5020);
+    let previousDuration = 0;
+    for (let index = 0; index < 4; index++) {
+      if (rhythm[index] === 0) continue;
+      if (previousDuration) await page.clock.runFor(previousDuration * 1000);
+      await expect(page.locator(".breath-circle")).toHaveAttribute(
+        "data-phase",
+        String(index),
+      );
+      await expect(page.locator(".circle-label h2")).toHaveText(
+        ["吸う", "止める", "吐く", "止める"][index],
+      );
+      await expect(page.locator(".circle-label small")).toHaveCount(0);
+      if (index === 1 || index === 3) {
+        await expect(page.locator(".water")).toHaveAttribute(
+          "style",
+          index === 1 ? "height: 100%;" : "height: 0%;",
+        );
+        await expect(page.locator(".circle-label")).not.toContainText(
+          /吸った後|吐いた後/,
+        );
+      }
+      previousDuration = rhythm[index];
+    }
   });
-  await page.getByRole("button", { name: ja.start, exact: true }).click();
-  await page.clock.runFor(5020);
-  for (const [advance, title, phase, fill] of [
-    [0, "吸う", "0", null],
-    [4000, "止める", "1", "height: 100%;"],
-    [4000, "吐く", "2", null],
-    [4000, "止める", "3", "height: 0%;"],
-  ] as const) {
-    if (advance) await page.clock.runFor(advance);
-    await expect(page.locator(".breath-circle")).toHaveAttribute(
-      "data-phase",
-      phase,
-    );
-    await expect(page.locator(".circle-label h2")).toHaveText(title);
-    await expect(page.locator(".circle-label small")).toHaveCount(0);
-    if (fill)
-      await expect(page.locator(".water")).toHaveAttribute("style", fill);
-  }
-});
+}

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { Translator } from "../i18n";
+import type { Language, Translator } from "../i18n";
 import { clockText } from "../settings";
 import type { SessionStatus } from "../useBreathingSession";
 import { BreathingCircle } from "./BreathingCircle";
@@ -16,7 +16,7 @@ interface Props {
   remaining: number;
   preparing: boolean;
   preparationProgress?: number;
-  showHoldDetail?: boolean;
+  language: Language;
   restart: () => void;
   pause: () => void;
   resume: () => void;
@@ -30,7 +30,7 @@ export function SessionPanel({
   remaining,
   preparing,
   preparationProgress,
-  showHoldDetail = true,
+  language,
   restart,
   pause,
   resume,
@@ -50,7 +50,7 @@ export function SessionPanel({
           status={status}
           phase={phase}
           preparationProgress={preparationProgress}
-          showHoldDetail={showHoldDetail}
+          language={language}
         />
         <p className="phase-guidance">
           {t(

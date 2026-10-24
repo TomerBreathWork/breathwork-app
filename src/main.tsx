@@ -126,7 +126,7 @@ function App() {
             t={t}
             status={session.status}
             phase={session.phase}
-            showHoldDetail={language !== "ja"}
+            language={language}
             remaining={(session.end - session.elapsed) / 1000}
             preparing={session.preparing}
             preparationProgress={
