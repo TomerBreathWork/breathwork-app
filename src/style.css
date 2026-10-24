@@ -11,6 +11,8 @@
   --muted: #5a8c89;
   --aqua: #a6c9c2;
   --ivory: #f6f1e8;
+  /* Settings photograph only: 0 = ivory, 1 = full-strength photo. */
+  --settings-background-opacity: 0.35;
   --circle-size: min(72vw, 34dvh, 340px);
 }
 * {
@@ -64,8 +66,14 @@ select:focus-visible {
   z-index: -1;
   background: linear-gradient(180deg, #e8efdf39, #c8dedb1a 45%, #183d3e4d);
 }
+.settings-screen {
+  background: var(--ivory);
+}
+.settings-screen .scenery {
+  opacity: var(--settings-background-opacity);
+}
 .settings-screen .scene-overlay {
-  background: linear-gradient(180deg, #edf1e64d, #d1e2db20 45%, #17494b48);
+  background: none;
 }
 .app-view {
   width: min(100%, 470px);
