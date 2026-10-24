@@ -55,8 +55,8 @@ test('synthesized bowl envelopes render silence at boundaries, without recording
  const rendered=await page.evaluate(async()=>{
   const Native=window.AudioContext,rate=24000;
   const offline=new OfflineAudioContext(1,rate,rate);
-  const notes:number[]=[];const create=offline.createOscillator.bind(offline);
-  offline.createOscillator=()=>{const oscillator=create();const start=oscillator.start.bind(oscillator);oscillator.start=(...args)=>{notes.push(oscillator.frequency.value);start(...args)};return oscillator};
+  const buffers:AudioBuffer[]=[];const create=offline.createBufferSource.bind(offline);
+  offline.createBufferSource=()=>{const source=create(),start=source.start.bind(source);source.start=(...args)=>{buffers.push(source.buffer!);start(...args)};return source};
   const proxy=new Proxy(offline,{get(target,key){if(key==='state')return 'running';if(key==='resume')return async()=>{};const value=Reflect.get(target,key,target);return typeof value==='function'?value.bind(target):value}});
   window.AudioContext=function(){return proxy} as any;
   const engine=new (window as any).AudioTest.BowlAudio();await engine.unlock();
@@ -65,12 +65,10 @@ test('synthesized bowl envelopes render silence at boundaries, without recording
   await engine.prepare(set);engine.run(set,[.05,.05,.05,.05],0,200);
   const result=await offline.startRendering();engine.stop();window.AudioContext=Native;
   const samples=result.getChannelData(0);
-  return{notes,boundaries:[0,.05,.1,.15,.2].map(t=>samples[Math.round(t*rate)]),peak:Math.max(...samples.map(Math.abs)),silenceAfter:Math.max(...samples.slice(Math.round(.201*rate)).map(Math.abs))};
+  return{sameC4:buffers[0]===buffers[2],count:buffers.length,boundaries:[0,.05,.1,.15,.2].map(t=>samples[Math.round(t*rate)]),peak:Math.max(...samples.map(Math.abs)),silenceAfter:Math.max(...samples.slice(Math.round(.201*rate)).map(Math.abs))};
  });
  expect(requested).toEqual([]);
- const fundamentals=rendered.notes.filter((_,i)=>i%8===0);
- expect(fundamentals).toHaveLength(4);
- [261.63,196,261.63,329.63].forEach((frequency,i)=>expect(fundamentals[i]).toBeCloseTo(frequency,4));
+ expect(rendered.sameC4).toBe(true);expect(rendered.count).toBe(4);
  for(const sample of rendered.boundaries)expect(Math.abs(sample)).toBeLessThan(.002);
  expect(rendered.peak).toBeGreaterThan(.01);expect(rendered.peak).toBeLessThan(1);
  expect(rendered.silenceAfter).toBe(0);
@@ -120,4 +118,69 @@ test('struck bowl audio matches extracted upstream attack, resonance, reverb and
  });
  expect(comparison.difference).toBeLessThan(1e-5);
  expect(comparison.attackRms).toBeGreaterThan(.03);
+});
+
+test('prepared playback preserves upstream C4 attack and processed signal, including reverb',async({page})=>{
+ await page.goto('./');await page.addScriptTag({content:audioCode});
+ const comparison=await page.evaluate(async()=>{
+  const rate=24000,signals:Float32Array[][]=[];
+  for(const reference of [true,false]){
+   const context=new OfflineAudioContext(2,rate*2,rate);
+   const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};let seed=54321;
+   if(reference)(window as any).AudioTest.referenceStrike(context,context.destination,261.63,random);
+   else{
+    const Native=window.AudioContext;
+    const proxy=new Proxy(context,{get(target,key){if(key==='state')return 'running';if(key==='resume')return async()=>{};const value=Reflect.get(target,key,target);return typeof value==='function'?value.bind(target):value}});
+    window.AudioContext=function(){return proxy} as any;
+    const engine=new (window as any).AudioTest.BowlAudio((c:BaseAudioContext,f:number)=>(window as any).AudioTest.renderBowl(c,f,{random}));
+    await engine.unlock();const set={id:'C4',name:'C4',recordings:{},frequencies:{inhale:261.63,holdAfterInhale:261.63,exhale:261.63,holdAfterExhale:261.63}};
+    await engine.prepare(set);engine.preview(set);
+    const output=await context.startRendering();signals.push([output.getChannelData(0),output.getChannelData(1)]);
+    engine.stop();window.AudioContext=Native;continue;
+   }
+   const output=await context.startRendering();signals.push([output.getChannelData(0),output.getChannelData(1)]);
+  }
+  let difference=0;
+  for(let ch=0;ch<2;ch++)for(let i=0;i<signals[0][ch].length;i++)difference=Math.max(difference,Math.abs(signals[0][ch][i]-signals[1][ch][i]));
+  return difference;
+ });
+ expect(comparison).toBeLessThan(1e-5);
+});
+
+test('repeated realtime C4 starts are not in the past and stopped voices clean up',async({page})=>{
+ await page.goto('./');await page.addScriptTag({content:audioCode});
+ const diagnostics=await page.evaluate(async()=>{
+  const Native=window.AudioContext;let context:AudioContext;const starts:number[]=[],buffers:AudioBuffer[]=[];let active=0,oscillators=0,convolvers=0;
+  window.AudioContext=class extends Native{
+   constructor(){super();context=this}
+   createOscillator(){oscillators++;return super.createOscillator()}
+   createConvolver(){convolvers++;return super.createConvolver()}
+   createBufferSource(){const source=super.createBufferSource(),start=source.start.bind(source);source.addEventListener('ended',()=>active--);source.start=(...args)=>{active++;starts.push((this.currentTime-(args[0]||0))*1000);buffers.push(source.buffer!);start(...args)};return source}
+  };
+  const engine=new (window as any).AudioTest.BowlAudio();await engine.unlock();
+  const set={id:'C4',name:'C4',recordings:{},frequencies:{inhale:261.63,holdAfterInhale:261.63,exhale:261.63,holdAfterExhale:261.63}};
+  await engine.prepare(set);
+  for(let i=0;i<4;i++){engine.preview(set);await new Promise(resolve=>setTimeout(resolve,80));engine.stop();await new Promise(resolve=>setTimeout(resolve,100))}
+  await context!.close();window.AudioContext=Native;
+  return{starts,active,oscillators,convolvers,sameBuffer:buffers.every(buffer=>buffer===buffers[0])};
+ });
+ expect(diagnostics.starts).toHaveLength(4);
+ expect(Math.max(...diagnostics.starts)).toBeLessThanOrEqual(0);
+ expect(diagnostics.active).toBe(0);expect(diagnostics.oscillators).toBe(0);expect(diagnostics.convolvers).toBe(0);expect(diagnostics.sameBuffer).toBe(true);
+});
+
+test('prepared C4 remains below full scale at maximum master volume',async({page})=>{
+ await page.goto('./');await page.addScriptTag({content:audioCode});
+ const metrics=await page.evaluate(async()=>{
+  const Native=window.AudioContext,context=new OfflineAudioContext(2,24000*5,24000);
+  const proxy=new Proxy(context,{get(target,key){if(key==='state')return 'running';if(key==='resume')return async()=>{};const value=Reflect.get(target,key,target);return typeof value==='function'?value.bind(target):value}});
+  window.AudioContext=function(){return proxy} as any;
+  const engine=new (window as any).AudioTest.BowlAudio();await engine.unlock();engine.setVolume(1);
+  const set={id:'C4',name:'C4',recordings:{},frequencies:{inhale:261.63,holdAfterInhale:261.63,exhale:261.63,holdAfterExhale:261.63}};
+  await engine.prepare(set);engine.preview(set);const output=await context.startRendering();engine.stop();window.AudioContext=Native;
+  let peak=0,nonfinite=0;
+  for(let channel=0;channel<2;channel++)for(const sample of output.getChannelData(channel)){if(!Number.isFinite(sample))nonfinite++;peak=Math.max(peak,Math.abs(sample))}
+  return{peak,nonfinite};
+ });
+ expect(metrics.nonfinite).toBe(0);expect(metrics.peak).toBeGreaterThan(.05);expect(metrics.peak).toBeLessThan(1);
 });

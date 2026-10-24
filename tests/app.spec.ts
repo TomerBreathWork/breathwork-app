@@ -64,7 +64,7 @@ test('sound begins only on interaction, skips holds, and hidden tab pauses',asyn
   const Native=window.AudioContext;
   (window as any).cueCount=0;
   window.AudioContext=class extends Native {
-   createOscillator(){(window as any).cueCount+=1/8;return super.createOscillator()}
+   createBufferSource(){(window as any).cueCount++;return super.createBufferSource()}
   };
  });
  expect(await page.evaluate(()=>(window as any).cueCount)).toBe(0);
@@ -121,7 +121,7 @@ test('resume and unmute restore phase audio; volume changes do not restart a voi
  await page.evaluate(()=>{
   const Native=window.AudioContext;(window as any).voices=[];
   window.AudioContext=class extends Native {
-   createOscillator(){const s=super.createOscillator();if(!(this as any).oscillatorCount||(this as any).oscillatorCount%8===0)(window as any).voices.push(s);(this as any).oscillatorCount=((this as any).oscillatorCount||0)+1;return s}
+   createBufferSource(){const s=super.createBufferSource();(window as any).voices.push(s);return s}
   };
  });
  await page.clock.install();await page.getByRole('button',{name:'Begin your practice'}).click();
@@ -191,4 +191,20 @@ test('missing recordings use synthesized fallback without blocking the session',
  await expect(page.locator('.session')).toBeVisible();
  await page.getByRole('button',{name:'Stop',exact:true}).click();
  await expect(page.getByRole('status')).toContainText('synthesized fallback');
+});
+
+test('hiding the page during initial audio preparation starts paused without a cue',async({page})=>{
+ await page.goto('./');
+ await page.evaluate(()=>{
+  const Native=window.AudioContext;(window as any).cueCount=0;
+  window.AudioContext=class extends Native{createBufferSource(){(window as any).cueCount++;return super.createBufferSource()}};
+  Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});
+ });
+ await page.getByRole('button',{name:'Begin your practice'}).click();
+ await expect(page.getByRole('heading',{name:'Paused',exact:true})).toBeVisible();
+ expect(await page.evaluate(()=>(window as any).cueCount)).toBe(0);
+ await page.evaluate(()=>Object.defineProperty(document,'hidden',{configurable:true,get:()=>false}));
+ await page.getByRole('button',{name:'Resume',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Inhale',exact:true})).toBeVisible();
+ await expect.poll(()=>page.evaluate(()=>(window as any).cueCount)).toBe(1);
 });

@@ -44,12 +44,7 @@ export interface BowlNodes {
  volume: GainNode;
  lifetimes: Map<AudioScheduledSourceNode,number>;
 }
-export function createSingingBowl(context: BaseAudioContext, destination: AudioNode, frequency: number, at: number, offset: number, options: {volume?:number;random?:()=>number} = {}): BowlNodes {
- const random=options.random||Math.random;
- const sources: AudioScheduledSourceNode[]=[],gains:GainNode[]=[],nodes:AudioNode[]=[],offsets=new Map<AudioScheduledSourceNode,number>(),lifetimes=new Map<AudioScheduledSourceNode,number>();
- const gain=(value=1)=>{const g=context.createGain();g.gain.value=value;gains.push(g);nodes.push(g);return g};
- try {
-  // Original impulse(): identical stereo noise, low-pass smoothing, length/decay.
+export function prepareBowlImpulse(context:BaseAudioContext,random:()=>number=Math.random):AudioBuffer {
   let impulse=impulses.get(context);
   if(!impulse){
    const len=Math.floor(context.sampleRate*referenceMix.impulseSeconds);
@@ -60,6 +55,14 @@ export function createSingingBowl(context: BaseAudioContext, destination: AudioN
    }
    impulses.set(context,impulse);
   }
+  return impulse;
+}
+export function createSingingBowl(context: BaseAudioContext, destination: AudioNode, frequency: number, at: number, offset: number, options: {volume?:number;random?:()=>number;impulse?:AudioBuffer} = {}): BowlNodes {
+ const random=options.random||Math.random;
+ const sources: AudioScheduledSourceNode[]=[],gains:GainNode[]=[],nodes:AudioNode[]=[],offsets=new Map<AudioScheduledSourceNode,number>(),lifetimes=new Map<AudioScheduledSourceNode,number>();
+ const gain=(value=1)=>{const g=context.createGain();g.gain.value=value;gains.push(g);nodes.push(g);return g};
+ try {
+  const impulse=options.impulse||prepareBowlImpulse(context,random);
   const bus=gain(),dry=gain(1-0.45*referenceMix.reverb),wet=gain(referenceMix.reverb*1.1);
   const convolver=context.createConvolver();nodes.push(convolver);convolver.buffer=impulse;
   const volume=gain(referenceVolumeGain(options.volume??0.35));

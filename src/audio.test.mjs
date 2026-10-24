@@ -41,9 +41,10 @@ async function setup(t,{duration=20,fail=false}={}){
  t.mock.method(performance,'now',()=>now*1000);
  t.mock.method(globalThis,'fetch',async url=>{fetched.push(url);if(fail)throw new Error('Unavailable');return{ok:true,arrayBuffer:async()=>new Uint8Array([duration]).buffer}});
  t.mock.timers.enable({apis:['setInterval']});
- const audio=new BowlAudio();await audio.unlock();await audio.prepare(set,'recorded');
+ const renders=[];
+ const audio=new BowlAudio(async(_context,frequency)=>{renders.push(frequency);return {duration:27.9,frequency}});await audio.unlock();await audio.prepare(set,'recorded');
  t.after(()=>audio.stop());
- return{audio,c,fetched,advance(seconds){now=seconds;c.currentTime=seconds;t.mock.timers.tick(25)}};
+ return{audio,c,fetched,renders,advance(seconds){now=seconds;c.currentTime=seconds;t.mock.timers.tick(25)}};
 }
 // A browser-only constructor is injected above, without requiring browser APIs in Node.
 if(!globalThis.AudioContext)globalThis.AudioContext=function(){};
@@ -99,8 +100,8 @@ test('pause cancels future source, resume uses current phase offset, master is i
 });
 test('missing recordings use fallback; stop cancels all future playback',async t=>{
  const {audio,c,advance}=await setup(t,{fail:true});assert.equal(audio.recordingStatus,'fallback');
- audio.run(set,[1,1,1,1],0,4000);assert.equal(c.oscillators.length,8);
- audio.stop();advance(3);assert.equal(c.oscillators.length,8);assert(c.sources.every(source=>source.buffer.duration===.03));
+ audio.run(set,[1,1,1,1],0,4000);assert.equal(c.sources.length,1);
+ audio.stop();advance(3);assert.equal(c.sources.length,1);assert.equal(c.sources[0].buffer.frequency,261.63);
 });
 test('the second hold can use an independent recording',async t=>{
  const {audio,c,advance}=await setup(t);
@@ -111,38 +112,45 @@ test('the second hold can use an independent recording',async t=>{
  assert.notEqual(c.sources[1].buffer,c.sources[3].buffer);
 });
 
-test('default synthesis maps C4/G3/C4/E4 without loading any recordings',async t=>{
- const {audio,c,fetched,advance}=await setup(t);
- const loaded=fetched.length;await audio.prepare(set);
+test('default synthesis caches exactly three notes and maps C4/G3/C4/E4',async t=>{
+ const {audio,c,fetched,renders,advance}=await setup(t);
+ const loaded=fetched.length;await audio.prepare(set);await audio.prepare(set);
  assert.equal(audio.recordingStatus,'synthesized');assert.equal(fetched.length,loaded);
+ assert.deepEqual(renders,[261.63,196,329.63]);
  audio.run(set,[1,1,1,1],0,4000);
  for(const time of [.8,1.8,2.8])advance(time);
- assert.equal(c.oscillators.length,32);assert(c.sources.every(source=>source.buffer.duration===.03));
- assert.deepEqual(c.oscillators.filter((_,i)=>i%8===0).map(o=>o.frequency.value),[261.63,196,261.63,329.63]);
- assert.deepEqual(c.oscillators.slice(0,8).filter((_,i)=>i%2===0).map(o=>o.frequency.value),c.oscillators.slice(16,24).filter((_,i)=>i%2===0).map(o=>o.frequency.value));
- for(let voice=0;voice<3;voice++)assert.equal(c.oscillators[voice*8].stops[0],c.oscillators[(voice+1)*8].startAt);
- advance(4);assert.equal(c.oscillators.length,32);
+ assert.deepEqual(c.sources.map(source=>source.buffer.frequency),[261.63,196,261.63,329.63]);
+ assert.equal(c.sources[0].buffer,c.sources[2].buffer);assert.equal(c.oscillators.length,0);
+ for(let i=0;i<3;i++)assert.equal(c.sources[i].stops[0],c.sources[i+1].startAt);
+ advance(4);assert.equal(c.sources.length,4);
 });
 test('synthesized short/zero phases, rapid resume and node cleanup have no overlap',async t=>{
  const {audio,c,advance}=await setup(t);await audio.prepare(set);
  audio.run(set,[.5,0,.5,0],0,2000);advance(.25);
- const first=c.oscillators[0];audio.stop();
- const releaseEnd=first.stops.at(-1),beforeResume=c.oscillators.length;
+ const first=c.sources[0];audio.stop();
+ const releaseEnd=first.stops.at(-1),beforeResume=c.sources.length;
  audio.run(set,[.5,0,.5,0],250,2000);
- const resumed=c.oscillators[beforeResume];assert(resumed.startAt>=releaseEnd);
- assert(Math.abs(resumed.stops[0]-.5)<.00001);
- const count=c.oscillators.length;audio.setVolume(.4);assert.equal(c.oscillators.length,count);
- audio.stop();advance(5);assert.equal(c.oscillators.length,count);
- for(const source of [...c.oscillators,...c.sources,...c.constants])source.onended();
- assert(c.oscillators.every(source=>source.disconnected));
- assert(c.gains.slice(1).every(gain=>gain.disconnected));
+ const resumed=c.sources[beforeResume];assert(resumed.startAt>=releaseEnd);
+ assert(Math.abs(resumed.stops[0]-.5)<.00001);assert(resumed.offset>=.25);
+ assert.equal(resumed.buffer,first.buffer);
+ const count=c.sources.length;audio.setVolume(.4);assert.equal(c.sources.length,count);
+ audio.stop();advance(5);assert.equal(c.sources.length,count);
+ for(const source of c.sources)source.onended();
+ assert(c.sources.every(source=>source.disconnected));
+ assert(c.gains.slice(1).every(gain=>gain.disconnected));assert(c.effects.every(effect=>effect.disconnected));
 });
-test('long phases retain upstream natural oscillator lifetime and reverb tail',async t=>{
+test('long phases allow the original resonance and reverb to end naturally',async t=>{
  const {audio,c}=await setup(t);await audio.prepare(set);
  audio.run(set,[120,0,0,0],0,120000);
- assert.equal(c.oscillators.length,8);
- assert(c.oscillators.every(source=>Math.abs(source.stops[0]-24.3)<1e-9));
- assert(Math.abs(c.constants[0].stops[0]-27.9)<1e-9);
+ assert.equal(c.sources.length,1);assert.equal(c.sources[0].stops[0],27.9);assert.equal(c.sources[0].loop,false);
+});
+test('late graph creation cannot schedule a strike into the past or move its boundary',async t=>{
+ const {audio,c}=await setup(t);await audio.prepare(set);
+ const create=c.createDynamicsCompressor.bind(c);
+ c.createDynamicsCompressor=()=>{c.currentTime+=.04;return create()};
+ audio.run(set,[1,0,1,0],0,2000);
+ assert.equal(c.sources[0].startAt,.04);assert.equal(c.sources[0].offset,0);
+ assert.equal(c.sources[0].stops[0],1);
 });
 
 test('resume retains natural decay and oscillator phase instead of a fresh strike',()=>{
@@ -168,4 +176,23 @@ test('struck bowl uses original bowls.js partials, effect settings and attack',(
  const compressor=context.effects.find(effect=>effect.threshold);
  assert.equal(compressor.threshold.value,-16);assert.equal(compressor.ratio.value,6);assert.equal(compressor.connected,destination);
  assert.equal(phaseEnvelope(5,0,true).attack,0);assert.equal(phaseEnvelope(5,0,true).fadeStart,4);
+});
+
+test('very early resume seeks the same C4 without replaying the strike and de-clicks before compression',async t=>{
+ const {audio,c,advance}=await setup(t);await audio.prepare(set);
+ audio.run(set,[4,0,4,0],0,8000);const original=c.sources[0];
+ advance(.01);audio.stop();const count=c.sources.length;
+ audio.run(set,[4,0,4,0],10,8000);const resumed=c.sources[count];
+ assert.equal(resumed.buffer,original.buffer);assert(resumed.offset>=.01);
+ assert.equal(resumed.gain.gain.events[0][0],'set');assert.equal(resumed.gain.gain.events[0][1],0);
+ assert.equal(resumed.gain.gain.events[1][0],'ramp');assert.equal(resumed.gain.gain.events[1][1],1);
+ assert(Math.abs(resumed.gain.gain.events[1][2]-resumed.startAt-.004)<1e-9);
+});
+
+test('unsupported offline rendering falls back to the retained recordings',async t=>{
+ const {c}=await setup(t);
+ const audio=new BowlAudio(async()=>{throw new Error('OfflineAudioContext unavailable')});t.after(()=>audio.stop());
+ await audio.unlock();await audio.prepare(set);
+ assert.equal(audio.recordingStatus,'recorded');audio.run(set,[4,0,4,0],0,8000);
+ assert.equal(c.sources[0].buffer.duration,20);
 });

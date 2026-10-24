@@ -62,7 +62,7 @@ function App(){
   const ticket=++operation.current;setPreparing(true);audio.current.stop();
   if(settings.sound!=='silent')await prepareAudio();
   if(ticket!==operation.current)return;
-  selectBackground(settings.background);base.current=0;origin.current=performance.now();setElapsed(0);setStatus('running');setPreparing(false);
+  selectBackground(settings.background);base.current=0;origin.current=performance.now();setElapsed(0);setStatus(document.hidden?'paused':'running');setPreparing(false);
  }
  function stop(){operation.current++;audio.current.stop();setPreparing(false);setStatus('idle');setElapsed(0)}
  function pause(){audio.current.stop();base.current+=performance.now()-origin.current;setElapsed(Math.min(base.current,end));setStatus(base.current>=end?'completed':'paused')}
