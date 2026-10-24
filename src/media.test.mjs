@@ -5,8 +5,8 @@ import {validateManifest} from '../scripts/validate-media.mjs';
 import {resolveMediaPath} from './media-path.ts';
 const manifest=JSON.parse(readFileSync(new URL('../public/media/manifest.json',import.meta.url),'utf8'));
 test('uploaded photographs have distinct IDs and all media paths exist',()=>{
- assert.deepEqual(validateManifest(manifest),{backgrounds:5,audioRoles:4});
- assert.equal(new Set(manifest.backgrounds.map(a=>a.id)).size,5);
+ assert.deepEqual(validateManifest(manifest),{backgrounds:6,audioRoles:4});
+ assert.equal(new Set(manifest.backgrounds.map(a=>a.id)).size,6);
  assert.equal(manifest.recordings.holdAfterInhale,manifest.recordings.holdAfterExhale);
 });
 test('the original path-string manifest reports a schema error, not duplicate IDs',()=>{

@@ -1,4 +1,6 @@
-# Still — breathing, simply
+# Breath Flow
+
+**BY TOMER BREATHWORK** · Breathe. Be Present. Feel Better.
 
 A free React + TypeScript + Vite breathing app. No registration, credentials, paid APIs, or runtime external requests. All preferences stay in this browser. Local photographs, fallback landscape illustrations, and native synthesized singing bowls are included. Synthesis is the default sound mode; uploaded recordings remain selectable. Local photographs and recordings can be registered in the media manifest.
 
@@ -14,9 +16,9 @@ npm run dev
 
 Open the address Vite prints in your browser (normally port 5173, under `/breathwork-app/`). In a cloud editor, use its port preview for port 5173 if available. To test the production version, run `npm run build` then `npm run preview` (port 4173). Production files are in `dist/`.
 
-Choose a preset or enter your own seconds; 0 skips a phase entirely. Start opens the scenic exercise. Try pause/resume, mute, stop, and the × button. Under **Atmosphere & sound**, choose a fixed background, random scenery, a gradient, volume, or silence. Preview plays a sample bowl. Use **Reset defaults** to return to 4–0–6–0 for 5 minutes.
+The app opens directly to settings. Choose an existing preset or Custom, set seconds with the sliders or numeric fields, and press **Start Session**. A phase set to 0 is skipped. Use **Restart**, **Pause / Resume**, or **Stop** during practice. **Advanced Options**, collapsed by default on both screens, contains background, sound, mute, preview, and volume. **Reset defaults** is available there on settings. It restores 4–0–6–0 for 5 minutes. Language selection appears only on settings.
 
-The session completes at the end of the phase containing the target duration; the countdown includes this extension. Hiding the browser tab pauses safely and silences cues; resume manually on return. Refreshing ends a session, while keeping valid settings. Synthesized Tibetan Bowls is the default; it does not fetch audio files. You can select the existing recordings under Atmosphere & sound. In recording mode, missing or undecodable files use per-role synthesis instead. Existing sound-on preferences use the new synthesis; saved silence preferences remain silent. Start or Preview unlocks browser audio; unavailable audio falls back to silence.
+The session completes at the end of the phase containing the target duration; the countdown includes this extension. Hiding the browser tab pauses safely and silences cues; resume manually on return. Refreshing ends a session, while keeping valid settings. Synthesized Tibetan Bowls is the default; it does not fetch audio files. You can select the existing recordings under Advanced Options. In recording mode, missing or undecodable files use per-role synthesis instead. Existing sound-on preferences use the new synthesis; saved silence preferences remain silent. Start or Preview unlocks browser audio; unavailable audio falls back to silence.
 
 ## Checks
 
@@ -33,7 +35,7 @@ Manual checks on your phone and desktop:
 - Try all presets and a rhythm with only one nonzero phase. All-zero and out-of-range values must block Start.
 - Watch water rise on inhale, hold full, fall on exhale, and hold empty. Each hold has a clockwise progress arc.
 - Pause midway; the water, countdown, and phase stay fixed. Resume should continue from that point.
-- Set a one-minute 4–7–8 session; it finishes after 61 seconds. Stop and × return immediately to settings.
+- Set a one-minute 4–7–8 session; it finishes after 61 seconds. Stop returns immediately to settings.
 - Listen for distinct inhale/exhale cues and the shared hold cue. Muting and stopping must silence audio.
 - Reload after changing settings; they should persist. Try private browsing or unavailable storage; the app must remain usable.
 - Block `media/*.webp` in browser tools; the exercise must use its built-in gradient.
@@ -47,13 +49,13 @@ Manual checks on your phone and desktop:
 - `src/media.ts` and `public/media/manifest.json`: typed static media catalog, phase-role recordings, defaults, read-only media provider and separate access provider.
 - `public/media/`: locally served original illustrative placeholders. `scripts/create-landscapes.py` reproduces them with Pillow; Python is not needed to run the app.
 
-To change defaults or presets for this local version, edit `appDefaults` in `src/media.ts` or `presets` in `src/main.tsx`. Existing saved preferences take precedence until Reset defaults is clicked. To add photographs or recordings, follow the manifest instructions below. Set a photograph's `published: false` to remove it from selections; **this is not access control**—anything in `public/` remains publicly downloadable. Never place private or draft media there. Assets are selected once per session, with immediate repeats avoided in random mode.
+To change defaults or presets for this local version, edit `appDefaults` in `src/media.ts` or `presets` in `src/settings.ts`. Existing saved preferences take precedence until Reset defaults is clicked. To add photographs or recordings, follow the manifest instructions below. Set a photograph's `published: false` to remove it from selections; **this is not access control**—anything in `public/` remains publicly downloadable. Never place private or draft media there. Assets are selected once per session, with immediate repeats avoided in random mode.
 
 ### Version 1.1 scope
 
 Implemented: configurable phases, zero-phase skipping, presets, duration, persistent settings/reset, static local scenery and gradient fallback, water fill, hold arc, synchronized clock/cues, volume/preview/silence, start/pause/resume/stop/exit, end-of-phase completion, tab hiding policy, responsive layout, reduced wave motion, safety guidance, and no-account access.
 
-Deferred to honor the direct request to avoid Supabase/external services: secure owner login, uploads and media CRUD, owner-managed recording upload interface, owner-managed defaults without deployment, remote publishing, database/RLS/storage policies. This MVP has no admin screen and no payment integration. Its catalog supports published images, but is bundled and requires deployment for updates. The first UI is English; Hebrew/RTL remains a future localization option from the document's open decisions. The shipped fallback backgrounds remain illustrations; real photographs can now be added through the manifest.
+Deferred to honor the direct request to avoid Supabase/external services: secure owner login, uploads and media CRUD, owner-managed recording upload interface, owner-managed defaults without deployment, remote publishing, database/RLS/storage policies. This MVP has no admin screen and no payment integration. Its catalog supports published images, but is bundled and requires deployment for updates. English, Hebrew (RTL), and Japanese are supported, with browser detection and a locally saved preference. The shipped fallback backgrounds remain illustrations; real photographs can now be added through the manifest.
 
 For a future managed library, replace the read-only provider with an API serving only published assets and sound-role URLs (`inhale`, `hold`, `exhale`, optional `end`). Add authenticated server-side owner authorization and storage policies before enabling uploads; retain drafts in private storage. Add file validation, thumbnail generation, ordering and deletion reference checks. No secrets or service-role keys belong in browser code. Future paid entitlements must be checked by a trusted server, independently of the local session engine. No cloud provider was selected, so there is no recurring service subscription in this version; hosting bandwidth may still incur costs depending on deployment. Compare then-current storage limits/pricing before enabling managed storage.
 
@@ -84,7 +86,7 @@ The browser tests start a production preview on port 5174 and exercise `/breathw
 
 ## Local photographs and recorded bowls
 
-Five photographs (`1.webp`–`5.webp`) and three recordings (`inhale 4.MP3`, `hold 4.MP3`, `exhale 4.MP3`) are registered in the manifest. Both holds share the hold recording. The existing illustrations remain functional fallbacks. Synthesized singing bowls are the default; recordings remain available as an alternative. No service subscriptions or API credentials are needed.
+The five uploaded photographs (`1.webp`–`5.webp`), an additional original generated mountain-lake scene (`breath-flow-lake.webp`), and three recordings (`inhale 4.MP3`, `hold 4.MP3`, `exhale 4.MP3`) are registered in the manifest. Both holds share the hold recording. The existing illustrations remain functional fallbacks. Synthesized singing bowls are the default; recordings remain available as an alternative. No service subscriptions or API credentials are needed.
 
 You can add media directly through GitHub's **Add file → Upload files** in these folders, then edit the manifest and commit to `main`. The existing Actions workflow rebuilds and deploys your updates.
 
@@ -109,7 +111,7 @@ You can add media directly through GitHub's **Add file → Upload files** in the
 
 Only register paths for files you have actually uploaded. Leave an unassigned audio role as `null`. Both hold roles may reference the same file; assign a separate `hold-after-exhale.mp3` later without changing code. IDs must be unique; `random`, `gradient`, `alpine` and `coast` are reserved. `npm run validate:media` checks paths, formats and file presence, and runs automatically during builds. The manifest is bundled at build time, so uploading files alone is insufficient: register them, commit, and wait for deployment.
 
-When photographs are present, random sessions choose from those photographs and avoid an immediate repeat when possible. Fallback illustrations remain selectable. The chosen image stays fixed unless you change **Scenery** in the session header. Failed session images use the gradient. All media URLs respect `/breathwork-app/`; no root-relative media URLs or runtime external requests are used. Only the displayed background loads, and browsers can cache the static assets. Settings remain stored in the browser.
+When photographs are present, random sessions choose from those photographs and avoid an immediate repeat when possible. Fallback illustrations remain selectable. The chosen image stays fixed unless you change **Background** under Advanced Options. Failed session images use the gradient. All media URLs respect `/breathwork-app/`; no root-relative media URLs or runtime external requests are used. Only the displayed background loads, and browsers can cache the static assets. Settings remain stored in the browser.
 
 **Audio behavior:** Start and Preview unlock audio through user interaction. Default synthesis renders the original bowl/reverb signal locally before the first session, then reuses it with live volume and the original compressor; no audio download or post-phase tail is involved. First preparation can take a few seconds, using the existing Preparing audio indicator; later sessions reuse the cached signals. Selecting recording mode preloads/decodes assigned files and caches them for this page visit. Missing or unsupported recordings fall back individually to the new synthesis. Settings reports the active mode or fallback. Autoplay/API failure leaves the exercise silent. Recordings never loop: short files end naturally, and long files stop at their phase boundary. Synthesized strikes keep the original 4 ms attack; recordings keep their 150 ms fade-in. Both fade out over the final second, with proportional fades for short phases. Each phase reaches zero before the next starts. There is no crossfade. A separate master gain controls volume without resetting those envelopes.
 
@@ -153,3 +155,26 @@ Pause/resume seeks the same prepared signal, preserving oscillator beating, deca
 Attribution and the full MIT notice are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and [the license file](third-party/tibetan-singing-bowls-LICENSE.txt). The production JavaScript retains the license notice. Tests include a separate extraction of the actual upstream strike/impulse/clink code; with identical randomness and exact pitch, offline browser renders match both the model and the prepared/live-compressor playback path within floating-point tolerance over the first two seconds, in stereo. This checks the initial impact and real signal chain, not just descriptive similarities.
 
 Tests additionally verify all four note mappings, the same shared C4 signal for inhale/exhale, resumed decay, long/short/skipped phases, master independence, cancellation and node cleanup. Real browser offline audio renders check silence at every phase boundary, no clipping, and RMS levels matching the unchanged upstream reference for G4/C4/E4 over a five-second note. These signal checks support consistency; perceived warmth/loudness should also be checked on your phone or headphones at a comfortable volume.
+
+## Breath Flow interface and languages
+
+The existing application now uses a shared two-screen visual system: compact branding, teal/ivory glass panels, the existing presets plus a Custom selector, four duration sliders with editable numeric values, and an immersive exercise with a single remaining-session timer. All original preset values, the breathing engine, end-of-phase completion, and original media are preserved. The water fill is constant during both holds; the wave is also paused, while the outer hold-progress arc continues clockwise. The current audio engine and C4 → G4 → C4 → E4 mapping are unchanged. Musical note names are not displayed in the interface.
+
+- `src/components/`: Brand, SettingsPanel, SessionPanel, BreathingCircle, AdvancedOptions and shared icons.
+- `src/useBreathingSession.ts`: existing session-clock/audio integration, now shared with the redesigned controls. Changing sound mode joins the current phase without resetting the timer. Preview during practice pauses the timer to avoid overlapping the preview with session audio; Resume continues the elapsed phase.
+- `src/useSessionHistory.ts`: browser Back returns to settings and stops audio; it never auto-starts a session on Forward.
+- `src/settings.ts`: original three presets, defaults/persistence helpers. The original `still-settings` storage key is retained so existing configurations survive the rebrand.
+- `src/locales/en.json`, `he.json`, `ja.json`: complete typed translation dictionaries. `src/i18n.ts` handles browser detection, persistence (`breath-flow-language`), document language/direction and named substitutions.
+- [Translation review](docs/translations.md): every stable key with all three values. Regenerate with `node scripts/generate-translations.mjs`. Native-speaker review is welcome, especially for brand tone and Japanese phrasing.
+
+Collapsed settings and active screens were checked at 360×740, 375×812 and 390×844 in all three languages, with no vertical or horizontal page overflow. Smaller screens (e.g. 320×568), landscape, enlarged text, and expanded Advanced Options can scroll rather than hiding controls. Safe-area insets and dynamic viewport units are used. System Georgia/serif, Hebrew, and Japanese fallback fonts avoid external font downloads. Real-device Safari/Android browser chrome and screen-reader behavior still merit manual checks.
+
+### Original branding assets
+
+`public/branding/brush-circle.svg` is an original organic enso-style brush circle; `app-icon.svg` uses a light brush circle on deep teal. PNG exports include 192px, 512px and an Apple touch icon. These are clean original interpretations of the requested Natural Brush concept: no mockup/reference image was supplied for exact visual comparison, so later brand refinement may be useful. The original generated mountain-lake background is a local compressed WebP (about 139 KB); none of the five uploaded photographs or two existing illustrative backgrounds was removed. It is included in the media manifest and available for manual/random selection. A random selection previews the mountain lake on settings, then chooses a view once when starting a session.
+
+The favicon, Apple icon and small web-app manifest use GitHub Pages-compatible paths. The web manifest supplies icons, scope and standalone display metadata only; no new PWA framework, service worker, splash screen or offline caching system was introduced. English brand/attribution remain unchanged in every language. All functional text, statuses and accessibility labels are dictionary-based.
+
+### UI verification
+
+Run `npm test`, `npm run build`, and `PLAYWRIGHT_TEST_PRODUCTION=1 npm run test:e2e`. Existing engine/media/audio suites remain, with selectors updated for the new interface. Added tests cover translated controls and placeholders, all-language mobile fit, persisted/detected language, RTL with LTR clock/water geometry, holds, actual remaining time, restart, browser Back, expanded/small-screen usability, blank-field validation, mode/volume/background changes while running, preview/resume, and subpath branding assets. Browser tests capture mobile settings/session screenshots for each language under `/tmp/breath-flow-{en,he,ja}-{settings,session}.png`.

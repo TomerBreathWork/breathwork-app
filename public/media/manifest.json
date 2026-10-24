@@ -24,6 +24,11 @@
       "id": "photo-5",
       "name": "Nature 5",
       "file": "media/backgrounds/5.webp"
+    },
+    {
+      "id": "mountain-lake",
+      "name": "Mountain stillness",
+      "file": "media/backgrounds/breath-flow-lake.webp"
     }
   ],
   "recordings": {
