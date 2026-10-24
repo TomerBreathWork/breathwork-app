@@ -91,7 +91,7 @@ The five uploaded photographs (`1.webp`–`5.webp`), an additional original gene
 You can add media directly through GitHub's **Add file → Upload files** in these folders, then edit the manifest and commit to `main`. The existing Actions workflow rebuilds and deploys your updates.
 
 1. Put licensed JPG/JPEG/PNG/WebP photographs in `public/media/backgrounds/`. Prefer compressed WebP, about 1600–2000 pixels wide, preferably below 500 KB. Use simple ASCII filenames (spaces, dashes and underscores are supported).
-2. Put licensed MP3/WAV/OGG recordings in `public/media/audio/`. MP3 is a broadly compatible choice for phones. Use soft, normalized recordings without harsh attacks. The synthesis mapping is inhale C4 (261.63 Hz), first hold G4 (392.00 Hz), exhale C4 (261.63 Hz), second hold E4 (329.63 Hz). Uploaded recordings keep their original pitches. No therapeutic frequency claims are made.
+2. Put licensed MP3/WAV/OGG recordings in `public/media/audio/`. MP3 is a broadly compatible choice for phones. Use soft, normalized recordings without harsh attacks. The synthesis mapping is inhale G4 (392.00 Hz), first hold E4 (329.63 Hz), exhale C4 (261.63 Hz), second hold E4 (329.63 Hz). Uploaded recordings keep their original pitches. No therapeutic frequency claims are made.
 3. Edit `public/media/manifest.json`, for example:
 
 ```json
@@ -125,12 +125,12 @@ The default prepares the original native Web Audio oscillator/reverb model local
 
 | Phase | Note | Fundamental |
 | --- | --- | --- |
-| Inhale | C4 | 261.63 Hz |
-| Hold after inhale | G4 | 392.00 Hz |
+| Inhale | G4 | 392.00 Hz |
+| Hold after inhale | E4 | 329.63 Hz |
 | Exhale | C4 | 261.63 Hz |
 | Hold after exhale | E4 | 329.63 Hz |
 
-Inhale/exhale share the same prepared C4 signal, including strike, detuning, resonance and room response. The reference's original randomness is generated once per note/page visit rather than again at every transition. `src/bowl-synth.ts` adapts the actual [Olivier Giulieri singing bowl implementation](https://github.com/evoluteur/tibetan-singing-bowls/blob/main/js/bowls.js), not the earlier softened approximation.
+Both holds share the same prepared E4 signal, including strike, detuning, resonance and room response. The reference's original randomness is generated once per note/page visit rather than again at every transition. `src/bowl-synth.ts` adapts the actual [Olivier Giulieri singing bowl implementation](https://github.com/evoluteur/tibetan-singing-bowls/blob/main/js/bowls.js), not the earlier softened approximation.
 
 | Parameter | Upstream reference and current adaptation |
 | --- | --- |
@@ -154,11 +154,11 @@ Pause/resume seeks the same prepared signal, preserving oscillator beating, deca
 
 Attribution and the full MIT notice are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and [the license file](third-party/tibetan-singing-bowls-LICENSE.txt). The production JavaScript retains the license notice. Tests include a separate extraction of the actual upstream strike/impulse/clink code; with identical randomness and exact pitch, offline browser renders match both the model and the prepared/live-compressor playback path within floating-point tolerance over the first two seconds, in stereo. This checks the initial impact and real signal chain, not just descriptive similarities.
 
-Tests additionally verify all four note mappings, the same shared C4 signal for inhale/exhale, resumed decay, long/short/skipped phases, master independence, cancellation and node cleanup. Real browser offline audio renders check silence at every phase boundary, no clipping, and RMS levels matching the unchanged upstream reference for G4/C4/E4 over a five-second note. These signal checks support consistency; perceived warmth/loudness should also be checked on your phone or headphones at a comfortable volume.
+Tests additionally verify all four note mappings, the same shared E4 signal for both holds, resumed decay, long/short/skipped phases, master independence, cancellation and node cleanup. Real browser offline audio renders check silence at every phase boundary, no clipping, and RMS levels matching the unchanged upstream reference for G4/C4/E4 over a five-second note. These signal checks support consistency; perceived warmth/loudness should also be checked on your phone or headphones at a comfortable volume.
 
 ## Breath Flow interface and languages
 
-The existing application now uses a shared two-screen visual system: compact branding, teal/ivory glass panels, the existing presets plus a Custom selector, four duration sliders with editable numeric values, and an immersive exercise with a single remaining-session timer. All original preset values, the breathing engine, end-of-phase completion, and original media are preserved. The water fill is constant during both holds; the wave is also paused, while the outer hold-progress arc continues clockwise. The current audio engine and C4 → G4 → C4 → E4 mapping are unchanged. Musical note names are not displayed in the interface.
+The existing application now uses a shared two-screen visual system: compact branding, teal/ivory glass panels, the existing presets plus a Custom selector, four duration sliders with editable numeric values, and an immersive exercise with a single remaining-session timer. All original preset values, the breathing engine, end-of-phase completion, and original media are preserved. The water fill is constant during both holds; the wave is also paused, while the outer hold-progress arc continues clockwise. The current audio engine and G4 → E4 → C4 → E4 mapping are unchanged. Musical note names are not displayed in the interface.
 
 - `src/components/`: Brand, SettingsPanel, SessionPanel, BreathingCircle, AdvancedOptions and shared icons.
 - `src/useBreathingSession.ts`: existing session-clock/audio integration, now shared with the redesigned controls. Changing sound mode joins the current phase without resetting the timer. Preview during practice pauses the timer to avoid overlapping the preview with session audio; Resume continues the elapsed phase.
@@ -184,3 +184,11 @@ Run `npm test`, `npm run build`, and `PLAYWRIGHT_TEST_PRODUCTION=1 npm run test:
 Settings always uses `public/media/backgrounds/3.webp`, even while selecting another session image and after Stop/reload. Active sessions support only the five uploaded real photos (`photo-1` through `photo-5`), plus random selection among those five. A saved legacy illustration/generated/gradient selection migrates to random without discarding the other settings. A built-in gradient remains an error fallback if an image fails; it is not a selectable background. Generated/illustrated files are retained, and the generated mountain-lake manifest entry is unpublished. Registering another image alone does not expose it: changing the approved set requires an explicit update to the five-photo policy in `src/media.ts`.
 
 The Natural Brush Circle logo is centered above the app name, attribution and localized tagline, free-floating over the photograph with no surrounding branding panel. The small settings-only language selector sits in an upper corner. Collapsed phone layouts are verified in English, Hebrew and Japanese at 360×740, 375×812 and 390×844. The audio engine, animations and other session controls are unchanged.
+
+### Silent preparation and final presentation
+
+Start Session now opens practice immediately with a separate five-second silent preparation: **Breathe Out Fully** (עברית: **נשפו את האוויר החוצה**; 日本語: **ゆっくり息を吐き切る**). Water descends from full to empty while 5→1 counts down. The selected session duration is untouched until normal breathing starts. Pause/Resume and tab hiding freeze this preparation clock; Restart includes it again; Stop cancels it. Sound preview is disabled throughout preparation. The current synthesis is prepared in parallel; if first-time rendering takes longer than five seconds on a slow device, preparation stays silent until audio is ready rather than shortening the breathing session or losing the first cue. Only then does the first G4 strike play. Normal zero-duration phases remain skipped.
+
+The mapping is **G4 (392 Hz) → E4 (329.63 Hz) → C4 (261.63 Hz) → E4 (329.63 Hz)**. Both hold phases use the identical prepared E4 signal; the reference synthesis algorithms and original strike/decay/fades are unchanged. Preparation is implemented in the session integration hook, not in the sound model.
+
+Logos are approximately 17–18% larger with compact spacing preserved. Smaller branding text has a slightly stronger, localized shadow without a panel. Practice photographs use `--practice-background-opacity: 0.8` over warm ivory; settings retains its fixed `3.webp` with `--settings-background-opacity: 0.35`. Only image opacity changes, never the UI layers. Dedicated preparation tests verify all translations, five full seconds, falling water, frozen total time, silence (including preview/mute), actual first G4, pause/resume/restart/stop, opacity isolation, and normal session continuation.

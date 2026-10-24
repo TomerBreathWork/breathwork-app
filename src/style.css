@@ -13,6 +13,7 @@
   --ivory: #f6f1e8;
   /* Settings photograph only: 0 = ivory, 1 = full-strength photo. */
   --settings-background-opacity: 0.35;
+  --practice-background-opacity: 0.8;
   --circle-size: min(72vw, 34dvh, 340px);
 }
 * {
@@ -97,8 +98,8 @@ select:focus-visible {
   min-width: 0;
 }
 .brand-mark {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   flex: none;
 }
 .brand h1 {
@@ -674,7 +675,7 @@ select:focus-visible {
   padding-bottom: 12px;
 }
 .session .app-header {
-  margin-bottom: clamp(16px, 3dvh, 30px);
+  margin-bottom: clamp(12px, 2.5dvh, 24px);
 }
 [lang="he"] .phase-count,
 [lang="he"] .remaining-value {
@@ -705,8 +706,8 @@ select:focus-visible {
     gap: 8px;
   }
   .brand-mark {
-    width: 38px;
-    height: 38px;
+    width: 45px;
+    height: 45px;
   }
   .brand h1 {
     font-size: 1.9rem;
@@ -798,8 +799,8 @@ select:focus-visible {
     font-size: 2.6rem;
   }
   .brand-mark {
-    width: 52px;
-    height: 52px;
+    width: 61px;
+    height: 61px;
   }
   .tagline {
     font-size: 0.85rem;
@@ -826,8 +827,8 @@ select:focus-visible {
   }
 
   .brand-mark {
-    width: 33px;
-    height: 33px;
+    width: 39px;
+    height: 39px;
   }
   .attribution {
     font-size: 0.46rem;
@@ -890,8 +891,31 @@ select:focus-visible {
 }
 
 /* Free-floating stacked branding; text shadows keep it legible on photographs. */
-.brand h1, .attribution, .tagline, .language-picker {
+.brand h1,
+.attribution,
+.tagline,
+.language-picker {
   color: #f6f1e8;
-  text-shadow: 0 1px 4px #102f2fe6, 0 0 14px #102f2faa;
+  text-shadow:
+    0 1px 4px #102f2fe6,
+    0 0 14px #102f2faa;
 }
-.brand-mark { filter: drop-shadow(0 1px 2px #f6f1e8b3); }
+.brand-mark {
+  filter: drop-shadow(0 1px 2px #f6f1e8b3);
+}
+
+.session {
+  background: var(--ivory);
+}
+.session .scenery {
+  opacity: var(--practice-background-opacity);
+}
+.attribution,
+.tagline {
+  text-shadow:
+    0 1px 3px #102f2f,
+    0 0 8px #102f2fc4;
+}
+.breath-circle[data-phase="preparation"] .circle-label h2 {
+  font-size: clamp(1.35rem, 5vw, 1.8rem);
+}

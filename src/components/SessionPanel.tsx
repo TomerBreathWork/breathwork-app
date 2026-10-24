@@ -10,6 +10,7 @@ interface Props {
   phase: { index: number; progress: number; remaining: number };
   remaining: number;
   preparing: boolean;
+  preparationProgress?: number;
   restart: () => void;
   pause: () => void;
   resume: () => void;
@@ -22,6 +23,7 @@ export function SessionPanel({
   phase,
   remaining,
   preparing,
+  preparationProgress,
   restart,
   pause,
   resume,
@@ -29,21 +31,32 @@ export function SessionPanel({
   advanced,
 }: Props) {
   return (
-    <main className="session-panel" aria-label={t("sessionLabel")}>
+    <main
+      className="session-panel"
+      aria-label={t("sessionLabel")}
+      aria-busy={preparing}
+    >
       <div className="practice">
         <p className="session-intro">{t("intro")}</p>
-        <BreathingCircle t={t} status={status} phase={phase} />
+        <BreathingCircle
+          t={t}
+          status={status}
+          phase={phase}
+          preparationProgress={preparationProgress}
+        />
         <p className="phase-guidance">
           {t(
             status === "completed"
               ? "completeMessage"
               : status === "paused"
                 ? "pausedHint"
-                : phase.index === 0
-                  ? "inhaleHint"
-                  : phase.index === 2
-                    ? "exhaleHint"
-                    : "holdHint",
+                : preparationProgress !== undefined
+                  ? "preparationHint"
+                  : phase.index === 0
+                    ? "inhaleHint"
+                    : phase.index === 2
+                      ? "exhaleHint"
+                      : "holdHint",
           )}
         </p>
         <div className="remaining">
@@ -59,7 +72,7 @@ export function SessionPanel({
         <div className="session-controls">
           <button
             className="side-button"
-            disabled={preparing}
+            disabled={preparing && preparationProgress === undefined}
             onClick={restart}
           >
             <Icon name="restart" />
@@ -72,12 +85,12 @@ export function SessionPanel({
           ) : (
             <button
               className="primary-control"
-              disabled={preparing}
+              disabled={preparing && preparationProgress === undefined}
               onClick={status === "running" ? pause : resume}
             >
               <Icon name={status === "running" ? "pause" : "play"} />
               {t(
-                preparing
+                preparing && preparationProgress === undefined
                   ? "preparing"
                   : status === "running"
                     ? "pause"

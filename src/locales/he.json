@@ -72,5 +72,7 @@
   "pausedHint": "המשיכו כשתרגישו מוכנים.",
   "sessionLabel": "תרגול נשימה",
   "settingsLabel": "הגדרות נשימה",
-  "rhythmLabel": "קצב הנשימה"
+  "rhythmLabel": "קצב הנשימה",
+  "preparationInstruction": "נשפו את האוויר החוצה",
+  "preparationHint": "התרגול מתחיל בעוד רגע."
 }

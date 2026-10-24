@@ -72,5 +72,7 @@
   "pausedHint": "準備ができたら、またゆっくり。",
   "sessionLabel": "呼吸セッション",
   "settingsLabel": "呼吸の設定",
-  "rhythmLabel": "呼吸のリズム"
+  "rhythmLabel": "呼吸のリズム",
+  "preparationInstruction": "ゆっくり息を吐き切る",
+  "preparationHint": "まもなく練習が始まります。"
 }

@@ -72,5 +72,7 @@
   "pausedHint": "Continue whenever you feel ready.",
   "sessionLabel": "Breathing session",
   "settingsLabel": "Breathing settings",
-  "rhythmLabel": "Breathing rhythm"
+  "rhythmLabel": "Breathing rhythm",
+  "preparationInstruction": "Breathe Out Fully",
+  "preparationHint": "Your practice begins in a moment."
 }

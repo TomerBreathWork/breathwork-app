@@ -1,4 +1,6 @@
 import {test,expect,type Page} from '@playwright/test';
+test.beforeEach(async({page})=>{await page.clock.install({time:new Date('2026-10-24T12:00:00Z')});await page.clock.pauseAt(new Date('2026-10-24T12:00:01Z'))});
+async function finishPreparation(page:Page){await expect(page.locator('.session-panel')).toHaveAttribute('aria-busy','false',{timeout:15000});await page.clock.fastForward(5001)}
 import en from '../src/locales/en.json' with {type:'json'};
 import he from '../src/locales/he.json' with {type:'json'};
 import ja from '../src/locales/ja.json' with {type:'json'};
@@ -19,7 +21,7 @@ for(const language of ['en','he','ja'] as const){
   await expect(page.getByText(t.tagline,{exact:true})).toBeVisible();await expect(page.getByRole('button',{name:t.custom,exact:false})).toBeVisible();
   await expect(page.getByRole('slider',{name:t.holdIn,exact:true})).toBeVisible();
   await page.reload();await expect(page.locator('html')).toHaveAttribute('lang',language);
-  await page.getByRole('button',{name:t.start,exact:true}).click();
+  await page.getByRole('button',{name:t.start,exact:true}).click();await finishPreparation(page);
   await expect(page.getByRole('heading',{name:t.inhale,exact:true})).toBeVisible();
   await expect(page.locator('.language-picker')).toHaveCount(0);await expect(page.locator('#duration')).toHaveCount(0);
   expect(await page.locator('.breath-circle').evaluate(el=>getComputedStyle(el).direction)).toBe('ltr');
@@ -38,7 +40,7 @@ for(const language of ['en','he','ja'] as const){
    await expect.poll(()=>page.locator('.scenery').evaluate((img:HTMLImageElement)=>img.naturalWidth)).toBeGreaterThan(0);
    if(viewport.width===375)await page.screenshot({path:`/tmp/breath-flow-${language}-settings.png`,fullPage:true});
    for(const button of await page.getByRole('button').all()){const box=await button.boundingBox();if(box)expect(box.height).toBeGreaterThanOrEqual(44)}
-   await page.getByRole('button',{name:t.start,exact:true}).click();await expect(page.locator('.session-panel')).toBeVisible();
+   await page.getByRole('button',{name:t.start,exact:true}).click();await finishPreparation(page);await expect(page.locator('.session-panel')).toBeVisible();
    await expect(page.getByRole('button',{name:t.advanced,exact:true})).toHaveAttribute('aria-expanded','false');await noOverflow(page,viewport.height);
    if(viewport.width===375)await page.screenshot({path:`/tmp/breath-flow-${language}-session.png`,fullPage:true});
   });
@@ -49,7 +51,7 @@ test('browser Hebrew detection works before a preference is selected',async({bro
  await page.goto('http://127.0.0.1:5174/breathwork-app/');await expect(page.locator('html')).toHaveAttribute('lang','he');await expect(page.getByRole('button',{name:he.start,exact:true})).toBeVisible();await context.close();
 });
 test('hold water and waves stay stationary while the clockwise ring progresses',async({page})=>{
- await silentSettings(page);await page.getByRole('button',{name:'Box breathing'}).click();await page.clock.install();await page.getByRole('button',{name:en.start,exact:true}).click();
+ await silentSettings(page);await page.getByRole('button',{name:'Box breathing'}).click();await page.getByRole('button',{name:en.start,exact:true}).click();await finishPreparation(page);
  await page.clock.runFor(4200);await expect(page.locator('.breath-circle')).toHaveAttribute('data-phase','1');
  const high=await page.locator('.water').getAttribute('style'),arc=await page.locator('.ring-progress').getAttribute('stroke-dashoffset');
  expect(await page.locator('.wave').evaluate(el=>getComputedStyle(el).animationPlayState)).toBe('paused');
@@ -59,11 +61,11 @@ test('hold water and waves stay stationary while the clockwise ring progresses',
  expect(high).toContain('100%');expect(low).toContain('0%');
 });
 test('remaining time pauses correctly; restart and stop preserve settings',async({page})=>{
- await silentSettings(page);await page.clock.install();await page.getByRole('button',{name:en.start,exact:true}).click();
+ await silentSettings(page);await page.getByRole('button',{name:en.start,exact:true}).click();await finishPreparation(page);
  await page.clock.runFor(2300);await page.getByRole('button',{name:en.pause,exact:true}).click();const time=await page.locator('.remaining-value').innerText();
  await page.clock.runFor(5000);await expect(page.locator('.remaining-value')).toHaveText(time);
  await page.getByRole('button',{name:en.resume,exact:true}).click();await page.clock.runFor(1100);await expect(page.locator('.remaining-value')).not.toHaveText(time);
- await page.getByRole('button',{name:en.restart,exact:true}).click();await expect(page.locator('.remaining-value')).toHaveText('05:00');
+ await page.getByRole('button',{name:en.restart,exact:true}).click();await finishPreparation(page);await expect(page.locator('.remaining-value')).toHaveText('05:00');
  await page.getByRole('button',{name:en.stop,exact:true}).click();await expect(page.locator('#duration')).toHaveValue('5');
  await expect(page.getByRole('spinbutton',{name:'Inhale seconds',exact:true})).toHaveValue('4');
 });
@@ -80,11 +82,11 @@ test('custom keeps the existing rhythm and blank session duration does not crash
  await page.locator('#duration').fill('2');await expect(page.getByRole('button',{name:en.start,exact:true})).toBeEnabled();
 });
 test('browser back exits the session without discarding preferences or restarting audio',async({page})=>{
- await silentSettings(page);await page.getByRole('button',{name:en.start,exact:true}).click();await expect(page.locator('.session-panel')).toBeVisible();
+ await silentSettings(page);await page.getByRole('button',{name:en.start,exact:true}).click();await finishPreparation(page);await expect(page.locator('.session-panel')).toBeVisible();
  await page.goBack();await expect(page.locator('.settings-panel')).toBeVisible();await expect(page.locator('#duration')).toHaveValue('5');
 });
 test('active visual/audio preferences keep the session clock and phase intact',async({page})=>{
- await silentSettings(page);await page.clock.install();await page.getByRole('button',{name:en.start,exact:true}).click();await page.clock.runFor(1500);
+ await silentSettings(page);await page.getByRole('button',{name:en.start,exact:true}).click();await finishPreparation(page);await page.clock.runFor(1500);
  await page.getByRole('button',{name:en.advanced,exact:true}).click();await page.getByRole('combobox',{name:en.background,exact:true}).selectOption('photo-1');
  await page.getByRole('slider',{name:en.volume,exact:true}).fill('0.2');await expect(page.locator('.remaining-value')).not.toHaveText('05:00');
  await page.getByRole('combobox',{name:en.sound,exact:true}).selectOption('bowls');await expect(page.getByRole('status')).toHaveText(en.audioReady,{timeout:15000});
@@ -107,7 +109,7 @@ test('sound preview plays on settings; active preview pauses and resume seeks th
  await page.getByRole('button',{name:en.advanced,exact:true}).click();
  await page.getByRole('button',{name:en.preview,exact:true}).click();
  await expect.poll(()=>page.evaluate(()=>(window as any).offsets.length)).toBe(1);
- await page.clock.install();await page.getByRole('button',{name:en.start,exact:true}).click();await expect(page.locator('.session-panel')).toBeVisible();await page.clock.runFor(1200);
+ await page.getByRole('button',{name:en.start,exact:true}).click();await finishPreparation(page);await expect(page.locator('.session-panel')).toBeVisible();await page.clock.runFor(1200);
  await page.getByRole('button',{name:en.advanced,exact:true}).click();await page.getByRole('button',{name:en.preview,exact:true}).click();await expect(page.getByRole('heading',{name:en.paused,exact:true})).toBeVisible();
  const time=await page.locator('.remaining-value').innerText();await page.clock.runFor(2000);await expect(page.locator('.remaining-value')).toHaveText(time);
  await expect(page.getByRole('status')).toHaveText(en.audioReady);const count=await page.evaluate(()=>(window as any).offsets.length);
@@ -122,7 +124,7 @@ test('settings always use forest stream regardless of saved or selected session 
  await page.getByRole('button',{name:en.advanced,exact:true}).click();
  await page.getByRole('combobox',{name:en.background,exact:true}).selectOption('photo-1');
  await expect(page.locator('.scenery')).toHaveAttribute('src',fixed);
- await page.getByRole('button',{name:en.start,exact:true}).click();
+ await page.getByRole('button',{name:en.start,exact:true}).click();await finishPreparation(page);
  await expect(page.locator('.scenery')).toHaveAttribute('src','/breathwork-app/media/backgrounds/1.webp');
  await page.getByRole('button',{name:en.advanced,exact:true}).click();
  const choices=page.getByRole('combobox',{name:en.background,exact:true});
@@ -134,7 +136,7 @@ test('random sessions use only real photographs and branding is stacked without 
  await silentSettings(page);await page.getByRole('button',{name:en.advanced,exact:true}).click();await page.getByRole('combobox',{name:en.background,exact:true}).selectOption('random');
  let previous='';
  for(let i=0;i<8;i++){
-  await page.getByRole('button',{name:en.start,exact:true}).click();await expect(page.locator('.session-panel')).toBeVisible();
+  await page.getByRole('button',{name:en.start,exact:true}).click();await finishPreparation(page);await expect(page.locator('.session-panel')).toBeVisible();
   const src=await page.locator('.scenery').getAttribute('src');expect(src).toMatch(/\/media\/backgrounds\/[1-5]\.webp$/);expect(src).not.toBe(previous);previous=src!;
   await page.getByRole('button',{name:en.stop,exact:true}).click();await expect(page.locator('.settings-panel')).toBeVisible();
  }

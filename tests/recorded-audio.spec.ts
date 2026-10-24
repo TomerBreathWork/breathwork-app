@@ -65,19 +65,19 @@ test('synthesized bowl envelopes render silence at boundaries, without recording
   await engine.prepare(set);engine.run(set,[.05,.05,.05,.05],0,200);
   const result=await offline.startRendering();engine.stop();window.AudioContext=Native;
   const samples=result.getChannelData(0);
-  return{sameC4:buffers[0]===buffers[2],count:buffers.length,boundaries:[0,.05,.1,.15,.2].map(t=>samples[Math.round(t*rate)]),peak:Math.max(...samples.map(Math.abs)),silenceAfter:Math.max(...samples.slice(Math.round(.201*rate)).map(Math.abs))};
+  return{sameHolds:buffers[1]===buffers[3],count:buffers.length,boundaries:[0,.05,.1,.15,.2].map(t=>samples[Math.round(t*rate)]),peak:Math.max(...samples.map(Math.abs)),silenceAfter:Math.max(...samples.slice(Math.round(.201*rate)).map(Math.abs))};
  });
  expect(requested).toEqual([]);
- expect(rendered.sameC4).toBe(true);expect(rendered.count).toBe(4);
+ expect(rendered.sameHolds).toBe(true);expect(rendered.count).toBe(4);
  for(const sample of rendered.boundaries)expect(Math.abs(sample)).toBeLessThan(.002);
  expect(rendered.peak).toBeGreaterThan(.01);expect(rendered.peak).toBeLessThan(1);
  expect(rendered.silenceAfter).toBe(0);
 });
-test('C4 voices match and all notes retain upstream loudness without clipping',async({page})=>{
+test('both hold voices match and all notes retain upstream loudness without clipping',async({page})=>{
  await page.goto('./');await page.addScriptTag({content:audioCode});
  const results=await page.evaluate(async()=>{
   const rate=24000,results:{rms:number;referenceRms:number;peak:number;samples:number[]}[]=[];
-  for(const frequency of [261.63,392,261.63,329.63]){
+  for(const frequency of [392,329.63,261.63,329.63]){
    const renders:{rms:number;peak:number;samples:number[]}[]=[];
    for(const reference of [false,true]){
     const context=new OfflineAudioContext(1,rate*6,rate),envelope=context.createGain();
@@ -97,7 +97,7 @@ test('C4 voices match and all notes retain upstream loudness without clipping',a
  });
  // Retain the reference's pitch-dependent level; do not retune the engine to
  // satisfy the former G3-specific 2 dB spread threshold (G4 gives ~2.06 dB).
- const difference=Math.max(...results[0].samples.map((sample,i)=>Math.abs(sample-results[2].samples[i])));
+ const difference=Math.max(...results[1].samples.map((sample,i)=>Math.abs(sample-results[3].samples[i])));
  expect(difference).toBeLessThan(1e-6);
  for(const result of results){expect(result.rms).toBeCloseTo(result.referenceRms,6);expect(result.peak).toBeGreaterThan(.1);expect(result.peak).toBeLessThan(1)}
 });
@@ -189,7 +189,7 @@ test('prepared C4 remains below full scale at maximum master volume',async({page
  expect(metrics.nonfinite).toBe(0);expect(metrics.peak).toBeGreaterThan(.05);expect(metrics.peak).toBeLessThan(1);
 });
 
-test('production phase assignments render C4 G4 C4 E4 using the actual oscillator frequencies',async({page})=>{
+test('production phase assignments render G4 E4 C4 E4 using the actual oscillator frequencies',async({page})=>{
  await page.goto('./');await page.addScriptTag({content:audioCode});
  const cycle=await page.evaluate(async()=>{
   const NativeAudio=window.AudioContext,NativeOffline=window.OfflineAudioContext;
@@ -207,11 +207,11 @@ test('production phase assignments render C4 G4 C4 E4 using the actual oscillato
   const engine=new (window as any).AudioTest.BowlAudio();await engine.unlock();
   const set=(window as any).AudioTest.soundSets[0];await engine.prepare(set);engine.run(set,[.05,.05,.05,.05],0,200);
   await playback.startRendering();engine.stop();window.AudioContext=NativeAudio;window.OfflineAudioContext=NativeOffline;
-  return{sequence,sameC4:buffers[0]===buffers[2]};
+  return{sequence,sameHolds:buffers[1]===buffers[3]};
  });
  expect(cycle.sequence).toHaveLength(4);
- [261.63,392,261.63,329.63].forEach((frequency,index)=>expect(cycle.sequence[index]).toBeCloseTo(frequency,4));
- expect(cycle.sequence[1]).toBeGreaterThan(cycle.sequence[3]);
- expect(cycle.sequence[3]).toBeGreaterThan(cycle.sequence[0]);
- expect(cycle.sameC4).toBe(true);
+ [392,329.63,261.63,329.63].forEach((frequency,index)=>expect(cycle.sequence[index]).toBeCloseTo(frequency,4));
+ expect(cycle.sequence[1]).toBe(cycle.sequence[3]);
+ expect(cycle.sequence[0]).toBeGreaterThan(cycle.sequence[1]);
+ expect(cycle.sameHolds).toBe(true);
 });

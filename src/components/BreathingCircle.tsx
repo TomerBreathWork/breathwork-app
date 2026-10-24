@@ -4,14 +4,18 @@ export function BreathingCircle({
   t,
   status,
   phase,
+  preparationProgress,
 }: {
   t: Translator;
   status: Status;
+  preparationProgress?: number;
   phase: { index: number; progress: number; remaining: number };
 }) {
-  const hold = phase.index === 1 || phase.index === 3;
-  const fill =
-    phase.index === 0
+  const preparing = preparationProgress !== undefined;
+  const hold = !preparing && (phase.index === 1 || phase.index === 3);
+  const fill = preparing
+    ? 1 - preparationProgress
+    : phase.index === 0
       ? phase.progress
       : phase.index === 1
         ? 1
@@ -23,11 +27,13 @@ export function BreathingCircle({
       ? t("complete")
       : status === "paused"
         ? t("paused")
-        : t(hold ? "hold" : phase.index === 0 ? "inhale" : "exhale");
+        : preparing
+          ? t("preparationInstruction")
+          : t(hold ? "hold" : phase.index === 0 ? "inhale" : "exhale");
   return (
     <div
       className={`breath-circle ${status === "running" && !hold ? "moving" : ""}`}
-      data-phase={phase.index}
+      data-phase={preparing ? "preparation" : phase.index}
       data-status={status}
     >
       <div className="water-clip">
@@ -58,7 +64,9 @@ export function BreathingCircle({
             dir="ltr"
             aria-label={t("phaseCountdown")}
           >
-            {Math.ceil(phase.remaining)}
+            {preparing
+              ? Math.max(1, Math.ceil((1 - preparationProgress) * 5))
+              : Math.ceil(phase.remaining)}
           </span>
         )}
         {hold && status === "running" && (

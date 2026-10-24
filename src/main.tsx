@@ -79,6 +79,7 @@ function App() {
       onPreview={() => void session.preview()}
       onReset={active ? undefined : reset}
       audioStatus={session.audioStatus}
+      disablePreview={session.inPreparation}
     />
   );
   return (
@@ -123,6 +124,11 @@ function App() {
             phase={session.phase}
             remaining={(session.end - session.elapsed) / 1000}
             preparing={session.preparing}
+            preparationProgress={
+              session.inPreparation
+                ? session.preparationElapsed / 5000
+                : undefined
+            }
             restart={() => void start()}
             pause={session.pause}
             resume={() => void session.resume()}

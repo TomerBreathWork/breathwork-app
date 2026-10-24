@@ -78,3 +78,5 @@ Generated from `src/locales/{en,he,ja}.json`. Run `node scripts/generate-transla
 | sessionLabel | Breathing session | תרגול נשימה | 呼吸セッション |
 | settingsLabel | Breathing settings | הגדרות נשימה | 呼吸の設定 |
 | rhythmLabel | Breathing rhythm | קצב הנשימה | 呼吸のリズム |
+| preparationInstruction | Breathe Out Fully | נשפו את האוויר החוצה | ゆっくり息を吐き切る |
+| preparationHint | Your practice begins in a moment. | התרגול מתחיל בעוד רגע. | まもなく練習が始まります。 |

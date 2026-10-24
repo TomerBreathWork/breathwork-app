@@ -12,6 +12,7 @@ interface Props {
   onPreview: () => void;
   onReset?: () => void;
   audioStatus: TranslationKey;
+  disablePreview?: boolean;
 }
 export function AdvancedOptions({
   t,
@@ -22,6 +23,7 @@ export function AdvancedOptions({
   onPreview,
   onReset,
   audioStatus,
+  disablePreview,
 }: Props) {
   const [open, setOpen] = useState(false);
   return (
@@ -79,7 +81,7 @@ export function AdvancedOptions({
             </button>
             <button
               className="small-button"
-              disabled={settings.sound === "silent"}
+              disabled={settings.sound === "silent" || disablePreview}
               onClick={onPreview}
             >
               {t("preview")}
