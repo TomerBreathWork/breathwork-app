@@ -2,13 +2,14 @@ import type { ReactNode, CSSProperties } from "react";
 import { presets, type Settings } from "../settings";
 import { phaseKeys, type Translator } from "../i18n";
 import type { Rhythm } from "../engine";
+import type { PresetKey } from "../presets";
+import { SettingsFooter } from "./SettingsFooter";
 import { Icon } from "./Icons";
 interface Props {
   t: Translator;
   settings: Settings;
-  custom: boolean;
   onCustom: () => void;
-  onPreset: (rhythm: Rhythm) => void;
+  onPreset: (key: PresetKey) => void;
   patch: (patch: Partial<Settings>) => void;
   advanced: ReactNode;
   valid: boolean;
@@ -18,7 +19,6 @@ interface Props {
 export function SettingsPanel({
   t,
   settings,
-  custom,
   onCustom,
   onPreset,
   patch,
@@ -34,28 +34,23 @@ export function SettingsPanel({
     >
       <section className="presets-section" aria-label={t("presets")}>
         <h2 className="section-title">{t("presets")}</h2>
-        <div className="presets">
+        <div className="presets" dir="ltr" lang="en">
           {presets.map((preset) => (
             <button
-              className={`preset ${!custom && preset.rhythm.every((n, index) => settings.rhythm[index] === n) ? "selected" : ""}`}
-              aria-pressed={
-                !custom &&
-                preset.rhythm.every((n, index) => settings.rhythm[index] === n)
-              }
+              className={`preset ${settings.preset === preset.key ? "selected" : ""}`}
+              aria-pressed={settings.preset === preset.key}
               key={preset.key}
-              onClick={() => onPreset([...preset.rhythm])}
+              onClick={() => onPreset(preset.key)}
             >
               <strong>{t(preset.key)}</strong>
-              <span dir="ltr">{preset.rhythm.join(" · ")}</span>
             </button>
           ))}
           <button
-            className={`preset ${custom ? "selected" : ""}`}
-            aria-pressed={custom}
+            className={`preset ${settings.preset === "custom" ? "selected" : ""}`}
+            aria-pressed={settings.preset === "custom"}
             onClick={onCustom}
           >
             <strong>{t("custom")}</strong>
-            <span>{t("customHint")}</span>
           </button>
         </div>
       </section>
@@ -139,6 +134,7 @@ export function SettingsPanel({
         {t(preparing ? "preparing" : "start")}
       </button>
       <p className="safety">{t("safety")}</p>
+      <SettingsFooter t={t} />
     </main>
   );
 }

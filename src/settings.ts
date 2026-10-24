@@ -1,13 +1,9 @@
 import { appDefaults, selectableBackgrounds } from "./media";
 import { validRhythm, type Rhythm } from "./engine";
-import type { TranslationKey } from "./i18n";
-export type Settings = typeof appDefaults;
-export const presets: { key: TranslationKey; rhythm: Rhythm }[] = [
-  { key: "coherentBreathing", rhythm: [5.5, 0, 5.5, 0] },
-  { key: "slowSteady", rhythm: [4, 0, 6, 0] },
-  { key: "boxBreathing", rhythm: [4, 4, 4, 4] },
-  { key: "eveningUnwind", rhythm: [4, 7, 8, 0] },
-];
+import { restorePreset, type PatternSettings } from "./presets";
+export { presets } from "./presets";
+export type Settings = typeof appDefaults &
+  Pick<PatternSettings, "customRhythm">;
 export function loadSettings(): Settings {
   try {
     const s = JSON.parse(localStorage.getItem("still-settings") || "null");
@@ -15,19 +11,19 @@ export function loadSettings(): Settings {
       const rhythm = validRhythm(s.rhythm)
         ? (s.rhythm as Rhythm)
         : ([...appDefaults.rhythm] as Rhythm);
-      const matching = presets.find((p) =>
-        p.rhythm.every((n, i) => rhythm[i] === n),
-      );
+      const preset = validRhythm(s.rhythm)
+        ? restorePreset(s.preset, rhythm)
+        : appDefaults.preset;
       return {
         ...appDefaults,
         rhythm,
-        // Legacy saved rhythms are explicit choices, even without a preset ID.
-        // A Custom choice stays Custom when its values happen to match a preset.
-        preset: validRhythm(s.rhythm)
-          ? s.preset === "custom"
-            ? "custom"
-            : matching?.key || "custom"
-          : appDefaults.preset,
+        // Retired presets retain their durations as Custom; never discard a rhythm.
+        preset,
+        customRhythm: validRhythm(s.customRhythm)
+          ? ([...s.customRhythm] as Rhythm)
+          : preset === "custom"
+            ? ([...rhythm] as Rhythm)
+            : undefined,
         minutes:
           Number.isFinite(s.minutes) && s.minutes >= 1 && s.minutes <= 120
             ? s.minutes

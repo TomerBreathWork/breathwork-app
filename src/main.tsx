@@ -1,8 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { appDefaults, chooseBackground, mediaUrl } from "./media";
-import { validRhythm, type Rhythm } from "./engine";
-import { loadSettings, presets, type Settings } from "./settings";
+import { validRhythm } from "./engine";
+import { loadSettings, type Settings } from "./settings";
+import {
+  editRhythm,
+  selectPreset,
+  selectCustom,
+  type PresetKey,
+} from "./presets";
 import { useLanguage } from "./i18n";
 import { useBreathingSession } from "./useBreathingSession";
 import { useSessionHistory } from "./useSessionHistory";
@@ -14,7 +20,6 @@ import "./style.css";
 const settingsBackground = mediaUrl("media/backgrounds/3.webp")!;
 function App() {
   const [settings, setSettings] = useState<Settings>(loadSettings);
-  const custom = settings.preset === "custom";
   const [background, setBackground] = useState(settingsBackground);
   const [failedImage, setFailedImage] = useState("");
   const previousImage = useRef("");
@@ -43,24 +48,25 @@ function App() {
   function patch(patch: Partial<Settings>) {
     if (patch.rhythm !== undefined || patch.minutes !== undefined)
       session.cancelPreparation();
-    if (patch.rhythm !== undefined) patch.preset = "custom";
     if (patch.sound !== undefined) void session.changeSound(patch.sound);
     if (patch.background !== undefined) selectBackground(patch.background);
-    setSettings((value) => ({ ...value, ...patch }));
+    setSettings((value) =>
+      patch.rhythm !== undefined
+        ? editRhythm({ ...value, ...patch }, patch.rhythm)
+        : { ...value, ...patch },
+    );
   }
   async function start() {
     if (!valid) return;
     if (await session.start()) selectBackground(settings.background, true);
   }
-  function onPreset(rhythm: Rhythm) {
+  function onPreset(key: PresetKey) {
     session.cancelPreparation();
-    setSettings((value) => ({
-      ...value,
-      rhythm,
-      preset:
-        presets.find((p) => p.rhythm.every((n, i) => rhythm[i] === n))?.key ||
-        "custom",
-    }));
+    setSettings((value) => selectPreset(value, key));
+  }
+  function onCustom() {
+    session.cancelPreparation();
+    setSettings(selectCustom);
   }
   function reset() {
     session.cancelPreparation();
@@ -107,8 +113,7 @@ function App() {
           <SettingsPanel
             t={t}
             settings={settings}
-            custom={custom}
-            onCustom={() => patch({ preset: "custom" })}
+            onCustom={onCustom}
             onPreset={onPreset}
             patch={patch}
             advanced={advanced}
@@ -121,6 +126,7 @@ function App() {
             t={t}
             status={session.status}
             phase={session.phase}
+            showHoldDetail={language !== "ja"}
             remaining={(session.end - session.elapsed) / 1000}
             preparing={session.preparing}
             preparationProgress={

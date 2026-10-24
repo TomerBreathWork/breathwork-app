@@ -51,7 +51,7 @@ test('browser Hebrew detection works before a preference is selected',async({bro
  await page.goto('http://127.0.0.1:5174/breathwork-app/');await expect(page.locator('html')).toHaveAttribute('lang','he');await expect(page.getByRole('button',{name:he.start,exact:true})).toBeVisible();await context.close();
 });
 test('hold water and waves stay stationary while the clockwise ring progresses',async({page})=>{
- await silentSettings(page);await page.getByRole('button',{name:'Box breathing'}).click();await page.getByRole('button',{name:en.start,exact:true}).click();await finishPreparation(page);
+ await silentSettings(page);await page.getByRole('button',{name:'Box Breath'}).click();await page.getByRole('button',{name:en.start,exact:true}).click();await finishPreparation(page);
  await page.clock.runFor(4200);await expect(page.locator('.breath-circle')).toHaveAttribute('data-phase','1');
  const high=await page.locator('.water').getAttribute('style'),arc=await page.locator('.ring-progress').getAttribute('stroke-dashoffset');
  expect(await page.locator('.wave').evaluate(el=>getComputedStyle(el).animationPlayState)).toBe('paused');

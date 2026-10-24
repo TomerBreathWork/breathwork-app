@@ -6,11 +6,18 @@ export function BreathingCircle({
   status,
   phase,
   preparationProgress,
+  showHoldDetail = true,
 }: {
   t: Translator;
   status: Status;
   preparationProgress?: number;
-  phase: { index: number; progress: number; remaining: number; duration: number };
+  showHoldDetail?: boolean;
+  phase: {
+    index: number;
+    progress: number;
+    remaining: number;
+    duration: number;
+  };
 }) {
   const preparing = preparationProgress !== undefined;
   const hold = !preparing && (phase.index === 1 || phase.index === 3);
@@ -70,7 +77,7 @@ export function BreathingCircle({
               : phaseCountdown(phase.remaining, phase.duration)}
           </span>
         )}
-        {hold && status === "running" && (
+        {hold && status === "running" && showHoldDetail && (
           <small>{t(phase.index === 1 ? "afterInhale" : "afterExhale")}</small>
         )}
       </div>

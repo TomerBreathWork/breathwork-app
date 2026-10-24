@@ -6,7 +6,7 @@ async function advanced(page:Page){const button=page.getByRole('button',{name:'A
 test('configure, persist, start, pause, resume and stop',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('./');
- await page.getByRole('button',{name:'Box breathing'}).click();
+ await page.getByRole('button',{name:'Box Breath'}).click();
  await page.reload();
  await expect(page.getByRole('spinbutton',{name:'Hold after inhale seconds'})).toHaveValue('4');
  await page.getByRole('button',{name:'Advanced Options'}).click();
@@ -33,7 +33,7 @@ test('configure, persist, start, pause, resume and stop',async({page})=>{
 });
 test('zero phases skip and completion respects the whole final cycle',async({page})=>{
  await page.goto('./');
- await page.getByRole('button',{name:'Evening unwind'}).click();
+ await page.getByRole('button',{name:'4-7-8'}).click();
  await page.locator('#duration').fill('1');
 
  await page.getByRole('button',{name:'Start Practice'}).click();await finishPreparation(page);

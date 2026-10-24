@@ -9,9 +9,15 @@ export function Icon({
     | "chevron"
     | "globe"
     | "sound"
-    | "mute";
+    | "mute"
+    | "share"
+    | "message"
+    | "help";
 }) {
   const paths = {
+    share: "M12 16V3m-4 4 4-4 4 4M5 13v7h14v-7",
+    message: "M4 4h16v12H9l-5 4ZM8 8h8M8 12h5",
+    help: "M9.5 9a2.5 2.5 0 1 1 4.4 1.6c-1 .7-1.9 1-1.9 2.4M12 17h.01",
     play: "M8 5v14l11-7Z",
     pause: "M8 5v14M16 5v14",
     stop: "M6 6h12v12H6Z",
@@ -33,7 +39,9 @@ export function Icon({
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      {name === "globe" && <circle cx="12" cy="12" r="9" />}
+      {(name === "globe" || name === "help") && (
+        <circle cx="12" cy="12" r="9" />
+      )}
       <path d={paths[name]} />
     </svg>
   );

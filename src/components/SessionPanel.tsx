@@ -7,10 +7,16 @@ import { Icon } from "./Icons";
 interface Props {
   t: Translator;
   status: Exclude<SessionStatus, "idle">;
-  phase: { index: number; progress: number; remaining: number; duration: number };
+  phase: {
+    index: number;
+    progress: number;
+    remaining: number;
+    duration: number;
+  };
   remaining: number;
   preparing: boolean;
   preparationProgress?: number;
+  showHoldDetail?: boolean;
   restart: () => void;
   pause: () => void;
   resume: () => void;
@@ -24,6 +30,7 @@ export function SessionPanel({
   remaining,
   preparing,
   preparationProgress,
+  showHoldDetail = true,
   restart,
   pause,
   resume,
@@ -43,6 +50,7 @@ export function SessionPanel({
           status={status}
           phase={phase}
           preparationProgress={preparationProgress}
+          showHoldDetail={showHoldDetail}
         />
         <p className="phase-guidance">
           {t(

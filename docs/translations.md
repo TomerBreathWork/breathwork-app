@@ -9,11 +9,11 @@ Generated from `src/locales/{en,he,ja}.json`. Run `node scripts/generate-transla
 | tagline | Breathe. Be Present. Feel Better. | לנשום. להיות ברגע. להרגיש טוב יותר. | 呼吸して、今を感じて、心地よく。 |
 | language | Language | שפה | 言語 |
 | presets | Find your rhythm | מצאו את הקצב שלכם | 自分のリズムで |
-| coherentBreathing | Coherent Breathing | נשימה קוהרנטית | コヒーレント呼吸 |
+| coherentBreathing | Coherent Breath | Coherent Breath | Coherent Breath |
 | slowSteady | Slow & steady | לאט ובנחת | ゆっくり穏やかに |
-| boxBreathing | Box breathing | נשימה מרובעת | ボックス呼吸 |
-| eveningUnwind | Evening unwind | רגיעה בערב | 夜のリラックス |
-| custom | Custom | מותאם אישית | カスタム |
+| boxBreathing | Box Breath | Box Breath | Box Breath |
+| eveningUnwind | 4-7-8 | 4-7-8 | 4-7-8 |
+| custom | Custom | Custom | Custom |
 | customHint | Your own rhythm | הקצב שלכם | 自分だけのリズム |
 | inhale | Inhale | שאיפה | 吸う |
 | holdIn | Hold after inhale | עצירה אחרי שאיפה | 吸った後に止める |
@@ -81,3 +81,27 @@ Generated from `src/locales/{en,he,ja}.json`. Run `node scripts/generate-transla
 | rhythmLabel | Breathing rhythm | קצב הנשימה | 呼吸のリズム |
 | preparationInstruction | Breathe Out Fully | נשפו את האוויר החוצה | ゆっくり息を吐き切る |
 | preparationHint | Your practice begins in a moment. | התרגול מתחיל בעוד רגע. | まもなく練習が始まります。 |
+| share | Share | שיתוף | 共有 |
+| contact | Contact | יצירת קשר | お問い合わせ |
+| howToUse | How to Use | איך משתמשים | 使い方 |
+| close | Close | סגירה | 閉じる |
+| footerActions | More actions | פעולות נוספות | その他の操作 |
+| shareMessage | I've been using Breath Flow, a simple app for mindful breathing. Give it a try! | רציתי לשתף את Breath Flow, אפליקציה פשוטה ונעימה לנשימה מודעת. מוזמנים לנסות! | 心地よく呼吸できるシンプルなアプリ、Breath Flowを使っています。よかったら試してみてください！ |
+| contactMessage | Hi Tomer, I've been using the Breath Flow app, and I'd love to learn more about breathwork therapy. | שלום תומר, השתמשתי באפליקציית Breath Flow, ומעניין אותי לשמוע עוד על תרפיה בנשימה. | トメルさん、こんにちは。Breath Flowアプリを使ってみました。呼吸セラピーについて、もう少し詳しくお話を聞いてみたいです。 |
+| shareFallback | You can copy the app link to share it. | אפשר להעתיק את הקישור לאפליקציה ולשתף אותו. | アプリのリンクをコピーして共有できます。 |
+| copyLink | Copy link | העתקת קישור | リンクをコピー |
+| linkCopied | Link copied. Share it wherever you like. | הקישור הועתק. אפשר לשתף אותו בכל דרך שנוחה לכם. | リンクをコピーしました。お好きな方法で共有してください。 |
+| copyManually | Select and copy this link to share it. | בחרו והעתיקו את הקישור כדי לשתף אותו. | リンクを選択してコピーし、共有してください。 |
+| appLink | App link | קישור לאפליקציה | アプリのリンク |
+| helpTitle | How to Use Breath Flow | איך משתמשים ב־Breath Flow? | Breath Flow の使い方 |
+| helpIntro | Find a comfortable breathing rhythm that works for you. | מצאו קצב נשימה שנעים ומתאים לכם. | 自分に合ったペースで、心地よく呼吸しましょう。 |
+| helpChooseTitle | Choose a breathing pattern | בחרו תרגול נשימה | 呼吸パターンを選ぶ |
+| helpChooseBody | Select Coherent Breath, Box Breath or 4-7-8, or choose Custom to create your own breathing rhythm. | בחרו Coherent Breath, Box Breath או 4-7-8, או בחרו Custom כדי ליצור קצב נשימה אישי. | Coherent Breath、Box Breath、4-7-8 から好きなパターンを選びます。Custom では、自分に合った呼吸のリズムを自由に設定できます。 |
+| helpAdjustTitle | Adjust the breathing times | התאימו את זמני הנשימה | 呼吸の時間を調整する |
+| helpAdjustBody | Set the duration of each phase: inhale, hold, exhale and hold.  You can adjust the timing in 0.5-second increments. Set either hold to 0 if you prefer continuous breathing without pauses. | קבעו את משך השאיפה, העצירה, הנשיפה והעצירה שאחריה.  אפשר להתאים את הזמנים בחצאי שניות. אם אינכם רוצים לעצור את הנשימה, הגדירו את משך העצירה ל־0. | 吸う・止める・吐く・止める、それぞれの時間を調整できます。  0.5秒単位で設定でき、止める時間を0秒にすると、息を止めずに呼吸できます。 |
+| helpLengthTitle | Choose your session length | בחרו את משך התרגול | 練習時間を選ぶ |
+| helpLengthBody | Select how long you would like to practice.  The app always finishes a complete breathing cycle, so a few extra seconds may be added to your selected session length. | בחרו כמה זמן תרצו לתרגל.  האפליקציה תמיד משלימה מחזור נשימה שלם, ולכן ייתכן שיתווספו כמה שניות למשך שבחרתם. | 練習したい時間を選びます。  設定した時間になっても、呼吸の途中では終了せず、最後の呼吸サイクルを終えてから自然に終了します。 |
+| helpStartTitle | Start your practice | התחילו לתרגל | 練習を始める |
+| helpStartBody | Tap Start Practice.  You will have five silent seconds to gently breathe out before the session begins.  Then follow the movement of the water and the sounds at a comfortable pace. | לחצו על Start Practice.  בתחילת התרגול יהיו לכם חמש שניות שקטות להוציא את האוויר בעדינות.  לאחר מכן עקבו אחר תנועת המים והצלילים, ונשמו בקצב שנעים לכם. | 「Start Practice」を押すと、最初に5秒間の準備時間があります。  ゆっくり息を吐き切ってから、画面の水の動きと音に合わせて、無理なく呼吸を続けましょう。 |
+| helpImportantTitle | Important to Remember | חשוב לזכור | 大切なこと |
+| helpImportantBody | Breathing should feel natural, comfortable and gentle.  There is no need to force a deep inhale, push the air out or hold your breath longer than feels comfortable.  You can shorten the breathing times, remove the holds or return to your natural breathing at any moment.  If you experience dizziness, pain, anxiety, breathlessness or other discomfort, stop the practice and return to your normal breathing.  The goal is not perfect performance. It is to discover a breathing rhythm that feels right for you. | הנשימה צריכה להרגיש טבעית, נוחה ונעימה.  אין צורך לשאוף בכוח, להוציא את כל האוויר במאמץ או להחזיק את הנשימה מעבר למה שנוח לכם.  אפשר לקצר את הזמנים, לוותר על עצירות או לחזור לנשימה רגילה בכל רגע.  אם מופיעים סחרחורת, כאב, תחושת לחץ, קוצר נשימה או אי־נוחות אחרת, הפסיקו את התרגול וחזרו לנשום באופן טבעי.  המטרה אינה לבצע את התרגול בצורה מושלמת, אלא למצוא קצב נשימה שמתאים לכם. | 呼吸は、無理をせず、自然で心地よいペースで行いましょう。  大きく吸おうと頑張ったり、強く吐いたり、苦しくなるまで息を止めたりする必要はありません。  自分に合わないと感じたら、呼吸の時間を短くしたり、息を止める時間を0秒にしたりして調整してください。  めまい、痛み、不安感、息苦しさなどを感じた場合は、練習を中止し、普段の自然な呼吸に戻してください。  大切なのは、上手に呼吸することではなく、今の自分に合った心地よいリズムを見つけることです。 |
