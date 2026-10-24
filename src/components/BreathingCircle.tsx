@@ -1,4 +1,5 @@
 import type { Translator } from "../i18n";
+import { phaseCountdown } from "../countdown";
 type Status = "running" | "paused" | "completed";
 export function BreathingCircle({
   t,
@@ -9,7 +10,7 @@ export function BreathingCircle({
   t: Translator;
   status: Status;
   preparationProgress?: number;
-  phase: { index: number; progress: number; remaining: number };
+  phase: { index: number; progress: number; remaining: number; duration: number };
 }) {
   const preparing = preparationProgress !== undefined;
   const hold = !preparing && (phase.index === 1 || phase.index === 3);
@@ -66,7 +67,7 @@ export function BreathingCircle({
           >
             {preparing
               ? Math.max(1, Math.ceil((1 - preparationProgress) * 5))
-              : Math.ceil(phase.remaining * 2) / 2}
+              : phaseCountdown(phase.remaining, phase.duration)}
           </span>
         )}
         {hold && status === "running" && (

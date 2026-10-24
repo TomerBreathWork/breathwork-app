@@ -7,7 +7,7 @@ import { Icon } from "./Icons";
 interface Props {
   t: Translator;
   status: Exclude<SessionStatus, "idle">;
-  phase: { index: number; progress: number; remaining: number };
+  phase: { index: number; progress: number; remaining: number; duration: number };
   remaining: number;
   preparing: boolean;
   preparationProgress?: number;

@@ -282,7 +282,7 @@ export function useBreathingSession(settings: Settings) {
     preparationElapsed,
     elapsed,
     end,
-    phase,
+    phase: { ...phase, duration: rhythm[phase.index] },
     muted,
     setMuted,
     preparing: preparing || preloading,
