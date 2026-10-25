@@ -12,6 +12,7 @@ import {
 import { useLanguage } from "./i18n";
 import { useBreathingSession } from "./useBreathingSession";
 import { useSessionHistory } from "./useSessionHistory";
+import { useOfflineSupport } from "./useOfflineSupport";
 import { Brand } from "./components/Brand";
 import { AdvancedOptions } from "./components/AdvancedOptions";
 import { SettingsPanel } from "./components/SettingsPanel";
@@ -26,6 +27,9 @@ function App() {
   const { language, setLanguage, t } = useLanguage();
   const session = useBreathingSession(settings),
     active = session.status !== "idle";
+  const { offlineStatus, beginPractice } = useOfflineSupport(
+    session.status === "running" || session.status === "paused",
+  );
   useSessionHistory(active, session.stop);
   const displayedBackground = active ? background : settingsBackground;
   const valid =
@@ -58,6 +62,8 @@ function App() {
   }
   async function start() {
     if (!valid) return;
+    // Close the update/reload race before React commits the running screen.
+    beginPractice();
     if (await session.start()) selectBackground(settings.background, true);
   }
   function onPreset(key: PresetKey) {
@@ -85,6 +91,7 @@ function App() {
       onReset={active ? undefined : reset}
       audioStatus={session.audioStatus}
       disablePreview={session.inPreparation}
+      offlineStatus={offlineStatus}
     />
   );
   return (

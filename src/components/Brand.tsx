@@ -14,7 +14,7 @@ export function Brand({
       <div className="brand">
         <img
           className="brand-mark"
-          src={`${import.meta.env.BASE_URL}branding/brush-circle.svg`}
+          src={`${import.meta.env.BASE_URL}brand/original-logo-transparent.png`}
           alt=""
         />
         <div dir="ltr">

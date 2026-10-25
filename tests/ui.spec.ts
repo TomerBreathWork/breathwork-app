@@ -94,8 +94,8 @@ test('active visual/audio preferences keep the session clock and phase intact',a
 });
 test('branding and manifest assets respect the GitHub Pages subpath',async({page,request})=>{
  await page.goto('./');await expect(page).toHaveTitle(/Breath Flow/);
- for(const file of ['brush-circle.svg','app-icon.svg','icon-192.png','icon-512.png','apple-touch-icon.png','app.webmanifest'])expect((await request.get(`branding/${file}`)).status()).toBe(200);
- const manifest=await (await request.get('branding/app.webmanifest')).json();expect(manifest.start_url).toBe('../');expect(manifest.icons).toHaveLength(3);
+ for(const file of ['favicon.svg','favicon.ico','favicon-32x32.png','pwa-192x192.png','pwa-512x512.png','pwa-maskable-512x512.png','apple-touch-icon.png','app.webmanifest','original-logo-transparent.png','og-image.png'])expect((await request.get(`brand/${file}`)).status()).toBe(200);
+ const manifest=await (await request.get('brand/app.webmanifest')).json();expect(manifest.start_url).toBe('/breathwork-app/');expect(manifest.scope).toBe('/breathwork-app/');expect(manifest.icons).toHaveLength(3);
 });
 
 test('sound preview plays on settings; active preview pauses and resume seeks the phase',async({page})=>{

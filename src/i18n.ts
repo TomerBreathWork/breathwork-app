@@ -30,7 +30,7 @@ export function useLanguage() {
   useEffect(() => {
     document.documentElement.lang = language;
     document.documentElement.dir = language === "he" ? "rtl" : "ltr";
-    document.title = `Breath Flow · ${dictionaries[language].tagline}`;
+    document.title = `Breath Flow — ${dictionaries[language].tagline}`;
     try {
       localStorage.setItem("breath-flow-language", language);
     } catch {}

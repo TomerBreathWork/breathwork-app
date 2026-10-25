@@ -3,6 +3,7 @@ import { hasRecordings, selectableBackgrounds } from "../media";
 import { sceneName, type TranslationKey, type Translator } from "../i18n";
 import type { Settings } from "../settings";
 import { Icon } from "./Icons";
+import type { OfflineStatus } from "../offline";
 interface Props {
   t: Translator;
   settings: Settings;
@@ -13,6 +14,7 @@ interface Props {
   onReset?: () => void;
   audioStatus: TranslationKey;
   disablePreview?: boolean;
+  offlineStatus: OfflineStatus;
 }
 export function AdvancedOptions({
   t,
@@ -24,6 +26,7 @@ export function AdvancedOptions({
   onReset,
   audioStatus,
   disablePreview,
+  offlineStatus,
 }: Props) {
   const [open, setOpen] = useState(false);
   return (
@@ -107,6 +110,9 @@ export function AdvancedOptions({
           </p>
           <p className="helper">
             {t("zeroHint")} {t("finishHint")}
+          </p>
+          <p className="helper" data-offline-status={offlineStatus}>
+            {t(offlineStatus)}
           </p>
           {onReset && (
             <button className="text-button" onClick={onReset}>

@@ -1,0 +1,31 @@
+{
+  "id": "/breathwork-app/",
+  "name": "Breath Flow",
+  "short_name": "Breath Flow",
+  "description": "Breathe. Be Present. Feel Better.",
+  "start_url": "/breathwork-app/",
+  "scope": "/breathwork-app/",
+  "display": "standalone",
+  "theme_color": "#19484A",
+  "background_color": "#F6F1E8",
+  "icons": [
+    {
+      "src": "pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
