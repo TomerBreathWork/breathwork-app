@@ -29,6 +29,7 @@ function App() {
     active = session.status !== "idle";
   const { offlineStatus, beginPractice } = useOfflineSupport(
     session.status === "running" || session.status === "paused",
+    settings,
   );
   useSessionHistory(active, session.stop);
   const displayedBackground = active ? background : settingsBackground;

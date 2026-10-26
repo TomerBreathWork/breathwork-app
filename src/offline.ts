@@ -1,3 +1,5 @@
+import { preserveConfigurationForUpdate, type Settings } from "./settings";
+
 export type OfflineStatus =
   | "offlineSaving"
   | "offlineReady"
@@ -10,6 +12,7 @@ export type OfflineStatus =
 class OfflineManager {
   private busy = true;
   private reloadPending = false;
+  private configuration?: Settings;
   private registration?: ServiceWorkerRegistration;
   private registering = false;
   private watched = new WeakSet<ServiceWorkerRegistration>();
@@ -30,8 +33,15 @@ class OfflineManager {
     this.listeners.forEach((listener) => listener(status));
   }
   private reloadIfIdle = () => {
-    if (this.reloadPending && !this.busy) location.reload();
+    if (this.reloadPending && !this.busy) {
+      if (this.configuration)
+        preserveConfigurationForUpdate(this.configuration);
+      location.reload();
+    }
   };
+  setConfiguration(settings: Settings) {
+    this.configuration = settings;
+  }
   setBusy(busy: boolean) {
     this.busy = busy;
     if (!busy) {

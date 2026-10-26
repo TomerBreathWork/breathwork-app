@@ -1,3 +1,4 @@
+import { configureBreathing } from "./configure-breathing";
 import { test, expect, type Page } from "@playwright/test";
 import en from "../src/locales/en.json" with { type: "json" };
 import he from "../src/locales/he.json" with { type: "json" };
@@ -110,11 +111,8 @@ for (const [language, t] of Object.entries(dictionaries)) {
 test("Japanese phase labels are short on Settings, both Practice holds and all help instructions", async ({
   page,
 }) => {
-  await open(page, "en", {
-    preset: "boxBreathing",
-    rhythm: [4, 4, 4, 4],
-    sound: "silent",
-  });
+  await open(page, "en", {sound:"silent"});
+  await configureBreathing(page,{preset:"boxBreathing"});
   await page.locator(".language-picker select").selectOption("ja");
   await expect(page.locator(".phase-row > label:first-child")).toHaveText([
     "吸う",
@@ -182,7 +180,7 @@ test("linear inhale/exhale bounds, accurate half seconds and clamped manual entr
       await input.evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
     ).toBeGreaterThanOrEqual(16);
 });
-test("both hold sliders use the precision mapping and keep exact manually entered durations after reload", async ({
+test("both hold sliders use the precision mapping and keep exact manually entered durations between screens", async ({
   page,
 }) => {
   await open(page);
@@ -208,7 +206,8 @@ test("both hold sliders use the precision mapping and keep exact manually entere
     await expect(input).toHaveValue("31.5");
     await expect(slider).toHaveValue("70.5");
   }
-  await page.reload();
+  await page.getByRole("button",{name:en.start,exact:true}).click();
+  await page.getByRole("button",{name:en.stop,exact:true}).click();
   for (const index of [1, 3]) {
     await expect(page.locator(`#phase-value-${index}`)).toHaveValue("31.5");
     await expect(page.locator(`#phase-${index}`)).toHaveValue("70.5");
@@ -221,7 +220,7 @@ test("both hold sliders use the precision mapping and keep exact manually entere
   await page.keyboard.press("End");
   await expect(page.locator("#phase-value-1")).toHaveValue("120");
 });
-test("legacy overlong breaths and saved Custom memory clamp to 40 without losing preferences", async ({
+test("legacy overlong breaths and saved Custom memory are ignored without losing preferences", async ({
   page,
 }) => {
   await open(page, "en", {
@@ -234,11 +233,11 @@ test("legacy overlong breaths and saved Custom memory clamp to 40 without losing
     background: "photo-5",
   });
   await page.getByRole("button", { name: "Custom", exact: true }).click();
-  for (const [i, value] of [40, 31.5, 40, 119.5].entries())
+  for (const [i, value] of [5.5, 0, 5.5, 0].entries())
     await expect(page.locator(`#phase-value-${i}`)).toHaveValue(String(value));
   await page.reload();
-  await expect(page.locator("#phase-value-0")).toHaveValue("40");
-  await expect(page.locator("#duration")).toHaveValue("7");
+  await expect(page.locator("#phase-value-0")).toHaveValue("5.5");
+  await expect(page.locator("#duration")).toHaveValue("3");
   const saved = await page.evaluate(() =>
     JSON.parse(localStorage.getItem("still-settings")!),
   );

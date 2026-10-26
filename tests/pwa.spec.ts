@@ -1,3 +1,4 @@
+import { configureBreathing } from "./configure-breathing";
 import { test as base, expect, type Page } from "@playwright/test";
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
@@ -118,6 +119,7 @@ async function open(page: Page, url: string, sound = "silent") {
     { sound },
   );
   await page.goto(url);
+  await configureBreathing(page, { minutes: 1 });
 }
 async function ready(page: Page) {
   await page.getByRole("button", { name: en.advanced, exact: true }).click();
@@ -184,7 +186,9 @@ test("approved assets, initial HTML social metadata, icons and standalone manife
     expect((await request.get(site.url + "brand/" + icon.src)).ok()).toBe(true);
   await open(page, site.url);
   await ready(page);
-  await expect(page).toHaveTitle("Breath Flow — Breathe. Be Present. Feel Better.");
+  await expect(page).toHaveTitle(
+    "Breath Flow — Breathe. Be Present. Feel Better.",
+  );
   await expect(page.locator(".brand-mark")).toHaveAttribute(
     "src",
     "/breathwork-app/brand/original-logo-transparent.png",
@@ -265,7 +269,7 @@ test("offline reload retains settings, all photographs, decoded recordings and a
     "data-phase",
     "preparation",
   );
-  await expect(page.locator(".remaining-value")).toHaveText("01:06");
+  await expect(page.locator(".remaining-value")).toHaveText("03:07");
   expect(await page.evaluate(() => (window as any).offlineVoices)).toBe(0);
   await expect(page.locator(".breath-circle")).toHaveAttribute(
     "data-phase",
@@ -357,6 +361,11 @@ test("update waits through preparation and pause, then reloads safely and remove
 }) => {
   await open(page, site.url);
   await ready(page);
+  await configureBreathing(page, {
+    preset: "custom",
+    rhythm: [6.5, 1.5, 8, 0.5],
+    minutes: 7,
+  });
   await page.getByRole("button", { name: en.start, exact: true }).click();
   site.release(2);
   await checkForUpdate(page);
@@ -393,6 +402,12 @@ test("update waits through preparation and pause, then reloads safely and remove
     { timeout: 10000 },
   );
   await expect(page.locator(".settings-panel")).toBeVisible();
+  await expect(page.locator("#duration")).toHaveValue("7");
+  for (const [i, value] of [6.5, 1.5, 8, 0.5].entries())
+    await expect(page.locator(`#phase-value-${i}`)).toHaveValue(String(value));
+  await expect(
+    page.getByRole("button", { name: "Custom", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
   const htmlKeys = await page.evaluate(async () =>
     (
       await Promise.all(
@@ -410,6 +425,12 @@ test("update waits through preparation and pause, then reloads safely and remove
       () => JSON.parse(localStorage.getItem("still-settings")!).volume,
     ),
   ).toBe(0.25);
+  await page.reload();
+  await expect(page.locator("#duration")).toHaveValue("3");
+  await expect(page.locator("#phase-value-0")).toHaveValue("5.5");
+  await expect(
+    page.getByRole("button", { name: "Coherent Breath", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
 });
 
 test("a second practicing tab blocks an idle tab update; closing it allows eventual activation", async ({
@@ -433,6 +454,11 @@ test("a second practicing tab blocks an idle tab update; closing it allows event
   await page.waitForTimeout(300);
   await expect(page.locator('meta[name="test-release"]')).toHaveCount(0);
   await expect(second.locator(".session-panel")).toBeVisible();
+  // The tabs intentionally have different schedules. The idle tab's update
+  // must preserve its own configuration rather than the last localStorage writer.
+  await configureBreathing(page, { preset: "boxBreathing", minutes: 7 });
+  await second.getByRole("button", { name: en.advanced, exact: true }).click();
+  await second.getByRole("slider", { name: en.volume, exact: true }).fill("0.3");
   await second.close();
   // Returning focus is one of the normal retry triggers (also online/60s).
   await page.evaluate(() =>
@@ -443,6 +469,10 @@ test("a second practicing tab blocks an idle tab update; closing it allows event
     "two",
     { timeout: 10000 },
   );
+  await expect(page.locator("#duration")).toHaveValue("7");
+  await expect(
+    page.getByRole("button", { name: "Box Breath", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
 });
 
 test("a practice started during activation defers the reload until Stop", async ({

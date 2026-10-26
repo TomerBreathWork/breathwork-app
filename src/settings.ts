@@ -1,31 +1,46 @@
 import { appDefaults, selectableBackgrounds } from "./media";
-import { migrateRhythm } from "./duration-controls";
-import { restorePreset, type PatternSettings } from "./presets";
+import { type PatternSettings } from "./presets";
+import {
+  consumeUpdateConfiguration,
+  saveUpdateConfiguration,
+} from "./launch-configuration";
 export { presets } from "./presets";
 export type Settings = typeof appDefaults &
   Pick<PatternSettings, "customRhythm">;
+// Consume once per document, outside React's double-invoked StrictMode initializer.
+const updateConfiguration = (() => {
+  try {
+    const navigation = performance.getEntriesByType("navigation")[0] as
+      | PerformanceNavigationTiming
+      | undefined;
+    return consumeUpdateConfiguration(
+      sessionStorage,
+      navigation?.type === "reload",
+    );
+  } catch {
+    return;
+  }
+})();
+export function preserveConfigurationForUpdate(settings: Settings) {
+  try {
+    saveUpdateConfiguration(sessionStorage, settings);
+  } catch {
+    /* Restricted storage must never prevent an update or break practice. */
+  }
+}
 export function loadSettings(): Settings {
+  const initial = {
+    ...appDefaults,
+    ...updateConfiguration,
+    rhythm: [
+      ...(updateConfiguration?.rhythm ?? appDefaults.rhythm),
+    ] as typeof appDefaults.rhythm,
+  };
   try {
     const s = JSON.parse(localStorage.getItem("still-settings") || "null");
     if (s && typeof s === "object") {
-      const migrated = migrateRhythm(s.rhythm);
-      const rhythm =
-        migrated ?? ([...appDefaults.rhythm] as typeof appDefaults.rhythm);
-      const preset = migrated
-        ? restorePreset(s.preset, rhythm)
-        : appDefaults.preset;
       return {
-        ...appDefaults,
-        rhythm,
-        // Retired presets retain their durations as Custom; never discard a rhythm.
-        preset,
-        customRhythm:
-          migrateRhythm(s.customRhythm) ??
-          (preset === "custom" ? ([...rhythm] as typeof rhythm) : undefined),
-        minutes:
-          Number.isFinite(s.minutes) && s.minutes >= 1 && s.minutes <= 120
-            ? s.minutes
-            : appDefaults.minutes,
+        ...initial,
         sound: ["bowls", "recordings", "silent"].includes(s.sound)
           ? s.sound
           : appDefaults.sound,
@@ -42,7 +57,7 @@ export function loadSettings(): Settings {
       };
     }
   } catch {}
-  return { ...appDefaults };
+  return initial;
 }
 export const clockText = (seconds: number) =>
   `${Math.floor(seconds / 60)

@@ -1,8 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
+import type { Settings } from "./settings";
 import { offlineManager, type OfflineStatus } from "./offline";
 
-export function useOfflineSupport(practicing: boolean) {
+export function useOfflineSupport(practicing: boolean, settings: Settings) {
   const [status, setStatus] = useState<OfflineStatus>("offlineSaving");
+  useLayoutEffect(() => {
+    offlineManager.setConfiguration(settings);
+  }, [settings]);
   useEffect(() => {
     const unsubscribe = offlineManager.subscribe(setStatus);
     offlineManager.start();

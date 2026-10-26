@@ -1,3 +1,4 @@
+import { configureBreathing } from "./configure-breathing";
 import {test, expect} from '@playwright/test';
 import en from '../src/locales/en.json' with {type:'json'};
 
@@ -16,7 +17,7 @@ test.beforeEach(async({page})=>{
 for(const [duration,timeline] of cases){
  test(`${duration}s circle changes only at the initial fraction and whole-second countdown boundaries`,async({page})=>{
   await page.addInitScript(duration=>localStorage.setItem('still-settings',JSON.stringify({rhythm:[duration,0,2,0],minutes:1,sound:'silent'})),duration);
-  await page.goto('./');await page.getByRole('button',{name:en.start,exact:true}).click();
+  await page.goto('./');await configureBreathing(page,{rhythm:[duration,0,2,0],minutes:1});await page.getByRole('button',{name:en.start,exact:true}).click();
   await page.evaluate(()=>{
    const count=document.querySelector('.phase-count')!,circle=document.querySelector('.breath-circle')!;
    const beginning=performance.now()+5000;

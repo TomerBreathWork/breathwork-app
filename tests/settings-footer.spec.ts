@@ -1,3 +1,4 @@
+import { configureBreathing } from "./configure-breathing";
 import { test, expect, type Page } from "@playwright/test";
 import en from "../src/locales/en.json" with { type: "json" };
 import he from "../src/locales/he.json" with { type: "json" };
@@ -127,7 +128,7 @@ for (const [key, name, rhythm] of [
   ["custom", "Custom", [6.5, 1, 8, 0.5]],
   ["slowSteady", "Custom", [4, 0, 6, 0]],
 ] as const)
-  test(`saved ${key} restores its selected button and durations`, async ({
+  test(`saved ${key} cannot override the coherent three-minute startup`, async ({
     page,
   }) => {
     await settings(page, "en", {
@@ -139,17 +140,17 @@ for (const [key, name, rhythm] of [
       volume: 0.25,
     });
     await expect(
-      page.getByRole("button", { name, exact: true }),
+      page.getByRole("button", { name: "Coherent Breath", exact: true }),
     ).toHaveAttribute("aria-pressed", "true");
     for (let i = 0; i < 4; i++)
-      await expect(page.locator(`#phase-value-${i}`)).toHaveValue(String(rhythm[i]));
-    await expect(page.locator("#duration")).toHaveValue("7");
+      await expect(page.locator(`#phase-value-${i}`)).toHaveValue(String([5.5,0,5.5,0][i]));
+    await expect(page.locator("#duration")).toHaveValue("3");
     await page.reload();
     await expect(
-      page.getByRole("button", { name, exact: true }),
+      page.getByRole("button", { name: "Coherent Breath", exact: true }),
     ).toHaveAttribute("aria-pressed", "true");
   });
-test("editing only switches to Custom when necessary, and the last Custom rhythm survives preset switches and reload", async ({
+test("editing only switches to Custom when necessary, and the last Custom rhythm survives preset switches within a launch", async ({
   page,
 }) => {
   await settings(page);
@@ -169,7 +170,8 @@ test("editing only switches to Custom when necessary, and the last Custom rhythm
     page.getByRole("button", { name: "Custom", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: "Box Breath", exact: true }).click();
-  await page.reload();
+  await page.getByRole("button",{name:en.start,exact:true}).click();
+  await page.getByRole("button",{name:en.stop,exact:true}).click();
   await expect(
     page.getByRole("button", { name: "Box Breath", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
@@ -178,10 +180,8 @@ test("editing only switches to Custom when necessary, and the last Custom rhythm
   await expect(inhale).toHaveValue("6.5");
   await expect(page.locator("#phase-value-1")).toHaveValue("1.5");
   await page.reload();
-  await expect(inhale).toHaveValue("6.5");
-  await expect(
-    page.getByRole("button", { name: "Custom", exact: true }),
-  ).toHaveAttribute("aria-pressed", "true");
+  await expect(inhale).toHaveValue("5.5");
+  await expect(page.getByRole("button",{name:"Coherent Breath",exact:true})).toHaveAttribute("aria-pressed","true");
 });
 test("unsupported native sharing offers clipboard copy and the confirmation follows language changes", async ({
   page,
@@ -283,6 +283,7 @@ for (const [preset, rhythm] of [
     await page.clock.install({ time: new Date("2026-10-24T12:00:00Z") });
     await page.clock.pauseAt(new Date("2026-10-24T12:00:01Z"));
     await settings(page, "en", { preset, rhythm, minutes: 1, sound: "silent" });
+    await configureBreathing(page,{preset,rhythm,minutes:1});
     await page.locator(".language-picker select").selectOption("ja");
     await page.getByRole("button", { name: ja.start, exact: true }).click();
     await page.clock.runFor(5020);

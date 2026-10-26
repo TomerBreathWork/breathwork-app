@@ -1,3 +1,4 @@
+import { configureBreathing } from "./configure-breathing";
 import { test, expect } from "@playwright/test";
 import en from "../src/locales/en.json" with { type: "json" };
 import he from "../src/locales/he.json" with { type: "json" };
@@ -8,7 +9,7 @@ test.beforeEach(async ({ page }) => {
   await page.clock.pauseAt(new Date("2026-10-24T12:00:01Z"));
 });
 for (const [language, t] of Object.entries({ en, he, ja })) {
-  test(`${language}: coherent default, decimal inputs, custom persistence and centered branding`, async ({
+  test(`${language}: coherent default, decimal inputs, same-session custom memory and centered branding`, async ({
     page,
   }) => {
     await page.setViewportSize({ width: 375, height: 812 });
@@ -32,7 +33,8 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
     });
     await input.fill("6.5");
     await page.locator("#phase-2").fill("4.5");
-    await page.reload();
+    await page.getByRole("button", {name:t.start,exact:true}).click();
+    await page.getByRole("button", {name:t.stop,exact:true}).click();
     await expect(input).toHaveValue("6.5");
     await expect(page.locator("#phase-2")).toHaveValue("4.5");
     await expect(
@@ -43,9 +45,9 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
       .click();
     await page.getByRole("button", { name: t.custom, exact: false }).click();
     await page.reload();
-    await expect(
-      page.getByRole("button", { name: t.custom, exact: false }),
-    ).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("button", {name:t.coherentBreathing,exact:true})).toHaveAttribute("aria-pressed","true");
+    await expect(input).toHaveValue("5.5");
+    await expect(page.locator("#duration")).toHaveValue("3");
     const center = await page.locator(".brand-mark").boundingBox();
     expect(center!.x + center!.width / 2).toBeCloseTo(187.5, 0);
     expect(
@@ -63,7 +65,7 @@ for (const saved of [
   },
   { minutes: 7, sound: "silent", volume: 0.25, background: "photo-2" },
 ])
-  test(`saved ${"rhythm" in saved ? "explicit rhythm" : "secondary preferences without a rhythm"} survive migration`, async ({
+  test(`saved ${"rhythm" in saved ? "explicit rhythm" : "secondary preferences without a rhythm"} keep secondary preferences but reset startup timing`, async ({
     page,
   }) => {
     await page.addInitScript(
@@ -71,9 +73,9 @@ for (const saved of [
       saved,
     );
     await page.goto("./");
-    await expect(page.locator("#duration")).toHaveValue("7");
+    await expect(page.locator("#duration")).toHaveValue("3");
     await expect(page.locator("#phase-0")).toHaveValue(
-      "rhythm" in saved ? "3.5" : "5.5",
+      "5.5",
     );
     await page.getByRole("button", { name: en.advanced, exact: true }).click();
     await expect(
@@ -112,6 +114,7 @@ for (const [rhythm, seconds, lastPhase] of [
       rhythm,
     );
     await page.goto("./");
+    await configureBreathing(page,{rhythm,minutes:1});
     await page.getByRole("button", { name: en.start, exact: true }).click();
     const timer = `01:${String(seconds - 60).padStart(2, "0")}`;
     await expect(page.locator(".remaining-value")).toHaveText(timer);
@@ -198,6 +201,7 @@ test("coherent native audio skips both holds and emits exactly twelve strikes fo
     };
   });
   await page.goto("./");
+  await configureBreathing(page,{minutes:1});
   await page.getByRole("button", { name: en.start, exact: true }).click();
   await expect(page.locator(".session-panel")).toHaveAttribute(
     "aria-busy",
