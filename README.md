@@ -86,7 +86,7 @@ The browser tests start a production preview on port 5174 and exercise `/breathw
 
 ## Current TEST audio: supplied MP3 samples
 
-The TEST branch now uses the three supplied files in `public/media/audio/bowls/` through `src/sample-audio.ts`. `public/media/manifest.json` maps inhale and exhale to `low_F3_174Hz.mp3`, the first hold to `high_F4_349Hz.mp3`, and the second hold to `mid_C4_262Hz.mp3`. These are actual recordings, not replacement oscillator notes. Both existing non-silent settings play these samples; Advanced Options remain hidden.
+The TEST branch now uses the three supplied files in `public/media/audio/bowls/` through `src/sample-audio.ts`. `public/media/manifest.json` maps inhale to `low_F3_174Hz.mp3`, both holds to `high_F4_349Hz.mp3`, and exhale to `mid_C4_262Hz.mp3`. These are actual recordings, not replacement oscillator notes. Both existing non-silent settings play these samples; Advanced Options remain hidden.
 
 All three samples preload/decode once before Start is enabled. Each nonzero phase schedules one independent, non-looping source using the existing integer-millisecond breathing boundaries. Its full eight-second sample may overlap later cues. There is no added phase fade, gate, crossfade or synthesis. Three-second preparation stays silent. Normal completion cancels future cues while allowing final tails to finish; Stop, Restart and leaving the practice cancel voices with a short de-click release. Pause freezes active sample offsets and resumes those tails smoothly, without another strike. Mute discards active tails and unmute enables subsequent phase cues only. Master volume is independent of source lifetimes. Missing files are skipped with a localized status; breathing continues without synthesized substitutes.
 
@@ -99,7 +99,7 @@ The photographs and current low/high/mid MP3 samples are registered in the manif
 You can add media in these folders and register it in the manifest. During TEST review, commit only to `feature/practice-library`; do not merge into or push `main`. Production remains unchanged until separately approved.
 
 1. Put licensed JPG/JPEG/PNG/WebP photographs in `public/media/backgrounds/`. Prefer compressed WebP, about 1600–2000 pixels wide, preferably below 500 KB. Use simple ASCII filenames (spaces, dashes and underscores are supported).
-2. Put licensed MP3/WAV/OGG recordings in `public/media/audio/`. MP3 is a broadly compatible choice for phones. Use soft, normalized recordings without harsh attacks. The current mapping is low F3 for inhale/exhale, high F4 for the first hold, and mid C4 for the second hold. Uploaded recordings keep their original pitches. No therapeutic frequency claims are made.
+2. Put licensed MP3/WAV/OGG recordings in `public/media/audio/`. MP3 is a broadly compatible choice for phones. Use soft, normalized recordings without harsh attacks. The current mapping is low F3 for inhale, high F4 for both holds, and mid C4 for exhale. Uploaded recordings keep their original pitches. No therapeutic frequency claims are made.
 3. Edit `public/media/manifest.json`, for example:
 
 ```json
@@ -111,8 +111,8 @@ You can add media in these folders and register it in the manifest. During TEST 
   "recordings": {
     "inhale": "media/audio/bowls/low_F3_174Hz.mp3",
     "holdAfterInhale": "media/audio/bowls/high_F4_349Hz.mp3",
-    "exhale": "media/audio/bowls/low_F3_174Hz.mp3",
-    "holdAfterExhale": "media/audio/bowls/mid_C4_262Hz.mp3"
+    "exhale": "media/audio/bowls/mid_C4_262Hz.mp3",
+    "holdAfterExhale": "media/audio/bowls/high_F4_349Hz.mp3"
   }
 }
 ```
@@ -164,7 +164,7 @@ Tests additionally verify all four note mappings, the same shared E4 signal for 
 
 ## Breath Flow interface and languages
 
-The existing application now uses a shared two-screen visual system: compact branding, teal/ivory glass panels, the existing presets plus a Custom selector, four duration sliders with editable numeric values, and an immersive exercise with a single remaining-session timer. All original preset values, the breathing engine, full-cycle completion, and original media are preserved. The water fill is constant during both holds; the wave is also paused, while the outer hold-progress arc continues clockwise. The current TEST audio uses low → high → low → mid MP3 cues; the breathing clock and water animation are unchanged. Musical note names are not displayed in the interface.
+The existing application now uses a shared two-screen visual system: compact branding, teal/ivory glass panels, the existing presets plus a Custom selector, four duration sliders with editable numeric values, and an immersive exercise with a single remaining-session timer. All original preset values, the breathing engine, full-cycle completion, and original media are preserved. The water fill is constant during both holds; the wave is also paused, while the outer hold-progress arc continues clockwise. The current TEST audio uses low → high → mid → high MP3 cues; the breathing clock and water animation are unchanged. Musical note names are not displayed in the interface.
 
 - `src/components/`: Brand, SettingsPanel, SessionPanel, BreathingCircle, AdvancedOptions and shared icons.
 - `src/useBreathingSession.ts`: existing session-clock/audio integration, now shared with the redesigned controls. Changing sound settings never resets the breathing timer; unmute enables future cues without replaying old strikes. Preview during practice pauses the timer to avoid overlapping the preview with session audio; Resume continues the elapsed phase.

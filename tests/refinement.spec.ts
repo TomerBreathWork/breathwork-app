@@ -188,7 +188,7 @@ test("coherent native audio skips both holds and emits exactly twelve strikes fo
   ).toBeVisible();
   const notes: string[] = await page.evaluate(() => (window as any).sampleAudio.starts.map((event:any)=>event.url.split("/").at(-1)));
   expect(notes).toHaveLength(12);
-  expect(notes).toEqual(Array(12).fill("low_F3_174Hz.mp3"));
+  expect(notes).toEqual(Array.from({length:12}, (_, index) => index % 2 ? "mid_C4_262Hz.mp3" : "low_F3_174Hz.mp3"));
   await page.clock.runFor(20000);
   expect(await page.evaluate(() => (window as any).sampleAudio.starts.length)).toBe(12);
 });
