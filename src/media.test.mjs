@@ -8,7 +8,7 @@ test('uploaded photographs have distinct IDs and all media paths exist',()=>{
  assert.deepEqual(validateManifest(manifest),{backgrounds:6,audioRoles:4});
  assert.equal(new Set(manifest.backgrounds.map(a=>a.id)).size,6);
  assert.notEqual(manifest.recordings.inhale,manifest.recordings.exhale);
- assert.equal(manifest.recordings.holdAfterInhale,manifest.recordings.holdAfterExhale);
+ assert.notEqual(manifest.recordings.holdAfterInhale,manifest.recordings.holdAfterExhale);
 });
 test('the original path-string manifest reports a schema error, not duplicate IDs',()=>{
  assert.throws(()=>validateManifest({...manifest,backgrounds:['backgrounds/1.webp']}),/must be an object with id, name and file/);

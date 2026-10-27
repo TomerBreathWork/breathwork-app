@@ -99,7 +99,7 @@ export function useBreathingSession(settings: Settings) {
       setPreloading(false);
       return;
     }
-    // Decode all three samples silently before enabling Start. Unlock still
+    // Decode all assigned samples silently before enabling Start. Unlock still
     // happens on user input; loading never stretches the preparation countdown.
     let cancelled = false;
     setPreloading(true);
