@@ -30,3 +30,20 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
     await expect(dialog).toHaveCount(0);
   });
 }
+
+for (const [language, t] of Object.entries({ en, he, ja })) {
+  test(`group 2 ${language}: Energy is hidden and Box is exclusively Focus`, async ({ page }) => {
+    await page.addInitScript(language => { localStorage.setItem("breath-flow-language", language); localStorage.setItem("still-settings", JSON.stringify({ sound: "silent" })); }, language);
+    await page.goto("./");
+    await page.locator('[data-home-choice="explore"]').click();
+    await expect(page.locator(".category-filters button")).toHaveText([t.allPractices, t.categoryCalm, t.categoryFocus]);
+    await expect(page.getByRole("button", { name: t.categoryEnergy, exact: true })).toHaveCount(0);
+    await expect(page.locator(".practice-card")).toHaveCount(5);
+    await page.getByRole("button", { name: t.categoryCalm, exact: true }).click();
+    await expect(page.locator('[data-practice="box"]')).toHaveCount(0);
+    await page.getByRole("button", { name: t.categoryFocus, exact: true }).click();
+    await expect(page.locator('[data-practice="box"]')).toBeVisible();
+    await page.locator('[data-practice="box"]').click();
+    await expect(page.locator(".suggested-rhythm bdi")).toHaveText("4 / 4 / 4 / 4");
+  });
+}

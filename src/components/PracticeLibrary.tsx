@@ -1,7 +1,7 @@
 import type { Translator } from "../i18n";
 import {
   practices,
-  categories,
+  visibleCategories,
   categoryKey,
   type Category,
   type PracticeId,
@@ -40,7 +40,7 @@ export function PracticeLibrary({
         >
           {t("allPractices")}
         </button>
-        {categories.map((id) => (
+        {visibleCategories.map((id) => (
           <button
             key={id}
             onClick={() => onCategory(id)}

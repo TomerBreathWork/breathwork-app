@@ -55,8 +55,7 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
       await shellFits(page);
       await expect(page.locator(".practice-card")).toHaveCount(5);
       for (const [key, count] of [
-        ["categoryCalm", 4],
-        ["categoryEnergy", 1],
+        ["categoryCalm", 3],
         ["categoryFocus", 3],
       ] as const) {
         await page.getByRole("button", { name: t[key], exact: true }).click();

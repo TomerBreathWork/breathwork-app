@@ -44,7 +44,7 @@ export const practices: Practice[] = [
     benefit: "boxBenefit",
     useCases: "boxUse",
     caution: "holdCaution",
-    categories: ["focus", "calm"],
+    categories: ["focus"],
     icon: "focus",
     rhythm: [4, 4, 4, 4],
     customization: "equalPhases",
@@ -98,6 +98,8 @@ export const practices: Practice[] = [
   },
 ];
 export const categories: Category[] = ["calm", "energy", "focus"];
+// Keep Energy data and icons available without exposing its filter for now.
+export const visibleCategories = categories.filter((id) => id !== "energy");
 export const categoryKey = {
   calm: "categoryCalm",
   energy: "categoryEnergy",

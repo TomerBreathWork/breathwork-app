@@ -86,3 +86,12 @@ test("history validates library/details states and never recreates an active ses
   ])
     assert.deepEqual(screenFromHistory(value), { name: "home" });
 });
+
+test("visible categories hide Energy without deleting data; Box belongs only to Focus", async () => {
+  const { visibleCategories } = await import("./practices.ts");
+  assert.deepEqual(visibleCategories, ["calm", "focus"]);
+  assert(categories.includes("energy"));
+  assert(getPractice("equal").categories.includes("energy"));
+  assert.deepEqual(getPractice("box").categories, ["focus"]);
+  assert.deepEqual(getPractice("box").rhythm, [4, 4, 4, 4]);
+});
