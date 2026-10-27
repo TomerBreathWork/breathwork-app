@@ -152,5 +152,7 @@
   "homeBoxDescription": "決まったリズムで呼吸し、集中力を支えながら、呼吸へ意識を戻す練習です。",
   "home478Description": "ゆっくりとした呼吸でリラックスを促し、緊張を和らげ、休息や眠りに向けてペースを落としていく練習です。",
   "homeCustomDescription": "今の自分の感覚に合わせて呼吸のリズムを調整し、自分に合った練習をつくりましょう。",
-  "exploreMore": "その他の呼吸法"
+  "exploreMore": "その他の呼吸法",
+  "audioSamplesPartial": "一部の録音を読み込めません。利用できる音声は再生されます。",
+  "audioSamplesUnavailable": "録音を読み込めませんでした。音なしで練習を続けられます。"
 }

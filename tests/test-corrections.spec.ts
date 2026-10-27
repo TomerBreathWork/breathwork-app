@@ -150,7 +150,9 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
     expect(await page.evaluate(()=>(window as any).audioStarts.length)).toBe(starts);
     await mute.click();
     await expect(mute).toHaveAttribute('aria-pressed','false');
-    expect(await page.evaluate(()=>(window as any).audioStarts.at(-1))).toBeGreaterThan(2);
+    expect(await page.evaluate(()=>(window as any).audioStarts.length)).toBe(starts);
+    await page.clock.runFor(3000);
+    expect(await page.evaluate(()=>(window as any).audioStarts.length)).toBe(starts + 1);
     await page.getByRole('button',{name:t.pause,exact:true}).click();
     const paused = await snapshot();
     const pausedStarts = await page.evaluate(()=>(window as any).audioStarts.length);

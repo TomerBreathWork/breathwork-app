@@ -1,3 +1,4 @@
+import { observeSamples } from "./sample-observer";
 import { showRetainedAdvanced } from "./retained-advanced";
 import { configureBreathing } from "./configure-breathing";
 import { test, expect } from "@playwright/test";
@@ -168,39 +169,8 @@ test("coherent native audio skips both holds and emits exactly twelve strikes fo
         volume: 0,
       }),
     );
-    const Context = window.AudioContext,
-      Offline = window.OfflineAudioContext,
-      notes = new Map<AudioBuffer, number>();
-    (window as any).played = [];
-    window.OfflineAudioContext = class extends Offline {
-      frequency = 0;
-      createOscillator() {
-        const osc = super.createOscillator(),
-          start = osc.start.bind(osc);
-        osc.start = (...args) => {
-          if (!this.frequency) this.frequency = osc.frequency.value;
-          start(...args);
-        };
-        return osc;
-      }
-      async startRendering() {
-        const buffer = await super.startRendering();
-        notes.set(buffer, this.frequency);
-        return buffer;
-      }
-    };
-    window.AudioContext = class extends Context {
-      createBufferSource() {
-        const source = super.createBufferSource(),
-          start = source.start.bind(source);
-        source.start = (...args) => {
-          (window as any).played.push(notes.get(source.buffer!));
-          start(...args);
-        };
-        return source;
-      }
-    };
   });
+  await page.addInitScript(observeSamples);
   await page.goto("./");
   await configureBreathing(page,{minutes:1});
   await page.getByRole("button", { name: en.start, exact: true }).click();
@@ -209,18 +179,16 @@ test("coherent native audio skips both holds and emits exactly twelve strikes fo
     "false",
     { timeout: 15000 },
   );
-  expect(await page.evaluate(() => (window as any).played)).toEqual([]);
+  expect(await page.evaluate(() => (window as any).sampleAudio.starts.map((event:any)=>event.url.split("/").at(-1)))).toEqual([]);
   await page.clock.runFor(3020);
   await expect(page.locator(".phase-count")).toHaveText("5.5");
   for (let phase = 0; phase < 12; phase++) await page.clock.fastForward(5500);
   await expect(
     page.getByRole("heading", { name: en.complete, exact: true }),
   ).toBeVisible();
-  const notes: number[] = await page.evaluate(() => (window as any).played);
+  const notes: string[] = await page.evaluate(() => (window as any).sampleAudio.starts.map((event:any)=>event.url.split("/").at(-1)));
   expect(notes).toHaveLength(12);
-  notes.forEach((frequency, index) =>
-    expect(frequency).toBeCloseTo(index % 2 ? 261.63 : 392, 4),
-  );
+  expect(notes).toEqual(Array(12).fill("low_F3_174Hz.mp3"));
   await page.clock.runFor(20000);
-  expect(await page.evaluate(() => (window as any).played.length)).toBe(12);
+  expect(await page.evaluate(() => (window as any).sampleAudio.starts.length)).toBe(12);
 });

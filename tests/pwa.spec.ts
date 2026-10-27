@@ -251,9 +251,9 @@ test("offline reload retains settings, all photographs, decoded recordings and a
     );
     const audio = new AudioContext();
     const recordings = await Promise.all(
-      ["inhale 4.MP3", "hold 4.MP3", "exhale 4.MP3"].map(async (file) => {
+      ["inhale 4.MP3", "hold 4.MP3", "exhale 4.MP3", "bowls/low_F3_174Hz.mp3", "bowls/high_F4_349Hz.mp3", "bowls/mid_C4_262Hz.mp3"].map(async (file) => {
         const response = await fetch(
-          new URL(`media/audio/${encodeURIComponent(file)}`, location.href),
+          new URL(`media/audio/${file.split("/").map(encodeURIComponent).join("/")}`, location.href),
         );
         return (await audio.decodeAudioData(await response.arrayBuffer()))
           .duration;

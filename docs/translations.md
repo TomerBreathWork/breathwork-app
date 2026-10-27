@@ -158,3 +158,5 @@ Generated from `src/locales/{en,he,ja}.json`. Run `node scripts/generate-transla
 | home478Description | A slow breathing practice that supports relaxation, stress reduction, and winding down for rest and sleep. | תרגול נשימה איטי התומך בהרפיה, בהפחתת מתח ובהאטת הקצב לקראת מנוחה ושינה. | ゆっくりとした呼吸でリラックスを促し、緊張を和らげ、休息や眠りに向けてペースを落としていく練習です。 |
 | homeCustomDescription | Adjust your breathing rhythm to how you feel and create a practice that suits your needs. | התאימו את קצב הנשימה לתחושה שלכם וצרו תרגול אישי שמתאים לצרכים שלכם. | 今の自分の感覚に合わせて呼吸のリズムを調整し、自分に合った練習をつくりましょう。 |
 | exploreMore | Explore More Breathing Exercises | תרגולי נשימה נוספים | その他の呼吸法 |
+| audioSamplesPartial | Some recordings are unavailable. Available samples will still play. | חלק מההקלטות אינן זמינות. ההקלטות הזמינות ימשיכו להתנגן. | 一部の録音を読み込めません。利用できる音声は再生されます。 |
+| audioSamplesUnavailable | Recordings could not be loaded. You can continue in silence. | לא ניתן לטעון את ההקלטות. אפשר להמשיך בתרגול בשקט. | 録音を読み込めませんでした。音なしで練習を続けられます。 |

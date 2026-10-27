@@ -51,7 +51,7 @@ test('real WAV decoding and rendered phase fades are silent at every boundary',a
 
 test('synthesized bowl envelopes render silence at boundaries, without recording requests',async({page})=>{
  const requested:string[]=[];page.on('request',request=>{if(request.url().includes('/media/audio/'))requested.push(request.url())});
- await page.goto('./');await page.addScriptTag({content:audioCode});
+ await page.goto('./');await expect(page.locator('.start-button')).toBeEnabled();requested.length=0;await page.addScriptTag({content:audioCode});
  const rendered=await page.evaluate(async()=>{
   const Native=window.AudioContext,rate=24000;
   const offline=new OfflineAudioContext(1,rate,rate);
@@ -189,7 +189,7 @@ test('prepared C4 remains below full scale at maximum master volume',async({page
  expect(metrics.nonfinite).toBe(0);expect(metrics.peak).toBeGreaterThan(.05);expect(metrics.peak).toBeLessThan(1);
 });
 
-test('production phase assignments render G4 E4 C4 E4 using the actual oscillator frequencies',async({page})=>{
+test('retained legacy synthesis assignments still render G4 E4 C4 E4 using actual oscillator frequencies',async({page})=>{
  await page.goto('./');await page.addScriptTag({content:audioCode});
  const cycle=await page.evaluate(async()=>{
   const NativeAudio=window.AudioContext,NativeOffline=window.OfflineAudioContext;

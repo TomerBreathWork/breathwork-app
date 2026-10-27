@@ -8,3 +8,5 @@ export {referenceStrike} from './reference-strike.js';
 export {renderBowl} from '../src/bowl-render';
 
 export {soundSets} from '../src/media';
+
+export {SampleAudio} from '../src/sample-audio';

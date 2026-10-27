@@ -84,14 +84,22 @@ PLAYWRIGHT_TEST_PRODUCTION=1 npm run test:e2e
 
 The browser tests start a production preview on port 5174 and exercise `/breathwork-app/`, including local images and CSS. For manual local preview, run `npm run preview` and open the printed address followed by `/breathwork-app/`.
 
+## Current TEST audio: supplied MP3 samples
+
+The TEST branch now uses the three supplied files in `public/media/audio/bowls/` through `src/sample-audio.ts`. `public/media/manifest.json` maps inhale and exhale to `low_F3_174Hz.mp3`, the first hold to `high_F4_349Hz.mp3`, and the second hold to `mid_C4_262Hz.mp3`. These are actual recordings, not replacement oscillator notes. Both existing non-silent settings play these samples; Advanced Options remain hidden.
+
+All three samples preload/decode once before Start is enabled. Each nonzero phase schedules one independent, non-looping source using the existing integer-millisecond breathing boundaries. Its full eight-second sample may overlap later cues. There is no added phase fade, gate, crossfade or synthesis. Three-second preparation stays silent. Normal completion cancels future cues while allowing final tails to finish; Stop, Restart and leaving the practice cancel voices with a short de-click release. Pause freezes active sample offsets and resumes those tails smoothly, without another strike. Mute discards active tails and unmute enables subsequent phase cues only. Master volume is independent of source lifetimes. Missing files are skipped with a localized status; breathing continues without synthesized substitutes.
+
+The new MP3s are included in the existing offline precache and retain GitHub Pages base-path handling. Original recordings, synthesis code and MIT notices remain on disk. The synthesis details below describe the retained legacy implementation, not the active TEST playback path. See `src/sample-audio.test.mjs` and `tests/sample-audio.spec.ts` for current behavior checks, including real MP3 decoding and a rendered overlap/completion test.
+
 ## Local photographs and recorded bowls
 
-The five uploaded photographs (`1.webp`–`5.webp`), an additional original generated mountain-lake scene (`breath-flow-lake.webp`), and three recordings (`inhale 4.MP3`, `hold 4.MP3`, `exhale 4.MP3`) are registered in the manifest. Both holds share the hold recording. The existing illustrations remain on disk but are excluded from the interface and random selection. Synthesized singing bowls are the default; recordings remain available as an alternative. No service subscriptions or API credentials are needed.
+The photographs and current low/high/mid MP3 samples are registered in the manifest. Original recordings (`inhale 4.MP3`, `hold 4.MP3`, `exhale 4.MP3`) and synthesis remain on disk for future use. The existing illustrations remain on disk but are excluded from the interface and random selection. No service subscriptions or API credentials are needed.
 
-You can add media directly through GitHub's **Add file → Upload files** in these folders, then edit the manifest and commit to `main`. The existing Actions workflow rebuilds and deploys your updates.
+You can add media in these folders and register it in the manifest. During TEST review, commit only to `feature/practice-library`; do not merge into or push `main`. Production remains unchanged until separately approved.
 
 1. Put licensed JPG/JPEG/PNG/WebP photographs in `public/media/backgrounds/`. Prefer compressed WebP, about 1600–2000 pixels wide, preferably below 500 KB. Use simple ASCII filenames (spaces, dashes and underscores are supported).
-2. Put licensed MP3/WAV/OGG recordings in `public/media/audio/`. MP3 is a broadly compatible choice for phones. Use soft, normalized recordings without harsh attacks. The synthesis mapping is inhale G4 (392.00 Hz), first hold E4 (329.63 Hz), exhale C4 (261.63 Hz), second hold E4 (329.63 Hz). Uploaded recordings keep their original pitches. No therapeutic frequency claims are made.
+2. Put licensed MP3/WAV/OGG recordings in `public/media/audio/`. MP3 is a broadly compatible choice for phones. Use soft, normalized recordings without harsh attacks. The current mapping is low F3 for inhale/exhale, high F4 for the first hold, and mid C4 for the second hold. Uploaded recordings keep their original pitches. No therapeutic frequency claims are made.
 3. Edit `public/media/manifest.json`, for example:
 
 ```json
@@ -101,10 +109,10 @@ You can add media directly through GitHub's **Add file → Upload files** in the
     {"id": "lake", "name": "Mountain lake", "file": "media/backgrounds/lake.jpg"}
   ],
   "recordings": {
-    "inhale": "media/audio/inhale.mp3",
-    "holdAfterInhale": "media/audio/hold.mp3",
-    "exhale": "media/audio/exhale.mp3",
-    "holdAfterExhale": "media/audio/hold.mp3"
+    "inhale": "media/audio/bowls/low_F3_174Hz.mp3",
+    "holdAfterInhale": "media/audio/bowls/high_F4_349Hz.mp3",
+    "exhale": "media/audio/bowls/low_F3_174Hz.mp3",
+    "holdAfterExhale": "media/audio/bowls/mid_C4_262Hz.mp3"
   }
 }
 ```
@@ -113,15 +121,13 @@ Only register paths for files you have actually uploaded. Leave an unassigned au
 
 When photographs are present, random sessions choose from those photographs and avoid an immediate repeat when possible. Only the five real photographs (`1.webp`–`5.webp`) are selectable or eligible for random sessions. Illustrations and the generated mountain lake remain on disk but are excluded. The chosen image stays fixed unless you change **Background** under Advanced Options. Failed session images use the gradient. All media URLs respect `/breathwork-app/`; no root-relative media URLs or runtime external requests are used. Only the displayed background loads, and browsers can cache the static assets. Settings remain stored in the browser.
 
-**Audio behavior:** Start and Preview unlock audio through user interaction. Default synthesis renders the original bowl/reverb signal locally before the first session, then reuses it with live volume and the original compressor; no audio download or post-phase tail is involved. First preparation can take a few seconds, using the existing Preparing audio indicator; later sessions reuse the cached signals. Selecting recording mode preloads/decodes assigned files and caches them for this page visit. Missing or unsupported recordings fall back individually to the new synthesis. Settings reports the active mode or fallback. Autoplay/API failure leaves the exercise silent. Recordings never loop: short files end naturally, and long files stop at their phase boundary. Synthesized strikes keep the original 4 ms attack; recordings keep their 150 ms fade-in. Both fade out over the final second, with proportional fades for short phases. Each phase reaches zero before the next starts. There is no crossfade. A separate master gain controls volume without resetting those envelopes.
+**Audio behavior:** See the current TEST audio section above. Samples preload once, retain their own full attack and decay, and overlap without phase gates or loops. Missing/undecodable samples are skipped without blocking the exercise or substituting synthesis. Start, Resume and Unmute unlock audio through user interaction. Volume and visual preference changes do not restart voices or the breathing clock.
 
-Pause/stop/exit cancel the scheduler and queued sources and release active audio over at most 50 ms. Resume/unmute re-envelope the current phase from its elapsed offset. Synthesized partial decay and oscillator phase resume at the elapsed offset, preserving the beating pattern without a new mallet strike. Recordings seek to that offset; a recording that already ended stays silent. Newly started audio waits for any cancellation release to finish, so rapid controls do not cause overlap. Background changes do not restart audio or the breathing clock. Session completion cancels all further cues. Tab hiding still pauses safely.
+The tests cover exact role assignments, fractional boundaries, zero phases, independent source instances, natural overlap, preloading, duplicate prevention, master volume, mute, paused offsets and cleanup. Browser checks decode the actual MP3s and render a known-signal overlap test through the real Web Audio graph. Separate legacy synthesis tests remain to protect the retained implementation; they are not assertions about the active sample player. Final listening on a phone or headphones is still recommended at a comfortable volume.
 
-The pure timing/audio tests include short/long phases, four role assignments, zero phases, no looping/overlap, independent master volume, cancellation, and resumed offsets. Browser tests cover the existing UI, image selection/randomness, controls and GitHub Pages paths. A separate browser test bundles the actual audio engine into a test-only harness, decodes temporary WAV responses, and renders the Web Audio graph offline to measure silence at phase boundaries. Those test WAVs are never shipped as app media. For final subjective loudness and mobile codec checks, preview your own recordings on the deployed site.
+## Retained synthesized singing bowls (inactive in TEST)
 
-## Synthesized singing bowls
-
-The default prepares the original native Web Audio oscillator/reverb model locally, with this exact phase mapping:
+The retained legacy model prepares the original native Web Audio oscillator/reverb signal locally, with this former phase mapping:
 
 | Phase | Note | Fundamental |
 | --- | --- | --- |
@@ -158,10 +164,10 @@ Tests additionally verify all four note mappings, the same shared E4 signal for 
 
 ## Breath Flow interface and languages
 
-The existing application now uses a shared two-screen visual system: compact branding, teal/ivory glass panels, the existing presets plus a Custom selector, four duration sliders with editable numeric values, and an immersive exercise with a single remaining-session timer. All original preset values, the breathing engine, full-cycle completion, and original media are preserved. The water fill is constant during both holds; the wave is also paused, while the outer hold-progress arc continues clockwise. The current audio engine and G4 → E4 → C4 → E4 mapping are unchanged. Musical note names are not displayed in the interface.
+The existing application now uses a shared two-screen visual system: compact branding, teal/ivory glass panels, the existing presets plus a Custom selector, four duration sliders with editable numeric values, and an immersive exercise with a single remaining-session timer. All original preset values, the breathing engine, full-cycle completion, and original media are preserved. The water fill is constant during both holds; the wave is also paused, while the outer hold-progress arc continues clockwise. The current TEST audio uses low → high → low → mid MP3 cues; the breathing clock and water animation are unchanged. Musical note names are not displayed in the interface.
 
 - `src/components/`: Brand, SettingsPanel, SessionPanel, BreathingCircle, AdvancedOptions and shared icons.
-- `src/useBreathingSession.ts`: existing session-clock/audio integration, now shared with the redesigned controls. Changing sound mode joins the current phase without resetting the timer. Preview during practice pauses the timer to avoid overlapping the preview with session audio; Resume continues the elapsed phase.
+- `src/useBreathingSession.ts`: existing session-clock/audio integration, now shared with the redesigned controls. Changing sound settings never resets the breathing timer; unmute enables future cues without replaying old strikes. Preview during practice pauses the timer to avoid overlapping the preview with session audio; Resume continues the elapsed phase.
 - `src/useSessionHistory.ts`: browser Back returns to settings and stops audio; it never auto-starts a session on Forward.
 - `src/presets.ts`: the three built-in configurations and pure selection/edit/migration helpers. `src/settings.ts` restores language-independent media/audio preferences using the original `still-settings` key. Timing uses `src/launch-configuration.ts` defaults for new users and validated saved choices for returning users; Custom memory survives reloads.
 - `src/locales/en.json`, `he.json`, `ja.json`: complete typed translation dictionaries. `src/i18n.ts` handles browser detection, persistence (`breath-flow-language`), document language/direction and named substitutions.

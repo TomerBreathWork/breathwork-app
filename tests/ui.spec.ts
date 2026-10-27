@@ -92,7 +92,7 @@ test('active visual/audio preferences keep the session clock and phase intact',a
  await silentSettings(page);await page.getByRole('button',{name:en.start,exact:true}).click();await finishPreparation(page);await page.clock.runFor(1500);
  await showRetainedAdvanced(page); await page.getByRole('button',{name:en.advanced,exact:true}).click();await page.getByRole('combobox',{name:en.background,exact:true}).selectOption('photo-1');
  await page.getByRole('slider',{name:en.volume,exact:true}).fill('0.2');await expect(page.locator('.remaining-value')).not.toHaveText('05:00');
- await page.getByRole('combobox',{name:en.sound,exact:true}).selectOption('bowls');await expect(page.getByRole('status')).toHaveText(en.audioReady,{timeout:15000});
+ await page.getByRole('combobox',{name:en.sound,exact:true}).selectOption('bowls');await expect(page.getByRole('status')).toHaveText(en.audioRecorded,{timeout:15000});
  const time=await page.locator('.remaining-value').innerText();await page.clock.runFor(1000);await expect(page.locator('.remaining-value')).not.toHaveText(time);await expect(page.locator('.session-panel')).toBeVisible();
 });
 test('branding and manifest assets respect the GitHub Pages subpath',async({page,request})=>{
@@ -115,9 +115,9 @@ test('sound preview plays on settings; active preview pauses and resume seeks th
  await page.getByRole('button',{name:en.start,exact:true}).click();await finishPreparation(page);await expect(page.locator('.session-panel')).toBeVisible();await page.clock.runFor(1200);
  await showRetainedAdvanced(page); await page.getByRole('button',{name:en.advanced,exact:true}).click();await page.getByRole('button',{name:en.preview,exact:true}).click();await expect(page.getByRole('heading',{name:en.paused,exact:true})).toBeVisible();
  const time=await page.locator('.remaining-value').innerText();await page.clock.runFor(2000);await expect(page.locator('.remaining-value')).toHaveText(time);
- await expect(page.getByRole('status')).toHaveText(en.audioReady);const count=await page.evaluate(()=>(window as any).offsets.length);
+ await expect(page.getByRole('status')).toHaveText(en.audioRecorded);const count=await page.evaluate(()=>(window as any).offsets.length);
  await page.getByRole('button',{name:en.resume,exact:true}).click();await expect.poll(()=>page.evaluate(()=>(window as any).offsets.length)).toBe(count+1);
- expect(await page.evaluate(()=>(window as any).offsets.at(-1))).toBeGreaterThan(1);
+ expect(await page.evaluate(()=>(window as any).offsets.at(-1))).toBeGreaterThan(0);
 });
 
 

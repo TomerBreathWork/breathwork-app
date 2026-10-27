@@ -129,7 +129,7 @@ test('background stays fixed until changed; random mode avoids immediate repeats
  await expect(page.locator('.session')).toBeVisible();
  await expect(page.locator('.scenery')).not.toHaveAttribute('src',previous!);
 });
-test('resume and unmute restore phase audio; volume changes do not restart a voice',async({page})=>{
+test('resume restores tails, unmute enables future cues, and volume never restarts a voice',async({page})=>{
  await page.addInitScript(()=>{
   const Native=window.AudioContext;(window as any).voices=[];
   window.AudioContext=class extends Native {
@@ -150,7 +150,9 @@ test('resume and unmute restore phase audio; volume changes do not restart a voi
  await advanced(page);
  await page.locator('.practice-mute').click();
  await page.locator('.practice-mute').click();
- await expect.poll(()=>page.evaluate(()=>(window as any).voices.length)).toBe(count+2);
+ expect(await page.evaluate(()=>(window as any).voices.length)).toBe(count+1);
+ await page.clock.runFor(4600);
+ expect(await page.evaluate(()=>(window as any).voices.length)).toBe(count+2);
  await page.getByRole('button',{name:'Stop',exact:true}).click();
  await page.clock.runFor(20000);expect(await page.evaluate(()=>(window as any).voices.length)).toBe(count+2);
 });
@@ -195,8 +197,8 @@ test('the three uploaded MP3 recordings decode with spaces and uppercase extensi
  expect(results).toHaveLength(3);
  for(const result of results){expect(result.duration).toBeGreaterThan(0);expect(result.channels).toBeGreaterThan(0)}
 });
-test('missing recordings use synthesized fallback without blocking the session',async({page})=>{
- await page.route(/\/media\/audio\/.*\.MP3$/,route=>route.abort());
+test('missing samples allow silent practice without synthesized replacements',async({page})=>{
+ await page.route(/\/media\/audio\/.*\.mp3$/i,route=>route.abort());
  await page.goto('./');
  await showRetainedAdvanced(page); await page.getByRole('button',{name:'Advanced Options'}).click();
  await page.getByRole('combobox',{name:'Sound',exact:true}).selectOption('recordings');
@@ -204,7 +206,7 @@ test('missing recordings use synthesized fallback without blocking the session',
  await expect(page.locator('.session')).toBeVisible();
  await page.getByRole('button',{name:'Stop',exact:true}).click();
  await advanced(page);
- await expect(page.getByRole('status')).toContainText('synthesized');
+ await expect(page.getByRole('status')).toContainText('continue in silence');
 });
 
 test('hiding the page during initial audio preparation starts paused without a cue',async({page})=>{
