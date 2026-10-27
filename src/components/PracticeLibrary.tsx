@@ -1,3 +1,4 @@
+import { CompactLabel } from "./CompactLabel";
 import type { Translator } from "../i18n";
 import {
   practices,
@@ -25,7 +26,7 @@ export function PracticeLibrary({
     <main className="discovery-panel glass-panel" aria-label={t("explore")}>
       <div className="discovery-heading">
         <button className="text-button discovery-back" onClick={back}>
-          {t("goBack")}
+          <CompactLabel>{t("goBack")}</CompactLabel>
         </button>
         <h2 tabIndex={-1}>{t("explore")}</h2>
       </div>
@@ -38,7 +39,7 @@ export function PracticeLibrary({
           onClick={() => onCategory("all")}
           aria-pressed={category === "all"}
         >
-          {t("allPractices")}
+          <CompactLabel>{t("allPractices")}</CompactLabel>
         </button>
         {visibleCategories.map((id) => (
           <button
@@ -47,7 +48,7 @@ export function PracticeLibrary({
             aria-pressed={category === id}
           >
             <CategoryIcon category={id} />
-            {t(categoryKey[id])}
+            <CompactLabel>{t(categoryKey[id])}</CompactLabel>
           </button>
         ))}
       </div>
@@ -66,7 +67,7 @@ export function PracticeLibrary({
             >
               <CategoryIcon category={practice.icon} />
               <span>
-                <strong>{t(practice.name)}</strong>
+                <strong><CompactLabel>{t(practice.name)}</CompactLabel></strong>
                 <span>{t(practice.short)}</span>
                 <bdi className="practice-rhythm">
                   {practice.rhythm.join(" / ")} {t("seconds")}

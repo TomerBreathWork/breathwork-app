@@ -1773,3 +1773,33 @@ input[type="number"],
 @media (prefers-reduced-motion: reduce) {
   .help-attention { animation: none; }
 }
+
+/* Atomic Japanese words wrap as units; only an oversized unit scales down. */
+[lang="ja"] button, [lang="ja"] .footer-action, [lang="ja"] .circle-label {
+  word-break: normal;
+  overflow-wrap: normal;
+  line-break: strict;
+}
+[lang="ja"] .preset strong { width: 100%; overflow-wrap: normal; }
+.compact-ja-label {
+  display: inline-block;
+  min-width: 0;
+  inline-size: min(100%, calc(var(--label-length) * 1em));
+  max-inline-size: 100%;
+  container-type: inline-size;
+  vertical-align: middle;
+  line-break: strict;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+.compact-ja-label > .ja-text-unit {
+  display: inline-block;
+  white-space: nowrap;
+  max-inline-size: 100%;
+  font-size: min(1em, calc(100cqw / var(--unit-length)));
+}
+[lang="ja"] .preset strong .compact-ja-label { font-size: inherit; }
+[lang="ja"] .footer-action > span {
+  flex: 1;
+  max-inline-size: calc(100% - 20px);
+}

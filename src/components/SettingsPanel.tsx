@@ -1,3 +1,4 @@
+import { CompactLabel } from "./CompactLabel";
 import { PhaseDurations, SessionLength } from "./BreathingControls";
 import { getPractice } from "../practices";
 import type { ReactNode } from "react";
@@ -53,7 +54,7 @@ export function SettingsPanel({
             data-home-choice="coherent"
             onClick={() => onPreset("coherentBreathing")}
           >
-            <strong>{t("coherentBreathing")}</strong>
+            <strong><CompactLabel>{t("coherentBreathing")}</CompactLabel></strong>
           </button>
           <button
             className={`preset ${settings.preset === "boxBreathing" ? "selected" : ""}`}
@@ -61,7 +62,7 @@ export function SettingsPanel({
             data-home-choice="box"
             onClick={() => onPreset("boxBreathing")}
           >
-            <strong>{t("boxBreathing")}</strong>
+            <strong><CompactLabel>{t("boxBreathing")}</CompactLabel></strong>
           </button>
           <button
             className={`preset ${settings.preset === "eveningUnwind" ? "selected" : ""}`}
@@ -69,7 +70,7 @@ export function SettingsPanel({
             data-home-choice="478"
             onClick={() => onPreset("eveningUnwind")}
           >
-            <strong>{t("preset478")}</strong>
+            <strong><CompactLabel>{t("preset478")}</CompactLabel></strong>
           </button>
           <button
             className={`preset ${settings.practiceId === "custom" ? "selected" : ""}`}
@@ -77,7 +78,7 @@ export function SettingsPanel({
             data-home-choice="custom"
             onClick={onCustom}
           >
-            <strong>{t("custom")}</strong>
+            <strong><CompactLabel>{t("custom")}</CompactLabel></strong>
           </button>
         </div>
       </section>
@@ -96,7 +97,7 @@ export function SettingsPanel({
           data-home-choice="explore"
           onClick={explore}
         >
-          {t("explore")}
+          <CompactLabel>{t("explore")}</CompactLabel>
         </button>
       </div>
       {!valid && !editing && (
@@ -116,7 +117,7 @@ export function SettingsPanel({
         onClick={start}
       >
         <Icon name="play" />
-        {t(preparing ? "preparing" : "start")}
+        <CompactLabel>{t(preparing ? "preparing" : "start")}</CompactLabel>
       </button>
       <SettingsFooter t={t} />
     </main>

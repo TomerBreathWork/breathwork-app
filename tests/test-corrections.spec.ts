@@ -147,3 +147,38 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
     await expect(page.locator('.settings-panel')).toBeVisible();
   });
 }
+
+test('group 5 Japanese: meaningful units fit compact controls without changing the text', async ({ page }) => {
+  await page.addInitScript(()=>{localStorage.setItem('breath-flow-language','ja');localStorage.setItem('still-settings',JSON.stringify({sound:'silent'}));});
+  await page.goto('./');
+  for (const viewport of [{width:320,height:568},{width:360,height:640},{width:375,height:812},{width:390,height:844}]) {
+    await page.setViewportSize(viewport);
+    await expect(page.locator('.presets button')).toHaveText([ja.coherentBreathing,ja.boxBreathing,ja.preset478,ja.custom]);
+    await expect(page.locator('.presets .ja-text-unit').filter({hasText:/^コヒーレント$/})).toHaveCount(1);
+    await expect(page.locator('.footer-actions .ja-text-unit').filter({hasText:/^お問い合わせ$/})).toHaveCount(1);
+    for (const unit of await page.locator('button .ja-text-unit,.footer-action .ja-text-unit').all()) {
+      const dimensions=await unit.evaluate(el=>({width:el.getBoundingClientRect().width,parent:el.parentElement!.getBoundingClientRect().width,scroll:el.scrollWidth,client:el.clientWidth,font:parseFloat(getComputedStyle(el).fontSize)}));
+      expect(dimensions.width).toBeGreaterThan(0);
+      expect(dimensions.font).toBeGreaterThanOrEqual(8.5);
+      expect(dimensions.width).toBeLessThanOrEqual(dimensions.parent+1);
+      expect(dimensions.scroll).toBeLessThanOrEqual(dimensions.client+1);
+    }
+    expect(await page.locator('.app-page').evaluate(el=>el.scrollWidth-el.clientWidth)).toBe(0);
+    await page.locator('[data-home-choice="explore"]').click();
+    await expect(page.locator('.category-filters button')).toHaveText([ja.allPractices,ja.categoryCalm,ja.categoryFocus]);
+    const clips=await page.locator('.category-filters button,.practice-card strong .compact-ja-label').evaluateAll(els=>els.filter(el=>el.scrollWidth>el.clientWidth+1).map(el=>el.textContent));
+    expect(clips).toEqual([]);
+    await page.locator('[data-practice="478"]').click();
+    await expect(page.locator('.practice-details > .start-button')).toHaveText(ja.start);
+    await page.locator('.discovery-back').click();await page.locator('.discovery-back').click();
+  }
+  await page.locator('.start-button').click();
+  await expect(page.getByRole('heading',{name:ja.preparationInstruction,exact:true})).toBeVisible();
+  await page.getByRole('button',{name:ja.stop,exact:true}).click();
+  await page.locator('.language-picker select').selectOption('he');
+  await expect(page.locator('html')).toHaveAttribute('dir','rtl');
+  await expect(page.locator('.compact-ja-label')).toHaveCount(0);
+  await page.locator('.language-picker select').selectOption('en');
+  await expect(page.locator('html')).toHaveAttribute('dir','ltr');
+  await expect(page.locator('.presets button')).toHaveText([en.coherentBreathing,en.boxBreathing,en.preset478,en.custom]);
+});

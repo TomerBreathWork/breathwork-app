@@ -1,3 +1,4 @@
+import { CompactLabel } from "./CompactLabel";
 import type { BreathingRoute } from "../practices";
 import type { ReactNode } from "react";
 import type { Language, Translator } from "../i18n";
@@ -100,11 +101,11 @@ export function SessionPanel({
         <div className="session-controls">
           <button className="side-button" onClick={restart}>
             <Icon name="restart" />
-            {t("restart")}
+            <CompactLabel>{t("restart")}</CompactLabel>
           </button>
           {status === "completed" ? (
             <button className="primary-control" onClick={stop}>
-              {t("back")}
+              <CompactLabel>{t("back")}</CompactLabel>
             </button>
           ) : (
             <button
@@ -112,12 +113,12 @@ export function SessionPanel({
               onClick={status === "running" ? pause : resume}
             >
               <Icon name={status === "running" ? "pause" : "play"} />
-              {t(status === "running" ? "pause" : "resume")}
+              <CompactLabel>{t(status === "running" ? "pause" : "resume")}</CompactLabel>
             </button>
           )}
           <button className="side-button" onClick={stop}>
             <Icon name="stop" />
-            {t("stop")}
+            <CompactLabel>{t("stop")}</CompactLabel>
           </button>
         </div>
       </div>

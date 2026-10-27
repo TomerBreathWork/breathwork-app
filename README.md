@@ -274,3 +274,7 @@ Within the app, Stop, Back and switching screens retain the current configuratio
 ### Practice library — feature branch review
 
 See [the review guide](docs/practice-library-review.md) for the optional library, shared Details, ratio controls, three-second preparation, route guidance, changed files and verification. Work stays on `feature/practice-library`. Tag `pre-practice-library` preserves production commit `1fe84e6`. Do not merge or deploy before explicit approval. The existing Pages workflow is unchanged and creates no automatic feature-branch preview.
+
+### Current targeted TEST UI
+
+See [the staged corrections](docs/test-corrections.md). Advanced Options are temporarily hidden on Home and Practice; the earlier sections describe their retained implementation. Current saved audio/background preferences remain in use. Home shows the selected rhythm above Start; Practice offers the speaker mute toggle. Preparation lasts three silent seconds. Energy is hidden from the filters and Box belongs only to Focus. No production deployment is authorized.

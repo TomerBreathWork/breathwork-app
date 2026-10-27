@@ -1,3 +1,4 @@
+import { CompactLabel } from "./CompactLabel";
 import { useRef, useState } from "react";
 import type { Translator } from "../i18n";
 import { publicAppUrl, contactUrl } from "../links";
@@ -68,7 +69,7 @@ export function SettingsFooter({ t }: { t: Translator }) {
           onClick={() => void share()}
         >
           <Icon name="share" />
-          <span>{t("share")}</span>
+          <span><CompactLabel>{t("share")}</CompactLabel></span>
         </button>
         <a
           className="footer-action"
@@ -77,7 +78,7 @@ export function SettingsFooter({ t }: { t: Translator }) {
           rel="noopener noreferrer"
         >
           <Icon name="message" />
-          <span>{t("contact")}</span>
+          <span><CompactLabel>{t("contact")}</CompactLabel></span>
         </a>
         <button
           type="button"
@@ -92,7 +93,7 @@ export function SettingsFooter({ t }: { t: Translator }) {
           }}
         >
           <Icon name="help" />
-          <span>{t("howToUse")}</span>
+          <span><CompactLabel>{t("howToUse")}</CompactLabel></span>
         </button>
       </div>
       {fallback && (
@@ -111,7 +112,7 @@ export function SettingsFooter({ t }: { t: Translator }) {
             className="small-button"
             onClick={() => void copy()}
           >
-            {t("copyLink")}
+            <CompactLabel>{t("copyLink")}</CompactLabel>
           </button>
         </div>
       )}

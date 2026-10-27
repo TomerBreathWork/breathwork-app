@@ -1,3 +1,4 @@
+import { CompactLabel } from "./CompactLabel";
 import type { Language, Translator } from "../i18n";
 import type { Settings } from "../settings";
 import { adjustPractice, isAdjusted, type Practice } from "../practices";
@@ -34,11 +35,11 @@ export function PracticeDetails({
     >
       <div className="discovery-heading">
         <button className="text-button discovery-back" onClick={back}>
-          {t("goBack")}
+          <CompactLabel>{t("goBack")}</CompactLabel>
         </button>
         <h2 tabIndex={-1}>
           <CategoryIcon category={practice.icon} />
-          {t(practice.name)}
+          <CompactLabel>{t(practice.name)}</CompactLabel>
         </h2>
       </div>
       <div className="discovery-scroll details-body">
@@ -180,7 +181,7 @@ export function PracticeDetails({
         onClick={start}
       >
         <Icon name="play" />
-        {t(preparing ? "preparing" : "start")}
+        <CompactLabel>{t(preparing ? "preparing" : "start")}</CompactLabel>
       </button>
     </main>
   );
