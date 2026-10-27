@@ -1,3 +1,4 @@
+import { showRetainedAdvanced } from "./retained-advanced";
 import { configureBreathing } from "./configure-breathing";
 import { test, expect } from "@playwright/test";
 import en from "../src/locales/en.json" with { type: "json" };
@@ -77,7 +78,7 @@ for (const saved of [
     await expect(page.locator("#phase-0")).toHaveValue(
       "rhythm" in saved ? "3.5" : "5.5",
     );
-    await page.getByRole("button", { name: en.advanced, exact: true }).click();
+    await showRetainedAdvanced(page); await page.getByRole("button", { name: en.advanced, exact: true }).click();
     await expect(
       page.getByRole("combobox", { name: en.sound, exact: true }),
     ).toHaveValue("silent");

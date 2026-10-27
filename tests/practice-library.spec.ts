@@ -1,3 +1,4 @@
+import { showRetainedAdvanced } from "./retained-advanced";
 import { test, expect, type Page } from "@playwright/test";
 import en from "../src/locales/en.json" with { type: "json" };
 import he from "../src/locales/he.json" with { type: "json" };
@@ -130,14 +131,14 @@ test("equal and extended ratios start directly from Details with exact fractiona
       "src",
       /backgrounds\/4\.webp$/,
     );
-    await page.getByRole("button", { name: en.advanced, exact: true }).click();
+    await showRetainedAdvanced(page); await page.getByRole("button", { name: en.advanced, exact: true }).click();
     await expect(
       page.getByRole("slider", { name: en.volume, exact: true }),
     ).toHaveValue("0.2");
     await expect(
       page.getByRole("combobox", { name: en.sound, exact: true }),
     ).toHaveValue("silent");
-    await page.getByRole("button", { name: en.advanced, exact: true }).click();
+    await showRetainedAdvanced(page); await page.getByRole("button", { name: en.advanced, exact: true }).click();
     const actual = "01:06";
     await expect(page.locator(".remaining-value")).toHaveText(actual);
     await expect(page.locator(".breath-route-icon")).toHaveCount(0);

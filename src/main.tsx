@@ -163,6 +163,9 @@ function App() {
       )}
       <div className="scene-overlay" />
       <div className="app-view">
+        <p className="sr-only" data-offline-status={offlineStatus} aria-live="polite">
+          {t(offlineStatus)}
+        </p>
         <Brand
           t={t}
           language={language}

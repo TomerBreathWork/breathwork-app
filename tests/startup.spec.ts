@@ -1,3 +1,4 @@
+import { showRetainedAdvanced } from "./retained-advanced";
 import { test, expect, type Page } from "@playwright/test";
 import { configureBreathing } from "./configure-breathing";
 import en from "../src/locales/en.json" with { type: "json" };
@@ -72,7 +73,7 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
     await expect(page.locator('[data-home-choice="custom"]')).toHaveAttribute("aria-pressed", "true");
     await expect(page.locator("#duration")).toHaveValue("2");
     await expect(page.locator("#phase-value-0")).toHaveValue("6.5");
-    await page.getByRole("button", { name: t.advanced, exact: true }).click();
+    await showRetainedAdvanced(page); await page.getByRole("button", { name: t.advanced, exact: true }).click();
     await expect(
       page.getByRole("combobox", { name: t.sound, exact: true }),
     ).toHaveValue("silent");
@@ -84,7 +85,7 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
     ).toHaveValue("0.2");
     await expect(page.locator("html")).toHaveAttribute("lang", language);
     // A new document navigation also restores the latest saved configuration.
-    await page.getByRole("button", { name: t.advanced, exact: true }).click();
+    await showRetainedAdvanced(page); await page.getByRole("button", { name: t.advanced, exact: true }).click();
     await configureBreathing(page, { preset: "boxBreathing", minutes: 7 });
     await page.goto("./");
     await expect(page.locator('[data-home-choice="box"]')).toHaveAttribute("aria-pressed", "true");
@@ -96,7 +97,7 @@ test("a new user receives 187 breathing seconds after five silent preparation se
 }) => {
   await page.goto("./");
   await defaults(page);
-  await page.getByRole("button", { name: en.advanced, exact: true }).click();
+  await showRetainedAdvanced(page); await page.getByRole("button", { name: en.advanced, exact: true }).click();
   await page
     .getByRole("combobox", { name: en.sound, exact: true })
     .selectOption("silent");

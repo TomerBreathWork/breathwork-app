@@ -1,8 +1,9 @@
+import { showRetainedAdvanced } from "./retained-advanced";
 import { configureBreathing } from "./configure-breathing";
 import {test,expect,type Page} from '@playwright/test';
 test.beforeEach(async({page})=>{await page.clock.install({time:new Date('2026-10-24T12:00:00Z')});await page.clock.pauseAt(new Date('2026-10-24T12:00:01Z'))});
 async function finishPreparation(page:Page){await expect(page.locator('.session-panel')).toHaveAttribute('aria-busy','false',{timeout:15000});await page.clock.fastForward(5001)}
-async function advanced(page:Page){const button=page.getByRole('button',{name:'Advanced Options',exact:true});if(await button.getAttribute('aria-expanded')!=='true')await button.click()}
+async function advanced(page:Page){await showRetainedAdvanced(page);const button=page.getByRole('button',{name:'Advanced Options',exact:true});if(await button.getAttribute('aria-expanded')!=='true')await button.click()}
 
 test('configure within a launch, reload choices, start, pause, resume and stop',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
@@ -11,7 +12,7 @@ test('configure within a launch, reload choices, start, pause, resume and stop',
  await page.reload();
  await expect(page.getByRole('spinbutton',{name:'Hold after inhale seconds'})).toHaveValue('4');
  await configureBreathing(page,{preset:'boxBreathing'});
- await page.getByRole('button',{name:'Advanced Options'}).click();
+ await showRetainedAdvanced(page); await page.getByRole('button',{name:'Advanced Options'}).click();
  await page.getByRole('combobox',{name:'Sound',exact:true}).selectOption('silent');
 
  await page.getByRole('button',{name:'Start Practice'}).click();await finishPreparation(page);
@@ -61,7 +62,7 @@ test('invalid settings block start and image failure falls back safely',async({p
 });
 test('mobile fits viewport and preferences have no horizontal overflow',async({page})=>{
  await page.setViewportSize({width:375,height:812});await page.goto('./');
- await page.getByRole('button',{name:'Advanced Options'}).click();
+ await showRetainedAdvanced(page); await page.getByRole('button',{name:'Advanced Options'}).click();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.screenshot({path:'/tmp/still-mobile.png',fullPage:true});
  await page.getByRole('button',{name:'Start Practice'}).click();await finishPreparation(page);
@@ -167,7 +168,7 @@ test('unavailable Web Audio does not prevent silent breathing practice',async({p
 
 test('all five uploaded photographs load and generated backgrounds are not selectable',async({page})=>{
  await page.goto('./');
- await page.getByRole('button',{name:'Advanced Options'}).click();
+ await showRetainedAdvanced(page); await page.getByRole('button',{name:'Advanced Options'}).click();
  await page.getByRole('combobox',{name:'Sound',exact:true}).selectOption('silent');
  await page.getByRole('button',{name:'Start Practice'}).click();await finishPreparation(page);
  await expect(page.locator('.session')).toBeVisible();
@@ -197,7 +198,7 @@ test('the three uploaded MP3 recordings decode with spaces and uppercase extensi
 test('missing recordings use synthesized fallback without blocking the session',async({page})=>{
  await page.route(/\/media\/audio\/.*\.MP3$/,route=>route.abort());
  await page.goto('./');
- await page.getByRole('button',{name:'Advanced Options'}).click();
+ await showRetainedAdvanced(page); await page.getByRole('button',{name:'Advanced Options'}).click();
  await page.getByRole('combobox',{name:'Sound',exact:true}).selectOption('recordings');
  await page.getByRole('button',{name:'Start Practice'}).click();await finishPreparation(page);
  await expect(page.locator('.session')).toBeVisible();

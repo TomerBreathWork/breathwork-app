@@ -106,7 +106,7 @@ export function SessionPanel({
           </button>
         </div>
       </div>
-      <div className="session-advanced glass-panel">{advanced}</div>
+      <div hidden data-retained-advanced>{advanced}</div>
     </main>
   );
 }

@@ -7,6 +7,7 @@ import type { PresetKey } from "../presets";
 import { SettingsFooter } from "./SettingsFooter";
 import { useState } from "react";
 import { Icon } from "./Icons";
+import { PatternPreview } from "./PatternPreview";
 interface Props {
   t: Translator;
   language: Language;
@@ -89,7 +90,7 @@ export function SettingsPanel({
       />
       <SessionLength t={t} settings={settings} patch={patch} />
       <div className="settings-secondary">
-        {advanced}
+        <div hidden data-retained-advanced>{advanced}</div>
         <button
           className="explore-choice"
           data-home-choice="explore"
@@ -103,6 +104,12 @@ export function SettingsPanel({
           {t("error")}
         </p>
       )}
+      <PatternPreview
+        key={settings.rhythm.join("/")}
+        rhythm={settings.rhythm}
+        practiceId={settings.practiceId}
+        t={t}
+      />
       <button
         className="start-button"
         disabled={!valid || preparing}
@@ -111,7 +118,6 @@ export function SettingsPanel({
         <Icon name="play" />
         {t(preparing ? "preparing" : "start")}
       </button>
-      <p className="safety">{t("safety")}</p>
       <SettingsFooter t={t} />
     </main>
   );

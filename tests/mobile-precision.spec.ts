@@ -1,3 +1,4 @@
+import { showRetainedAdvanced } from "./retained-advanced";
 import { configureBreathing } from "./configure-breathing";
 import { test, expect, type Page } from "@playwright/test";
 import en from "../src/locales/en.json" with { type: "json" };
@@ -264,7 +265,7 @@ test("safe-area-like padding, reduced viewport height and expanded options keep 
   await fits(page);
   await page.setViewportSize({ width: 390, height: 664 });
   await fits(page);
-  await page.getByRole("button", { name: he.advanced, exact: true }).click();
+  await showRetainedAdvanced(page); await page.getByRole("button", { name: he.advanced, exact: true }).click();
   await expect(
     page.getByRole("combobox", { name: he.background, exact: true }),
   ).toBeVisible();

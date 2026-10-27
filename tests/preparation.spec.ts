@@ -1,3 +1,4 @@
+import { showRetainedAdvanced } from "./retained-advanced";
 import { configureBreathing } from "./configure-breathing";
 import {test,expect} from '@playwright/test';
 import en from '../src/locales/en.json' with {type:'json'};
@@ -38,7 +39,7 @@ test('preparation pause/resume/restart/stop preserve time and never trigger soun
  await page.getByRole('button',{name:en.resume,exact:true}).click();await page.clock.runFor(2020);await expect(page.locator('.phase-count')).toHaveText('1');
  await page.getByRole('button',{name:en.restart,exact:true}).click();await expect(page.locator('.phase-count')).toHaveText('5');
  await expect(page.locator('.session-panel')).toHaveAttribute('aria-busy','false',{timeout:15000});
- await page.getByRole('button',{name:en.advanced,exact:true}).click();await expect(page.getByRole('button',{name:en.preview,exact:true})).toBeDisabled();
+ await showRetainedAdvanced(page); await page.getByRole('button',{name:en.advanced,exact:true}).click();await expect(page.getByRole('button',{name:en.preview,exact:true})).toBeDisabled();
  await page.clock.runFor(4990);expect(await page.evaluate(()=>(window as any).notes)).toEqual([]);
  await page.clock.runFor(30);await expect(page.getByRole('heading',{name:en.inhale,exact:true})).toBeVisible();expect(await page.evaluate(()=>(window as any).notes)).toEqual([392]);
  await page.getByRole('button',{name:en.restart,exact:true}).click();await expect(page.locator('.phase-count')).toHaveText('5');

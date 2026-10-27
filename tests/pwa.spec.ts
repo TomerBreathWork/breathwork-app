@@ -1,3 +1,4 @@
+import { showRetainedAdvanced } from "./retained-advanced";
 import { configureBreathing } from "./configure-breathing";
 import { test as base, expect, type Page } from "@playwright/test";
 import { createServer } from "node:http";
@@ -122,13 +123,13 @@ async function open(page: Page, url: string, sound = "silent") {
   await configureBreathing(page, { minutes: 1 });
 }
 async function ready(page: Page) {
-  await page.getByRole("button", { name: en.advanced, exact: true }).click();
-  await expect(page.locator("[data-offline-status]")).toHaveAttribute(
+  await showRetainedAdvanced(page); await page.getByRole("button", { name: en.advanced, exact: true }).click();
+  await expect(page.locator(".app-view > [data-offline-status]")).toHaveAttribute(
     "data-offline-status",
     "offlineReady",
     { timeout: 15000 },
   );
-  await page.getByRole("button", { name: en.advanced, exact: true }).click();
+  await showRetainedAdvanced(page); await page.getByRole("button", { name: en.advanced, exact: true }).click();
   await expect
     .poll(() => page.evaluate(() => !!navigator.serviceWorker.controller))
     .toBe(true);
@@ -295,11 +296,11 @@ test("offline reload retains settings, all photographs, decoded recordings and a
   );
   await page.getByRole("button", { name: en.stop, exact: true }).click();
   // Default synthesis also renders entirely offline, plus locale switching.
-  await page.getByRole("button", { name: en.advanced, exact: true }).click();
+  await showRetainedAdvanced(page); await page.getByRole("button", { name: en.advanced, exact: true }).click();
   await page
     .getByRole("combobox", { name: en.sound, exact: true })
     .selectOption("bowls");
-  await page.getByRole("button", { name: en.advanced, exact: true }).click();
+  await showRetainedAdvanced(page); await page.getByRole("button", { name: en.advanced, exact: true }).click();
   await page
     .getByRole("combobox", { name: en.language, exact: true })
     .selectOption("ja");
@@ -357,8 +358,8 @@ test("failed essential download never claims offline readiness; retry recovers",
 }) => {
   site.fail("media/audio/hold 4.MP3");
   await open(page, site.url);
-  await page.getByRole("button", { name: en.advanced, exact: true }).click();
-  await expect(page.locator("[data-offline-status]")).toHaveAttribute(
+  await showRetainedAdvanced(page); await page.getByRole("button", { name: en.advanced, exact: true }).click();
+  await expect(page.locator(".app-view > [data-offline-status]")).toHaveAttribute(
     "data-offline-status",
     "offlineUnavailable",
     { timeout: 15000 },
@@ -368,7 +369,7 @@ test("failed essential download never claims offline readiness; retry recovers",
   );
   site.fail(undefined);
   await page.evaluate(() => window.dispatchEvent(new Event("online")));
-  await expect(page.locator("[data-offline-status]")).toHaveAttribute(
+  await expect(page.locator(".app-view > [data-offline-status]")).toHaveAttribute(
     "data-offline-status",
     "offlineReady",
     { timeout: 15000 },
@@ -476,6 +477,7 @@ test("a second practicing tab blocks an idle tab update; closing it allows event
   // The tabs intentionally have different schedules. The idle tab's update
   // must preserve its own configuration rather than the last localStorage writer.
   await configureBreathing(page, { preset: "boxBreathing", minutes: 7 });
+  await showRetainedAdvanced(second);
   await second.getByRole("button", { name: en.advanced, exact: true }).click();
   await second
     .getByRole("slider", { name: en.volume, exact: true })
