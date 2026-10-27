@@ -157,3 +157,4 @@ Generated from `src/locales/{en,he,ja}.json`. Run `node scripts/generate-transla
 | homeBoxDescription | A structured breathing practice that supports focus, concentration, and bringing attention back to the breath. | תרגול נשימה מובנה המסייע במיקוד, בריכוז ובהחזרת תשומת הלב לנשימה. | 決まったリズムで呼吸し、集中力を支えながら、呼吸へ意識を戻す練習です。 |
 | home478Description | A slow breathing practice that supports relaxation, stress reduction, and winding down for rest and sleep. | תרגול נשימה איטי התומך בהרפיה, בהפחתת מתח ובהאטת הקצב לקראת מנוחה ושינה. | ゆっくりとした呼吸でリラックスを促し、緊張を和らげ、休息や眠りに向けてペースを落としていく練習です。 |
 | homeCustomDescription | Adjust your breathing rhythm to how you feel and create a practice that suits your needs. | התאימו את קצב הנשימה לתחושה שלכם וצרו תרגול אישי שמתאים לצרכים שלכם. | 今の自分の感覚に合わせて呼吸のリズムを調整し、自分に合った練習をつくりましょう。 |
+| exploreMore | Explore More Breathing Exercises | תרגולי נשימה נוספים | その他の呼吸法 |

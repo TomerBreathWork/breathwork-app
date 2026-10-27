@@ -1703,7 +1703,7 @@ input[type="number"],
   color: #365c59;
   font-size: 0.78rem;
   line-height: 1.4;
-  text-align: start;
+  text-align: center;
 }
 @container app-viewport (max-width:600px) and (max-height:700px) {
   .selected-explanation { margin: 1px 0 0; }

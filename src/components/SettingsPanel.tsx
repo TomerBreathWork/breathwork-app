@@ -107,7 +107,7 @@ export function SettingsPanel({
           data-home-choice="explore"
           onClick={explore}
         >
-          <CompactLabel>{t("explore")}</CompactLabel>
+          <CompactLabel>{t("exploreMore")}</CompactLabel>
         </button>
       </div>
       {!valid && !editing && (
