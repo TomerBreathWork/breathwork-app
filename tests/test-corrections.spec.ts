@@ -49,41 +49,59 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
 }
 
 for (const [language, t] of Object.entries({ en, he, ja })) {
-  test(`group 3 ${language}: selected pattern previews real timings and Advanced stays hidden`, async ({ page }) => {
+  test(`group 3 ${language}: benefit descriptions follow presets, fit mobile and replace the animated line`, async ({ page }) => {
     await page.clock.install({ time: new Date("2026-10-27T12:00:00Z") });
     await page.clock.pauseAt(new Date("2026-10-27T12:00:01Z"));
     await page.addInitScript(language => { localStorage.setItem("breath-flow-language", language); localStorage.setItem("still-settings", JSON.stringify({ sound: "silent" })); }, language);
     await page.goto("./");
-    for (const viewport of [{width:320,height:568},{width:360,height:640},{width:375,height:812},{width:390,height:844}]) {
-      await page.setViewportSize(viewport);
-      const bounds=await page.locator('.app-page').evaluate(el=>({h:el.clientHeight,sh:el.scrollHeight,w:el.clientWidth,sw:el.scrollWidth}));
-      expect(bounds.sw).toBe(bounds.w); expect(bounds.sh).toBeLessThanOrEqual(bounds.h+1);
+    const errors: string[] = [];
+    page.on("pageerror", error => errors.push(error.message));
+    const description = page.locator('.selected-explanation');
+    for (const [choice, copy, rhythm] of [
+      ['coherent', t.homeCoherentDescription, ['5.5','0','5.5','0']],
+      ['box', t.homeBoxDescription, ['4','4','4','4']],
+      ['478', t.home478Description, ['4','7','8','0']],
+      ['custom', t.homeCustomDescription, ['4','7','8','0']],
+    ] as const) {
+      await page.locator(`[data-home-choice="${choice}"]`).click();
+      await expect(description).toHaveCount(1);
+      await expect(description).toHaveText(copy);
+      for (let index=0; index<4; index++) await expect(page.locator(`#phase-value-${index}`)).toHaveValue(rhythm[index]);
+      await expect(page.locator('.presets + .selected-explanation')).toHaveCount(1);
+      await expect(page.locator('.presets-section + .rhythm-grid')).toHaveCount(1);
+      await expect(page.locator('.selected-pattern,.pattern-track,.pattern-rhythm')).toHaveCount(0);
+      for (const viewport of [{width:320,height:568},{width:360,height:592},{width:360,height:640},{width:375,height:667},{width:375,height:812},{width:390,height:664},{width:390,height:844},{width:393,height:660},{width:412,height:731}]) {
+        await page.setViewportSize(viewport);
+        const bounds=await page.locator('.app-page').evaluate(el=>({h:el.clientHeight,sh:el.scrollHeight,w:el.clientWidth,sw:el.scrollWidth}));
+        expect(bounds.sw).toBe(bounds.w); expect(bounds.sh).toBeLessThanOrEqual(bounds.h+1);
+        expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBe(viewport.width);
+        const boxes = await page.locator('.presets,.selected-explanation,.rhythm-grid,.session-length,.start-button,.footer-actions').evaluateAll(els=>els.map(el=>el.getBoundingClientRect().toJSON()));
+        for (let index=0; index<boxes.length-1; index++) expect(boxes[index].bottom).toBeLessThanOrEqual(boxes[index+1].top+1);
+        expect(boxes.at(-1)!.bottom).toBeLessThanOrEqual(viewport.height);
+        expect(await description.evaluate(el=>el.scrollHeight-el.clientHeight)).toBeLessThanOrEqual(1);
+      }
     }
+    await page.locator('[data-home-choice="box"]').click();
+    await page.locator('#phase-value-0').fill('5.5'); await page.locator('#phase-value-0').blur();
+    await expect(description).toHaveText(t.homeCustomDescription);
+    // The library keeps its existing technical descriptions, including the other practices.
+    await page.locator('[data-home-choice="explore"]').click();
+    await expect(page.locator('[data-practice="coherent"]')).toContainText(t.coherentShort);
+    await page.locator('[data-practice="equal"]').click();
+    await page.locator('.practice-details > .start-button').click();
+    await page.getByRole('button',{name:t.stop,exact:true}).click();
+    await page.locator('.discovery-back').click();
+    await page.locator('.discovery-back').click();
+    await expect(description).toHaveText(t.equalShort);
     await expect(page.getByRole('button',{name:t.advanced,exact:true})).toHaveCount(0);
     await expect(page.getByRole('slider',{name:t.volume,exact:true})).toHaveCount(0);
-    await expect(page.locator('.selected-explanation')).toHaveText(t.coherentShort);
-    await expect(page.locator('.pattern-track')).toHaveAttribute('data-cycle-ms','11000');
-    expect(await page.locator('.pattern-track span').evaluate(el=>getComputedStyle(el).animationDuration)).toBe('11s');
-    await page.locator('[data-home-choice="box"]').click();
-    await expect(page.locator('.selected-explanation')).toHaveText(t.boxShort);
-    await expect(page.locator('.pattern-track')).toHaveAttribute('data-cycle-ms','16000');
-    for (const [time, expected] of [[2000,0.5],[5000,1],[9000,0.75],[14000,0]]) {
-      const fill = await page.locator('.pattern-track span').evaluate((el, time) => {
-        const animation = el.getAnimations()[0]; animation.pause(); animation.currentTime = time;
-        return new DOMMatrix(getComputedStyle(el).transform).a;
-      }, time);
-      expect(fill).toBeCloseTo(expected, 2);
-    }
-    await expect(page.locator('.pattern-rhythm > span')).toHaveCount(5); // Four real phases and the seconds unit.
-    await page.locator('#phase-value-0').fill('5.5'); await page.locator('#phase-value-0').blur();
-    await expect(page.locator('.pattern-track')).toHaveAttribute('data-cycle-ms','17500');
-    await page.emulateMedia({reducedMotion:'reduce'});
-    expect(await page.locator('.pattern-track span').evaluate(el=>getComputedStyle(el).animationName)).toBe('none');
     await page.locator('.start-button').click();
     await expect(page.locator('.session-panel')).toBeVisible();
+    await expect(description).toHaveCount(0);
     await expect(page.getByRole('button',{name:t.advanced,exact:true})).toHaveCount(0);
     await expect(page.getByRole('combobox',{name:t.background,exact:true})).toHaveCount(0);
     await expect(page.locator('[data-retained-advanced] .advanced-toggle')).toHaveCount(1);
+    expect(errors).toEqual([]);
   });
 }
 

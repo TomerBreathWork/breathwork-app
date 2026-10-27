@@ -3,12 +3,11 @@ import { PhaseDurations, SessionLength } from "./BreathingControls";
 import { getPractice } from "../practices";
 import type { ReactNode } from "react";
 import { type Settings } from "../settings";
-import { type Translator, type Language } from "../i18n";
+import { type Translator, type Language, type TranslationKey } from "../i18n";
 import type { PresetKey } from "../presets";
 import { SettingsFooter } from "./SettingsFooter";
 import { useState } from "react";
 import { Icon } from "./Icons";
-import { PatternPreview } from "./PatternPreview";
 interface Props {
   t: Translator;
   language: Language;
@@ -36,6 +35,16 @@ export function SettingsPanel({
   explore,
 }: Props) {
   const [editing, setEditing] = useState(false);
+  // Home copy is separate from the library's existing educational descriptions.
+  const presetDescriptions: Record<string, TranslationKey> = {
+    coherent: "homeCoherentDescription",
+    box: "homeBoxDescription",
+    "478": "home478Description",
+    custom: "homeCustomDescription",
+  };
+  const description = presetDescriptions[settings.practiceId]
+    ?? getPractice(settings.practiceId)?.short
+    ?? "homeCustomDescription";
   return (
     <main
       tabIndex={-1}
@@ -81,6 +90,7 @@ export function SettingsPanel({
             <strong><CompactLabel>{t("custom")}</CompactLabel></strong>
           </button>
         </div>
+        <p className="selected-explanation">{t(description)}</p>
       </section>
       <PhaseDurations
         t={t}
@@ -105,12 +115,6 @@ export function SettingsPanel({
           {t("error")}
         </p>
       )}
-      <PatternPreview
-        key={settings.rhythm.join("/")}
-        rhythm={settings.rhythm}
-        practiceId={settings.practiceId}
-        t={t}
-      />
       <button
         className="start-button"
         disabled={!valid || preparing}
