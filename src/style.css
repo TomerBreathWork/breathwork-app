@@ -1311,7 +1311,7 @@ input[type="number"],
 
 /* Optional discovery shares the existing forest/ivory visual language. */
 .home-choices {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   direction: inherit;
 }
 .home-choices .preset {
@@ -1646,4 +1646,44 @@ input[type="number"],
   margin: 0;
   accent-color: #5a8c89;
   direction: ltr;
+}
+
+/* Preserve optional discovery without adding a fifth primary preset. */
+.explore-choice {
+  display: block;
+  margin: 0;
+  min-height: 44px;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--teal);
+  font-size: .75rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.settings-secondary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 8px;
+  min-width: 0;
+}
+.settings-secondary .advanced {
+  display: contents;
+}
+.settings-secondary .advanced-toggle {
+  grid-area: 1 / 1;
+  text-align: start;
+}
+.settings-secondary .advanced-content {
+  grid-area: 2 / 1 / auto / -1;
+}
+.settings-secondary .explore-choice {
+  grid-area: 1 / 2;
+  min-width: 0;
+}
+.help-safety {
+  border-top: 1px solid #19484a26;
+  margin-top: 20px;
+  padding-top: 8px;
 }

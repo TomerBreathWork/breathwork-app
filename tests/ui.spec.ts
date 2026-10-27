@@ -1,7 +1,7 @@
 import { configureBreathing } from "./configure-breathing";
 import {test,expect,type Page} from '@playwright/test';
 test.beforeEach(async({page})=>{await page.clock.install({time:new Date('2026-10-24T12:00:00Z')});await page.clock.pauseAt(new Date('2026-10-24T12:00:01Z'))});
-async function finishPreparation(page:Page){await expect(page.locator('.session-panel')).toHaveAttribute('aria-busy','false',{timeout:15000});await page.clock.fastForward(4001)}
+async function finishPreparation(page:Page){await expect(page.locator('.session-panel')).toHaveAttribute('aria-busy','false',{timeout:15000});await page.clock.fastForward(5001)}
 import en from '../src/locales/en.json' with {type:'json'};
 import he from '../src/locales/he.json' with {type:'json'};
 import ja from '../src/locales/ja.json' with {type:'json'};
@@ -50,7 +50,7 @@ for(const language of ['en','he','ja'] as const){
 }
 test('browser Hebrew detection works before a preference is selected',async({browser})=>{
  const context=await browser.newContext({locale:'he-IL'}),page=await context.newPage();
- await page.goto('http://127.0.0.1:5174/breathwork-app/');await expect(page.locator('html')).toHaveAttribute('lang','he');await expect(page.getByRole('button',{name:he.start,exact:true})).toBeVisible();await context.close();
+ await page.goto('http://127.0.0.1:5174/breathwork-app/');await expect(page.locator('html')).toHaveAttribute('lang','he');await expect(page.getByRole('button',{name:he.start,exact:true})).toBeVisible({timeout:15000});await context.close();
 });
 test('hold water and waves stay stationary while the clockwise ring progresses',async({page})=>{
  await silentSettings(page);await configureBreathing(page,{preset:"boxBreathing"});await page.getByRole('button',{name:en.start,exact:true}).click();await finishPreparation(page);

@@ -17,7 +17,7 @@ test.beforeEach(async ({ page }) => {
   await page.clock.pauseAt(new Date("2026-10-26T12:00:01Z"));
 });
 for (const [language, t] of Object.entries({ en, he, ja })) {
-  test(`${language}: every launch resets timing while current-session choices and other preferences survive`, async ({
+  test(`${language}: launch and reload restore breathing choices while current-session navigation and other preferences survive`, async ({
     page,
   }) => {
     await page.addInitScript((language) => {
@@ -38,14 +38,17 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
       }
     }, language);
     await page.goto("./");
-    await defaults(page);
+    await expect(page.locator('[data-home-choice="custom"]')).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator("#duration")).toHaveValue("27");
+    await expect(page.locator("#phase-value-0")).toHaveValue("40");
+    await expect(page.locator("#phase-value-2")).toHaveValue("40");
     await expect(page.locator("html")).toHaveAttribute("lang", language);
     await expect(page.locator("html")).toHaveAttribute(
       "dir",
       language === "he" ? "rtl" : "ltr",
     );
     await page.locator('[data-home-choice="custom"]').click();
-    await expect(page.locator("#phase-value-0")).toHaveValue("5.5"); // Old Custom memory was discarded too.
+    await expect(page.locator("#phase-value-0")).toHaveValue("40"); // Current migrated Custom stays selected until the user chooses another pattern.
     const chosen = { preset: "custom", rhythm: [6.5, 1.5, 8, 0.5], minutes: 2 };
     await configureBreathing(page, chosen);
     await configureBreathing(page,{preset:"boxBreathing"});
@@ -66,7 +69,9 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
     await expect(page.locator("#duration")).toHaveValue("2");
     await expect(page.locator("#phase-value-0")).toHaveValue("6.5");
     await page.reload();
-    await defaults(page);
+    await expect(page.locator('[data-home-choice="custom"]')).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator("#duration")).toHaveValue("2");
+    await expect(page.locator("#phase-value-0")).toHaveValue("6.5");
     await page.getByRole("button", { name: t.advanced, exact: true }).click();
     await expect(
       page.getByRole("combobox", { name: t.sound, exact: true }),
@@ -78,14 +83,15 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
       page.getByRole("slider", { name: t.volume, exact: true }),
     ).toHaveValue("0.2");
     await expect(page.locator("html")).toHaveAttribute("lang", language);
-    // A new document navigation (rather than reload) also starts with defaults.
+    // A new document navigation also restores the latest saved configuration.
     await page.getByRole("button", { name: t.advanced, exact: true }).click();
     await configureBreathing(page, { preset: "boxBreathing", minutes: 7 });
     await page.goto("./");
-    await defaults(page);
+    await expect(page.locator('[data-home-choice="box"]')).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator("#duration")).toHaveValue("7");
   });
 }
-test("a new user receives 187 breathing seconds after four silent preparation seconds and finishes the final exhale", async ({
+test("a new user receives 187 breathing seconds after five silent preparation seconds and finishes the final exhale", async ({
   page,
 }) => {
   await page.goto("./");
@@ -96,7 +102,7 @@ test("a new user receives 187 breathing seconds after four silent preparation se
     .selectOption("silent");
   await page.getByRole("button", { name: en.start, exact: true }).click();
   await expect(page.locator(".remaining-value")).toHaveText("03:07");
-  await page.clock.runFor(3990);
+  await page.clock.runFor(4990);
   await expect(page.locator(".breath-circle")).toHaveAttribute(
     "data-phase",
     "preparation",

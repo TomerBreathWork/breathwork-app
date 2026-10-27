@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
   await page.clock.install({ time: new Date("2026-10-27T12:00:00Z") });
   await page.clock.pauseAt(new Date("2026-10-27T12:00:01Z"));
   await page.addInitScript(() => {
-    localStorage.setItem(
+    if (!localStorage.getItem("still-settings")) localStorage.setItem(
       "still-settings",
       JSON.stringify({ sound: "silent", volume: 0.2, background: "photo-4" }),
     );
@@ -126,7 +126,7 @@ test("equal and extended ratios start directly from Details with exact fractiona
     await page.locator(".quick-lengths button").first().click();
     await page.locator("#duration").fill("1");
     await page.getByRole("button", { name: en.start, exact: true }).click();
-    await expect(page.locator(".phase-count")).toHaveText("4");
+    await expect(page.locator(".phase-count")).toHaveText("5");
     await expect(page.locator(".scenery")).toHaveAttribute(
       "src",
       /backgrounds\/4\.webp$/,
@@ -142,7 +142,7 @@ test("equal and extended ratios start directly from Details with exact fractiona
     const actual = "01:06";
     await expect(page.locator(".remaining-value")).toHaveText(actual);
     await expect(page.locator(".breath-route-icon")).toHaveCount(0);
-    await page.clock.runFor(3990);
+    await page.clock.runFor(4990);
     await expect(page.locator(".phase-count")).toHaveText("1");
     await expect(page.locator(".remaining-value")).toHaveText(actual);
     await page.clock.runFor(30);
@@ -165,8 +165,8 @@ test("equal and extended ratios start directly from Details with exact fractiona
       page.getByRole("button", { name: en.pause, exact: true }),
     ).toBeVisible();
     await page.getByRole("button", { name: en.restart, exact: true }).click();
-    await expect(page.locator(".phase-count")).toHaveText("4");
-    await page.clock.runFor(4020);
+    await expect(page.locator(".phase-count")).toHaveText("5");
+    await page.clock.runFor(5020);
     await page.clock.fastForward(65940);
     await expect(page.locator(".breath-circle")).toHaveAttribute(
       "data-phase",
@@ -223,7 +223,7 @@ test("Box adjusts four equal phases, keeps its identity and preserves choices on
   await page.reload();
   await expect(page.locator(".settings-panel")).toHaveAttribute(
     "data-selected-practice",
-    "coherent",
+    "box",
   );
   await expect(page.locator("#duration")).toHaveValue("3");
 });
@@ -236,7 +236,7 @@ test("nasal/mouth guidance is localized, hidden in both holds, and does not move
   for (let i = 0; i < 4; i++) await page.locator(`#phase-value-${i}`).fill("1");
   await page.locator("#duration").fill("1");
   await page.getByRole("button", { name: en.start, exact: true }).click();
-  await page.clock.runFor(4020);
+  await page.clock.runFor(5020);
   await expect(page.locator(".breath-route-guidance")).toContainText(
     en.throughNose,
   );

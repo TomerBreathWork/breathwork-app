@@ -26,7 +26,7 @@ async function settings(
   await page.goto("./");
 }
 for (const [language, t] of Object.entries(dictionaries)) {
-  test(`${language}: three localized primary choices in a single mobile row, contact, native share and accessible localized help`, async ({
+  test(`${language}: four localized primary presets in a single mobile row, contact, native share and accessible localized help`, async ({
     page,
   }) => {
     await page.setViewportSize({ width: 375, height: 812 });
@@ -39,7 +39,7 @@ for (const [language, t] of Object.entries(dictionaries)) {
       }),
     );
     await settings(page, language);
-    await expect(page.locator(".presets button")).toHaveText([t.coherentBreathing,t.custom,t.explore]);
+    await expect(page.locator(".presets button")).toHaveText([t.coherentBreathing,t.boxBreathing,t.preset478,t.custom]);
     await expect(
       page.locator('[data-home-choice="coherent"]'),
     ).toHaveAttribute("aria-pressed", "true");
@@ -87,6 +87,8 @@ for (const [language, t] of Object.entries(dictionaries)) {
       t.helpLengthTitle,
       t.helpStartTitle,
       t.helpImportantTitle,
+      t.helpSafetyTitle,
+      ...t.helpSafetyBody.split("\n\n"),
       ...t.helpImportantBody.split("\n\n"),
     ])
       await expect(dialog.getByText(text, { exact: true })).toHaveCount(1);
@@ -123,7 +125,7 @@ for (const [key, name, rhythm] of [
   ["custom", "Custom", [6.5, 1, 8, 0.5]],
   ["slowSteady", "Custom", [4, 0, 6, 0]],
 ] as const)
-  test(`saved ${key} cannot override the coherent three-minute startup`, async ({
+  test(`saved ${key} restores its breathing configuration and session length`, async ({
     page,
   }) => {
     await settings(page, "en", {
@@ -134,16 +136,13 @@ for (const [key, name, rhythm] of [
       background: "photo-5",
       volume: 0.25,
     });
-    await expect(
-      page.locator('[data-home-choice="coherent"]'),
-    ).toHaveAttribute("aria-pressed", "true");
-    for (let i = 0; i < 4; i++)
-      await expect(page.locator(`#phase-value-${i}`)).toHaveValue(String([5.5,0,5.5,0][i]));
-    await expect(page.locator("#duration")).toHaveValue("3");
-    await page.reload();
-    await expect(
-      page.locator('[data-home-choice="coherent"]'),
-    ).toHaveAttribute("aria-pressed", "true");
+    const selected = key === "coherentBreathing" ? "coherent" : key === "boxBreathing" ? "box" : key === "eveningUnwind" ? "478" : "custom";
+    for (const reload of [false, true]) {
+      if (reload) await page.reload();
+      await expect(page.locator(`[data-home-choice="${selected}"]`)).toHaveAttribute("aria-pressed", "true");
+      for (let i = 0; i < 4; i++) await expect(page.locator(`#phase-value-${i}`)).toHaveValue(String(rhythm[i]));
+      await expect(page.locator("#duration")).toHaveValue("7");
+    }
   });
 test("editing only switches to Custom when necessary, and the last Custom rhythm survives preset switches within a launch", async ({
   page,
@@ -175,8 +174,8 @@ test("editing only switches to Custom when necessary, and the last Custom rhythm
   await expect(inhale).toHaveValue("6.5");
   await expect(page.locator("#phase-value-1")).toHaveValue("1.5");
   await page.reload();
-  await expect(inhale).toHaveValue("5.5");
-  await expect(page.locator('[data-home-choice="coherent"]')).toHaveAttribute("aria-pressed","true");
+  await expect(inhale).toHaveValue("6.5");
+  await expect(page.locator('[data-home-choice="custom"]')).toHaveAttribute("aria-pressed","true");
 });
 test("unsupported native sharing offers clipboard copy and the confirmation follows language changes", async ({
   page,
@@ -281,7 +280,7 @@ for (const [preset, rhythm] of [
     await configureBreathing(page,{preset,rhythm,minutes:1});
     await page.locator(".language-picker select").selectOption("ja");
     await page.getByRole("button", { name: ja.start, exact: true }).click();
-    await page.clock.runFor(4020);
+    await page.clock.runFor(5020);
     let previousDuration = 0;
     for (let index = 0; index < 4; index++) {
       if (rhythm[index] === 0) continue;

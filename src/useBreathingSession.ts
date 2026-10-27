@@ -102,7 +102,7 @@ export function useBreathingSession(settings: Settings) {
       return;
     }
     // Cache the unchanged model silently before enabling Start. Unlock still
-    // happens on user input; loading never stretches the four-second countdown.
+    // happens on user input; loading never stretches the five-second countdown.
     let cancelled = false;
     setPreloading(true);
     void audio.current.warmup(soundSets[0]).finally(() => {

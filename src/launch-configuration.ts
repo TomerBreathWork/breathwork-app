@@ -16,6 +16,36 @@ export interface LaunchConfiguration {
   minutes: number;
   customRhythm?: Rhythm;
 }
+/** Restore valid saved choices, migrating legacy bounds without losing Custom.
+ * Missing/invalid timing keeps the default; secondary preferences load separately. */
+export function restoreSavedConfiguration(
+  value: unknown,
+): Partial<LaunchConfiguration> {
+  if (!value || typeof value !== "object") return {};
+  const s = value as Partial<LaunchConfiguration>;
+  const result: Partial<LaunchConfiguration> = {};
+  const rhythm = migrateRhythm(s.rhythm);
+  if (rhythm) {
+    const preset = restorePreset(s.preset, rhythm);
+    const practice = getPractice(s.practiceId);
+    result.rhythm = rhythm;
+    result.preset = preset;
+    result.practiceId =
+      practice && (s.preset === "custom" || practice.preset === preset)
+        ? practice.id
+        : practiceForPreset(preset);
+  }
+  if (
+    typeof s.minutes === "number" &&
+    Number.isFinite(s.minutes) &&
+    s.minutes >= 1 &&
+    s.minutes <= 120
+  )
+    result.minutes = s.minutes;
+  const customRhythm = migrateRhythm(s.customRhythm);
+  if (customRhythm) result.customRhythm = customRhythm;
+  return result;
+}
 export const updateHandoffKey = "breath-flow-update-configuration";
 type StorageAccess = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 function configuration(value: unknown): LaunchConfiguration | undefined {
@@ -39,7 +69,8 @@ function configuration(value: unknown): LaunchConfiguration | undefined {
   };
 }
 /** A one-use, tab-local handoff distinguishes our safe update reload from a
- * user's reload/new launch. Never use ordinary saved timing as startup input. */
+ * user's reload/new launch. This tab-local snapshot takes precedence over the
+ * shared saved choices, so a different tab cannot overwrite an update handoff. */
 export function saveUpdateConfiguration(
   storage: StorageAccess,
   value: unknown,

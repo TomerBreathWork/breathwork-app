@@ -269,7 +269,7 @@ test("offline reload retains settings, all photographs, decoded recordings and a
     "data-phase",
     "preparation",
   );
-  await expect(page.locator(".remaining-value")).toHaveText("03:07");
+  await expect(page.locator(".remaining-value")).toHaveText("01:06");
   expect(await page.evaluate(() => (window as any).offlineVoices)).toBe(0);
   await expect(page.locator(".breath-circle")).toHaveAttribute(
     "data-phase",
@@ -335,7 +335,7 @@ test("offline reload retains settings, all photographs, decoded recordings and a
   await page.locator("#practice-base").fill("5.5");
   await page.locator("#duration").fill("1");
   await page.getByRole("button", { name: ja.start, exact: true }).click();
-  await expect(page.locator(".phase-count")).toHaveText("4");
+  await expect(page.locator(".phase-count")).toHaveText("5");
   await expect(page.locator(".breath-circle")).toHaveAttribute(
     "data-phase",
     "0",
@@ -447,12 +447,9 @@ test("update waits through preparation and pause, then reloads safely and remove
     ),
   ).toBe(0.25);
   await page.reload();
-  await expect(page.locator("#duration")).toHaveValue("3");
-  await expect(page.locator("#phase-value-0")).toHaveValue("5.5");
-  await expect(page.locator('[data-home-choice="coherent"]')).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
+  await expect(page.locator("#duration")).toHaveValue("7");
+  await expect(page.locator("#phase-value-0")).toHaveValue("6.5");
+  await expect(page.locator(".settings-panel")).toHaveAttribute("data-selected-practice", "custom");
 });
 
 test("a second practicing tab blocks an idle tab update; closing it allows eventual activation", async ({
@@ -554,7 +551,7 @@ test("full-cycle completion releases a waiting update without interrupting the t
   await page.getByRole("button", { name: en.start, exact: true }).click();
   site.release(2);
   await checkForUpdate(page);
-  await page.clock.runFor(4020);
+  await page.clock.runFor(5020);
   await expect(page.locator(".remaining-value")).toHaveText("01:06");
   await page.clock.fastForward(65000);
   await expect(page.locator(".remaining-value")).toHaveText("00:01");

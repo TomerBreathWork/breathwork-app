@@ -45,8 +45,8 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
       .click();
     await page.getByRole("button", { name: t.custom, exact: false }).click();
     await page.reload();
-    await expect(page.getByRole("button", {name:t.coherentBreathing,exact:true})).toHaveAttribute("aria-pressed","true");
-    await expect(input).toHaveValue("5.5");
+    await expect(page.getByRole("button", {name:t.custom,exact:true})).toHaveAttribute("aria-pressed","true");
+    await expect(input).toHaveValue("6.5");
     await expect(page.locator("#duration")).toHaveValue("3");
     const center = await page.locator(".brand-mark").boundingBox();
     expect(center!.x + center!.width / 2).toBeCloseTo(187.5, 0);
@@ -65,7 +65,7 @@ for (const saved of [
   },
   { minutes: 7, sound: "silent", volume: 0.25, background: "photo-2" },
 ])
-  test(`saved ${"rhythm" in saved ? "explicit rhythm" : "secondary preferences without a rhythm"} keep secondary preferences but reset startup timing`, async ({
+  test(`saved ${"rhythm" in saved ? "explicit rhythm" : "secondary preferences without a rhythm"} restore valid saved choices and secondary preferences`, async ({
     page,
   }) => {
     await page.addInitScript(
@@ -73,9 +73,9 @@ for (const saved of [
       saved,
     );
     await page.goto("./");
-    await expect(page.locator("#duration")).toHaveValue("3");
+    await expect(page.locator("#duration")).toHaveValue("7");
     await expect(page.locator("#phase-0")).toHaveValue(
-      "5.5",
+      "rhythm" in saved ? "3.5" : "5.5",
     );
     await page.getByRole("button", { name: en.advanced, exact: true }).click();
     await expect(
@@ -118,7 +118,7 @@ for (const [rhythm, seconds, lastPhase] of [
     await page.getByRole("button", { name: en.start, exact: true }).click();
     const timer = `01:${String(seconds - 60).padStart(2, "0")}`;
     await expect(page.locator(".remaining-value")).toHaveText(timer);
-    await page.clock.runFor(3990);
+    await page.clock.runFor(4990);
     await expect(page.locator(".breath-circle")).toHaveAttribute(
       "data-phase",
       "preparation",
@@ -209,7 +209,7 @@ test("coherent native audio skips both holds and emits exactly twelve strikes fo
     { timeout: 15000 },
   );
   expect(await page.evaluate(() => (window as any).played)).toEqual([]);
-  await page.clock.runFor(4020);
+  await page.clock.runFor(5020);
   await expect(page.locator(".phase-count")).toHaveText("5.5");
   for (let phase = 0; phase < 12; phase++) await page.clock.fastForward(5500);
   await expect(

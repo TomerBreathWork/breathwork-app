@@ -1,15 +1,15 @@
 import { configureBreathing } from "./configure-breathing";
 import {test,expect,type Page} from '@playwright/test';
 test.beforeEach(async({page})=>{await page.clock.install({time:new Date('2026-10-24T12:00:00Z')});await page.clock.pauseAt(new Date('2026-10-24T12:00:01Z'))});
-async function finishPreparation(page:Page){await expect(page.locator('.session-panel')).toHaveAttribute('aria-busy','false',{timeout:15000});await page.clock.fastForward(4001)}
+async function finishPreparation(page:Page){await expect(page.locator('.session-panel')).toHaveAttribute('aria-busy','false',{timeout:15000});await page.clock.fastForward(5001)}
 async function advanced(page:Page){const button=page.getByRole('button',{name:'Advanced Options',exact:true});if(await button.getAttribute('aria-expanded')!=='true')await button.click()}
 
-test('configure within a launch, reload defaults, start, pause, resume and stop',async({page})=>{
+test('configure within a launch, reload choices, start, pause, resume and stop',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('./');
  await configureBreathing(page,{preset:"boxBreathing"});
  await page.reload();
- await expect(page.getByRole('spinbutton',{name:'Hold after inhale seconds'})).toHaveValue('0');
+ await expect(page.getByRole('spinbutton',{name:'Hold after inhale seconds'})).toHaveValue('4');
  await configureBreathing(page,{preset:'boxBreathing'});
  await page.getByRole('button',{name:'Advanced Options'}).click();
  await page.getByRole('combobox',{name:'Sound',exact:true}).selectOption('silent');
@@ -50,7 +50,7 @@ test('invalid settings block start and image failure falls back safely',async({p
  await page.route(/\/media\/.*\.webp$/,r=>r.abort());await page.goto('./');
  await page.getByRole('spinbutton',{name:'Inhale seconds',exact:true}).fill('');
  await page.getByRole('spinbutton',{name:'Inhale seconds',exact:true}).blur();
- await expect(page.getByRole('button',{name:'Start Practice'})).toBeDisabled();
+ await expect(page.locator('.start-button')).toBeDisabled();
  await expect(page.getByRole('alert')).toBeVisible();
  await advanced(page);
  await page.getByRole('button',{name:'Reset defaults'}).click();

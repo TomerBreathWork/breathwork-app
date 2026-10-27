@@ -55,19 +55,28 @@ export function SettingsPanel({
             <strong>{t("coherentBreathing")}</strong>
           </button>
           <button
+            className={`preset ${settings.preset === "boxBreathing" ? "selected" : ""}`}
+            aria-pressed={settings.preset === "boxBreathing"}
+            data-home-choice="box"
+            onClick={() => onPreset("boxBreathing")}
+          >
+            <strong>{t("boxBreathing")}</strong>
+          </button>
+          <button
+            className={`preset ${settings.preset === "eveningUnwind" ? "selected" : ""}`}
+            aria-pressed={settings.preset === "eveningUnwind"}
+            data-home-choice="478"
+            onClick={() => onPreset("eveningUnwind")}
+          >
+            <strong>{t("preset478")}</strong>
+          </button>
+          <button
             className={`preset ${settings.practiceId === "custom" ? "selected" : ""}`}
             aria-pressed={settings.practiceId === "custom"}
             data-home-choice="custom"
             onClick={onCustom}
           >
             <strong>{t("custom")}</strong>
-          </button>
-          <button
-            className="preset explore-choice"
-            data-home-choice="explore"
-            onClick={explore}
-          >
-            <strong>{t("explore")}</strong>
           </button>
         </div>
       </section>
@@ -79,7 +88,16 @@ export function SettingsPanel({
         onEditingChange={setEditing}
       />
       <SessionLength t={t} settings={settings} patch={patch} />
-      {advanced}
+      <div className="settings-secondary">
+        {advanced}
+        <button
+          className="explore-choice"
+          data-home-choice="explore"
+          onClick={explore}
+        >
+          {t("explore")}
+        </button>
+      </div>
       {!valid && !editing && (
         <p className="error" role="alert">
           {t("error")}

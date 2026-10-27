@@ -37,7 +37,9 @@ export function Brand({
           <span aria-hidden="true">{language.toUpperCase()}</span>
         </label>
       )}
-      <p className="tagline">{t("tagline")}</p>
+      <p className="tagline" lang="en" dir="ltr">
+        {t("tagline")}
+      </p>
     </header>
   );
 }

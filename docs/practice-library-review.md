@@ -8,7 +8,7 @@ The annotated tag **pre-practice-library** preserves verified production commit 
 
 ## Review the experience
 
-Home keeps its original logo/branding, fixed forest photo, glow, four duration controls, direct Start, Advanced Options and footer. Its three localized choices are Coherent Breathing, Custom Breathing and Explore Breathing Practices.
+Home keeps its original logo/branding, fixed forest photo, glow, four duration controls, direct Start, Advanced Options and footer. Its four primary presets are Coherent Breathing, Box Breathing, 4-7-8 and Custom. Explore Breathing Practices remains an optional secondary action beside Advanced Options, preserving mobile height.
 
 Explore is optional. All five cards appear initially. Calm, Energy and Focus & Balance filter overlapping categories without duplicating definitions. Card summaries stay one line; Details provides the complete text. Small screens scroll the list internally.
 
@@ -26,11 +26,11 @@ Coupled guided controls use 0.5-second increments and a compact 0.5–10-second 
 
 Start on Details uses the existing engine directly. Stop returns to Details with the same selected practice and timings. Back returns through Library to Home, preserving configuration and filter selection. Home direct Start/Stop retains its behavior. Browser Forward restores valid screens without starting sessions or audio.
 
-Every fresh launch/user reload still starts with Coherent, 5.5/0/5.5/0 and 3 requested minutes. Language, background, sound and volume remain saved. Automatic PWA update reloads also preserve the selected practice ID through the existing one-use timing handoff.
+New users start with Coherent, 5.5/0/5.5/0 and 3 requested minutes. The latest integrated request supersedes the earlier reset-on-launch rule: returning users restore their valid last preset, fractional configuration, Custom memory and session length. Legacy rhythms are migrated safely to the current bounds. Language, background, sound and volume remain saved. Automatic PWA update reloads preserve the tab’s own selected practice and timing through the existing one-use handoff, taking precedence over another tab’s saved settings.
 
 ## Timing, routes and audio
 
-`src/preparation.ts` defines **four silent seconds** for all starts/restarts. Preparation lowers water high-to-low, pauses/resumes correctly and does not reduce session duration. Default Coherent still finishes 17 full cycles: **187 breathing seconds (03:07)** plus four preparation seconds.
+`src/preparation.ts` defines **five silent seconds** for all starts/restarts. Preparation lowers water high-to-low, pauses/resumes correctly and does not reduce session duration. Default Coherent still finishes 17 full cycles: **187 breathing seconds (03:07)** plus five preparation seconds.
 
 The synthesis graph and **G4 / E4 / C4 / E4** assignments are unchanged. Zero-duration phases skip their sounds; original strike/resonance, final-second fades and no crossfade remain. Water rises/falls normally and stays stationary during holds. Thin, original frontal-nose/neutral-lips SVGs and translated route text appear only during running inhale/exhale, not preparation, holds, pause or completion. Their reserved row avoids countdown movement.
 
@@ -72,10 +72,25 @@ Review the branch comparison and open a pull request **from feature/practice-lib
 ## Validation recorded for this branch
 
 - Baseline: stable `main` automated tests and production build passed before the rollback tag was created.
-- 49 unit/data/audio/timing tests passed.
-- Full browser regression run: 108 tests passed.
-- Final shared-data/control integration rerun: 27 tests passed.
-- Final library/navigation/ratio/route/accessibility rerun: 7 tests passed, including 200% text and short landscape.
+- Latest integrated update: 50 unit/data/audio/timing tests passed.
+- Latest full production browser regression: 109 tests passed.
+- Focused integrated mobile/library/PWA/footer suite: 39 tests passed. The full suite includes 200% text and short-landscape reachability.
 - Production TypeScript/Vite build passed with exit code 0; all 32 required static entries remain precached.
 - Mobile screenshots were captured and inspected for Home, Library, Details, controls and active practice in all three languages.
 - Audio synthesis, main phase engine, approved media/branding, manifest/social metadata, dependencies and Pages workflow compare unchanged against the rollback commit.
+
+## Integrated update on the same branch
+
+The supplied `Breath_Flow_Brand_Assets.zip` was inspected. All 11 entries, including the original transparent logo, SVG/ICO/PNG favicons, 180px Apple icon, PWA icons, maskable icon and 1200×630 social image, match `public/brand/` byte for byte. No artwork was regenerated. Existing image-only opacity variables (Settings 0.35, Practice 0.8), enlarged centered logo, bold byline, feathered header glow and five-photo selection remain intact. The tagline now stays English in every locale, as required by the integrated request.
+
+How to Use adds the supplied Safety Guidelines and integrated medical disclaimer in all three languages, separated by a subtle divider. The earlier redundant discomfort paragraph was consolidated into this section. No popup or checkbox was introduced. English, Hebrew RTL and Japanese help use the same accessible, internally scrolling native dialog. Japanese phase labels remain 吸う → 止める → 吐く → 止める.
+
+The five-second preparation uses the existing shared clock without changing audio, water, full-cycle calculations or paused/session state. Regression tests assert silence until its deadline, frozen total time, translated instruction, high-to-low water, restart/pause/resume/stop and the first G4. The unchanged oscillator frequencies remain G4 392, E4 329.63, C4 261.63, E4 329.63 Hz.
+
+New saved-configuration tests cover all three primary patterns, Custom, retired IDs, invalid data, fractional values, bounds migration and retained library identity. Updated browser tests cover reload persistence, the four-button row, safety translations and five-second timing while retaining the existing audio, PWA/offline and mobile checks.
+
+Existing `public/brand/app.webmanifest` already provides the requested manifest values; its filename and URLs are retained to preserve installed clients. Initial HTML metadata, all supplied brand files, service-worker update policy and production workflow require no changes.
+
+The existing immutable public preview is a previous snapshot, not an automatic feature-branch deployment. There is no safe preview-update workflow attached to this source branch. The current changes can be reviewed locally using `npm ci`, `npm run build`, then `npm run preview -- --port 5173`; the path is `/breathwork-app/`. A localhost URL requires a browser on the same machine or an actual port-forwarding feature. It is not a public phone-accessible link. Do not merge into `main` or publish production without explicit approval.
+
+Latest mobile validation covers Home, Preparation and Practice at 320×568, 360×592, 360×640, 375×667, 375×812, 390×664, 390×844, 393×660 and 412×731 in English, Hebrew and Japanese. Additional library/details checks include desktop 1280×900. Final screenshots in all three locales and Hebrew Safety Guidelines were captured and inspected; no page errors were recorded. Physical-device installation/social preview verification remains manual.

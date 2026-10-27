@@ -20,15 +20,15 @@ for(const [duration,timeline] of cases){
   await page.goto('./');await configureBreathing(page,{rhythm:[duration,0,2,0],minutes:1});await page.getByRole('button',{name:en.start,exact:true}).click();
   await page.evaluate(()=>{
    const count=document.querySelector('.phase-count')!,circle=document.querySelector('.breath-circle')!;
-   const beginning=performance.now()+4000;
+   const beginning=performance.now()+5000;
    (window as any).changes=[];
    new MutationObserver(()=>{
     if(circle.getAttribute('data-phase')==='0')
      (window as any).changes.push({value:Number(count.textContent),at:performance.now()-beginning});
    }).observe(count,{childList:true,subtree:true,characterData:true});
   });
-  await expect(page.locator('.phase-count')).toHaveText('4'); // Four-second silent preparation.
-  await page.clock.runFor(4000+duration*1000+48);
+  await expect(page.locator('.phase-count')).toHaveText('5'); // Five-second silent preparation.
+  await page.clock.runFor(5000+duration*1000+48);
   const changes: {value:number;at:number}[]=await page.evaluate(()=>(window as any).changes);
   expect(changes.map(change=>change.value)).toEqual(timeline.map(([,value])=>value));
   changes.forEach((change,index)=>{
@@ -43,13 +43,13 @@ for(const [duration,timeline] of cases){
 test('pause freezes the initial fraction; resume, restart and stop preserve their behavior',async({page})=>{
  await page.addInitScript(()=>localStorage.setItem('still-settings',JSON.stringify({rhythm:[5.5,0,5.5,0],minutes:1,sound:'silent'})));
  await page.goto('./');await page.getByRole('button',{name:en.start,exact:true}).click();
- await page.clock.runFor(4220);await expect(page.locator('.phase-count')).toHaveText('5.5');
+ await page.clock.runFor(5220);await expect(page.locator('.phase-count')).toHaveText('5.5');
  await page.getByRole('button',{name:en.pause,exact:true}).click();
  const timer=await page.locator('.remaining-value').innerText();
  await page.clock.runFor(8000);await expect(page.locator('.phase-count')).toHaveText('5.5');await expect(page.locator('.remaining-value')).toHaveText(timer);
  await page.getByRole('button',{name:en.resume,exact:true}).click();await expect(page.getByRole('button',{name:en.pause,exact:true})).toBeVisible();
  await page.clock.runFor(400);await expect(page.locator('.phase-count')).toHaveText('5');
  await page.clock.runFor(1000);await expect(page.locator('.phase-count')).toHaveText('4');
- await page.getByRole('button',{name:en.restart,exact:true}).click();await expect(page.locator('.phase-count')).toHaveText('4');await expect(page.locator('.breath-circle')).toHaveAttribute('data-phase','preparation');
+ await page.getByRole('button',{name:en.restart,exact:true}).click();await expect(page.locator('.phase-count')).toHaveText('5');await expect(page.locator('.breath-circle')).toHaveAttribute('data-phase','preparation');
  await page.getByRole('button',{name:en.stop,exact:true}).click();await expect(page.locator('.settings-panel')).toBeVisible();
 });
