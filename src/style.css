@@ -1746,6 +1746,26 @@ input[type="number"],
   border-radius: 12px;
   animation: help-attention 3.6s ease-in-out infinite;
 }
+.breathing-interface {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-width: 0;
+}
+.practice-mute {
+  position: absolute;
+  inset-inline-end: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #ffffff70;
+  border-radius: 50%;
+  background: #f6f1e8c9;
+  color: var(--teal);
+}
 @keyframes help-attention {
   0%, 100% { box-shadow: 0 0 0 0 #5a8c8900; }
   50% { box-shadow: 0 0 14px 2px #5a8c8933; }

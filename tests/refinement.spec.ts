@@ -119,7 +119,7 @@ for (const [rhythm, seconds, lastPhase] of [
     await page.getByRole("button", { name: en.start, exact: true }).click();
     const timer = `01:${String(seconds - 60).padStart(2, "0")}`;
     await expect(page.locator(".remaining-value")).toHaveText(timer);
-    await page.clock.runFor(4990);
+    await page.clock.runFor(2990);
     await expect(page.locator(".breath-circle")).toHaveAttribute(
       "data-phase",
       "preparation",
@@ -210,7 +210,7 @@ test("coherent native audio skips both holds and emits exactly twelve strikes fo
     { timeout: 15000 },
   );
   expect(await page.evaluate(() => (window as any).played)).toEqual([]);
-  await page.clock.runFor(5020);
+  await page.clock.runFor(3020);
   await expect(page.locator(".phase-count")).toHaveText("5.5");
   for (let phase = 0; phase < 12; phase++) await page.clock.fastForward(5500);
   await expect(

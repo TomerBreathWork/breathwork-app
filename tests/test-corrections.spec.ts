@@ -86,3 +86,64 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
     await expect(page.locator('[data-retained-advanced] .advanced-toggle')).toHaveCount(1);
   });
 }
+
+for (const [language, t] of Object.entries({ en, he, ja })) {
+  test(`group 4 ${language}: three silent seconds and mute keep the real session clock intact`, async ({ page }) => {
+    await page.clock.install({ time: new Date("2026-10-27T12:00:00Z") });
+    await page.clock.pauseAt(new Date("2026-10-27T12:00:01Z"));
+    await page.addInitScript(language => {
+      localStorage.setItem("breath-flow-language", language);
+      localStorage.setItem("still-settings", JSON.stringify({ sound: "bowls", volume: 0.15, background: "photo-3" }));
+      const Native = window.AudioContext;
+      (window as any).audioStarts = [];
+      (window as any).audioStops = 0;
+      window.AudioContext = class extends Native {
+        createBufferSource() {
+          const source = super.createBufferSource(), start = source.start.bind(source), stop = source.stop.bind(source);
+          source.start = (...args) => { (window as any).audioStarts.push(args[1] ?? 0); start(...args); };
+          source.stop = (...args) => { (window as any).audioStops++; stop(...args); };
+          return source;
+        }
+      };
+    }, language);
+    await page.goto("./");
+    await expect(page.locator('.start-button')).toHaveText(t.start, {timeout:15000});
+    await page.locator('.start-button').click();
+    await expect(page.locator('.session-panel')).toHaveAttribute('aria-busy','false',{timeout:15000});
+    const mute = page.locator('.practice-mute');
+    await expect(page.locator('.phase-count')).toHaveText('3');
+    await expect(mute).toHaveAttribute('aria-label',t.mute);
+    await mute.click(); await expect(mute).toHaveAttribute('aria-pressed','true');
+    await mute.click(); await expect(mute).toHaveAttribute('aria-pressed','false');
+    await page.clock.runFor(2990);
+    expect(await page.evaluate(()=>(window as any).audioStarts)).toEqual([]);
+    await expect(page.locator('.remaining-value')).toHaveText('03:07');
+    await page.clock.runFor(530);
+    await expect(page.locator('.breath-circle')).toHaveAttribute('data-phase','0');
+    const snapshot = async () => ({ timer: await page.locator('.remaining-value').innerText(), water: await page.locator('.water').getAttribute('style'), count: await page.locator('.phase-count').innerText() });
+    const before = await snapshot();
+    await mute.click();
+    await expect(mute).toHaveAttribute('aria-label',t.unmute);
+    expect(await snapshot()).toEqual(before);
+    const starts = await page.evaluate(()=>(window as any).audioStarts.length);
+    expect(await page.evaluate(()=>(window as any).audioStops)).toBeGreaterThan(0);
+    await page.clock.runFor(2000);
+    expect((await snapshot()).water).not.toBe(before.water);
+    expect(await page.evaluate(()=>(window as any).audioStarts.length)).toBe(starts);
+    await mute.click();
+    await expect(mute).toHaveAttribute('aria-pressed','false');
+    expect(await page.evaluate(()=>(window as any).audioStarts.at(-1))).toBeGreaterThan(2);
+    await page.getByRole('button',{name:t.pause,exact:true}).click();
+    const paused = await snapshot();
+    const pausedStarts = await page.evaluate(()=>(window as any).audioStarts.length);
+    await mute.click(); await mute.click(); await page.clock.runFor(4000);
+    expect(await snapshot()).toEqual(paused);
+    expect(await page.evaluate(()=>(window as any).audioStarts.length)).toBe(pausedStarts);
+    await page.getByRole('button',{name:t.resume,exact:true}).click();
+    await page.getByRole('button',{name:t.stop,exact:true}).click();
+    const stoppedStarts = await page.evaluate(()=>(window as any).audioStarts.length);
+    await page.clock.runFor(15000);
+    expect(await page.evaluate(()=>(window as any).audioStarts.length)).toBe(stoppedStarts);
+    await expect(page.locator('.settings-panel')).toBeVisible();
+  });
+}

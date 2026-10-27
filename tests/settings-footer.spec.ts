@@ -280,7 +280,7 @@ for (const [preset, rhythm] of [
     await configureBreathing(page,{preset,rhythm,minutes:1});
     await page.locator(".language-picker select").selectOption("ja");
     await page.getByRole("button", { name: ja.start, exact: true }).click();
-    await page.clock.runFor(5020);
+    await page.clock.runFor(3020);
     let previousDuration = 0;
     for (let index = 0; index < 4; index++) {
       if (rhythm[index] === 0) continue;

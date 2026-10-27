@@ -228,6 +228,13 @@ function App() {
             pause={session.pause}
             resume={() => void session.resume()}
             stop={session.stop}
+            muted={session.muted || settings.sound === "silent"}
+            onMute={() => {
+              if (settings.sound === "silent") {
+                session.setMuted(false);
+                patch({ sound: appDefaults.sound });
+              } else session.setMuted(!session.muted);
+            }}
             advanced={advanced}
           />
         )}

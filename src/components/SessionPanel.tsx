@@ -24,6 +24,8 @@ interface Props {
   resume: () => void;
   stop: () => void;
   advanced: ReactNode;
+  muted: boolean;
+  onMute: () => void;
 }
 export function SessionPanel({
   t,
@@ -39,6 +41,8 @@ export function SessionPanel({
   resume,
   stop,
   advanced,
+  muted,
+  onMute,
 }: Props) {
   return (
     <main
@@ -49,14 +53,25 @@ export function SessionPanel({
     >
       <div className="practice">
         <p className="session-intro">{t("intro")}</p>
-        <BreathingCircle
-          t={t}
-          status={status}
-          phase={phase}
-          preparationProgress={preparationProgress}
-          language={language}
-          routes={routes}
-        />
+        <div className="breathing-interface">
+          <BreathingCircle
+            t={t}
+            status={status}
+            phase={phase}
+            preparationProgress={preparationProgress}
+            language={language}
+            routes={routes}
+          />
+          <button
+            className="practice-mute"
+            type="button"
+            aria-label={t(muted ? "unmute" : "mute")}
+            aria-pressed={muted}
+            onClick={onMute}
+          >
+            <Icon name={muted ? "mute" : "sound"} />
+          </button>
+        </div>
         <p className="phase-guidance">
           {t(
             status === "completed"

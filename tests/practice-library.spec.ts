@@ -126,7 +126,7 @@ test("equal and extended ratios start directly from Details with exact fractiona
     await page.locator(".quick-lengths button").first().click();
     await page.locator("#duration").fill("1");
     await page.getByRole("button", { name: en.start, exact: true }).click();
-    await expect(page.locator(".phase-count")).toHaveText("5");
+    await expect(page.locator(".phase-count")).toHaveText("3");
     await expect(page.locator(".scenery")).toHaveAttribute(
       "src",
       /backgrounds\/4\.webp$/,
@@ -142,7 +142,7 @@ test("equal and extended ratios start directly from Details with exact fractiona
     const actual = "01:06";
     await expect(page.locator(".remaining-value")).toHaveText(actual);
     await expect(page.locator(".breath-route-icon")).toHaveCount(0);
-    await page.clock.runFor(4990);
+    await page.clock.runFor(2990);
     await expect(page.locator(".phase-count")).toHaveText("1");
     await expect(page.locator(".remaining-value")).toHaveText(actual);
     await page.clock.runFor(30);
@@ -165,8 +165,8 @@ test("equal and extended ratios start directly from Details with exact fractiona
       page.getByRole("button", { name: en.pause, exact: true }),
     ).toBeVisible();
     await page.getByRole("button", { name: en.restart, exact: true }).click();
-    await expect(page.locator(".phase-count")).toHaveText("5");
-    await page.clock.runFor(5020);
+    await expect(page.locator(".phase-count")).toHaveText("3");
+    await page.clock.runFor(3020);
     await page.clock.fastForward(65940);
     await expect(page.locator(".breath-circle")).toHaveAttribute(
       "data-phase",
@@ -236,7 +236,7 @@ test("nasal/mouth guidance is localized, hidden in both holds, and does not move
   for (let i = 0; i < 4; i++) await page.locator(`#phase-value-${i}`).fill("1");
   await page.locator("#duration").fill("1");
   await page.getByRole("button", { name: en.start, exact: true }).click();
-  await page.clock.runFor(5020);
+  await page.clock.runFor(3020);
   await expect(page.locator(".breath-route-guidance")).toContainText(
     en.throughNose,
   );

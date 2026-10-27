@@ -61,8 +61,8 @@ test("ratio and common-phase adjustments preserve exact half-second relationship
   assert.equal(isAdjusted(getPractice("coherent"), [5.5, 0, 5.5, 0]), false);
   assert.equal(isAdjusted(getPractice("box"), [3.5, 3.5, 3.5, 3.5]), true);
 });
-test("five-second preparation stays separate from the existing precise full-cycle calculation", () => {
-  assert.equal(PREPARATION_MS, 5000);
+test("three-second preparation stays separate from the existing precise full-cycle calculation", () => {
+  assert.equal(PREPARATION_MS, 3000);
   assert.equal(finishAt(3, getPractice("coherent").rhythm), 187000);
   assert.equal(
     finishAt(1, adjustPractice(getPractice("extended"), 4.5)),

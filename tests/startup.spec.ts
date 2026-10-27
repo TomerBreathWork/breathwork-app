@@ -92,7 +92,7 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
     await expect(page.locator("#duration")).toHaveValue("7");
   });
 }
-test("a new user receives 187 breathing seconds after five silent preparation seconds and finishes the final exhale", async ({
+test("a new user receives 187 breathing seconds after three silent preparation seconds and finishes the final exhale", async ({
   page,
 }) => {
   await page.goto("./");
@@ -103,7 +103,7 @@ test("a new user receives 187 breathing seconds after five silent preparation se
     .selectOption("silent");
   await page.getByRole("button", { name: en.start, exact: true }).click();
   await expect(page.locator(".remaining-value")).toHaveText("03:07");
-  await page.clock.runFor(4990);
+  await page.clock.runFor(2990);
   await expect(page.locator(".breath-circle")).toHaveAttribute(
     "data-phase",
     "preparation",

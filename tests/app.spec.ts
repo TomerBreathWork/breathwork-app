@@ -2,7 +2,7 @@ import { showRetainedAdvanced } from "./retained-advanced";
 import { configureBreathing } from "./configure-breathing";
 import {test,expect,type Page} from '@playwright/test';
 test.beforeEach(async({page})=>{await page.clock.install({time:new Date('2026-10-24T12:00:00Z')});await page.clock.pauseAt(new Date('2026-10-24T12:00:01Z'))});
-async function finishPreparation(page:Page){await expect(page.locator('.session-panel')).toHaveAttribute('aria-busy','false',{timeout:15000});await page.clock.fastForward(5001)}
+async function finishPreparation(page:Page){await expect(page.locator('.session-panel')).toHaveAttribute('aria-busy','false',{timeout:15000});await page.clock.fastForward(3001)}
 async function advanced(page:Page){await showRetainedAdvanced(page);const button=page.getByRole('button',{name:'Advanced Options',exact:true});if(await button.getAttribute('aria-expanded')!=='true')await button.click()}
 
 test('configure within a launch, reload choices, start, pause, resume and stop',async({page})=>{
@@ -88,7 +88,7 @@ test('sound begins only on interaction, skips holds, and hidden tab pauses',asyn
  await expect(page.getByRole('heading',{name:'Exhale',exact:true})).toBeVisible();
  expect(await page.evaluate(()=>(window as any).cueCount)).toBe(2);
  await advanced(page);
- await page.getByRole('button',{name:'Mute sound',exact:true}).click();
+ await page.locator('.practice-mute').click();
  await page.clock.runFor(6100);
  expect(await page.evaluate(()=>(window as any).cueCount)).toBe(2);
  await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'))});
@@ -148,8 +148,8 @@ test('resume and unmute restore phase audio; volume changes do not restart a voi
  await page.getByRole('slider',{name:'Volume'}).fill('0.1');
  expect(await page.evaluate(()=>(window as any).voices.length)).toBe(count+1);
  await advanced(page);
- await page.getByRole('button',{name:'Mute sound',exact:true}).click();
- await page.getByRole('button',{name:'Unmute sound',exact:true}).click();
+ await page.locator('.practice-mute').click();
+ await page.locator('.practice-mute').click();
  await expect.poll(()=>page.evaluate(()=>(window as any).voices.length)).toBe(count+2);
  await page.getByRole('button',{name:'Stop',exact:true}).click();
  await page.clock.runFor(20000);expect(await page.evaluate(()=>(window as any).voices.length)).toBe(count+2);

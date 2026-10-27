@@ -2,7 +2,7 @@ import { showRetainedAdvanced } from "./retained-advanced";
 import { configureBreathing } from "./configure-breathing";
 import {test,expect,type Page} from '@playwright/test';
 test.beforeEach(async({page})=>{await page.clock.install({time:new Date('2026-10-24T12:00:00Z')});await page.clock.pauseAt(new Date('2026-10-24T12:00:01Z'))});
-async function finishPreparation(page:Page){await expect(page.locator('.session-panel')).toHaveAttribute('aria-busy','false',{timeout:15000});await page.clock.fastForward(5001)}
+async function finishPreparation(page:Page){await expect(page.locator('.session-panel')).toHaveAttribute('aria-busy','false',{timeout:15000});await page.clock.fastForward(3001)}
 import en from '../src/locales/en.json' with {type:'json'};
 import he from '../src/locales/he.json' with {type:'json'};
 import ja from '../src/locales/ja.json' with {type:'json'};
