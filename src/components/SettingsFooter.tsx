@@ -3,7 +3,18 @@ import type { Translator } from "../i18n";
 import { publicAppUrl, contactUrl } from "../links";
 import { Icon } from "./Icons";
 import { HelpDialog } from "./HelpDialog";
+const helpSeenKey = "breath-flow-help-seen";
+let helpOpenedThisVisit = false;
+function firstVisitAttention() {
+  if (helpOpenedThisVisit) return false;
+  try {
+    return localStorage.getItem(helpSeenKey) !== "1";
+  } catch {
+    return true;
+  }
+}
 export function SettingsFooter({ t }: { t: Translator }) {
+  const [attention, setAttention] = useState(firstVisitAttention);
   const [help, setHelp] = useState(false),
     [fallback, setFallback] = useState(false),
     [sharing, setSharing] = useState(false),
@@ -70,8 +81,15 @@ export function SettingsFooter({ t }: { t: Translator }) {
         </a>
         <button
           type="button"
-          className="footer-action"
-          onClick={() => setHelp(true)}
+          className={`footer-action help-action ${attention ? "help-attention" : ""}`}
+          onClick={() => {
+            helpOpenedThisVisit = true;
+            setAttention(false);
+            try {
+              localStorage.setItem(helpSeenKey, "1");
+            } catch { /* Keep the current visit calm even with restricted storage. */ }
+            setHelp(true);
+          }}
         >
           <Icon name="help" />
           <span>{t("howToUse")}</span>

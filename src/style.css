@@ -1687,3 +1687,16 @@ input[type="number"],
   margin-top: 20px;
   padding-top: 8px;
 }
+
+/* First-visit hint: no movement or flashing, and no repeated onboarding. */
+.help-attention {
+  border-radius: 12px;
+  animation: help-attention 3.6s ease-in-out infinite;
+}
+@keyframes help-attention {
+  0%, 100% { box-shadow: 0 0 0 0 #5a8c8900; }
+  50% { box-shadow: 0 0 14px 2px #5a8c8933; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .help-attention { animation: none; }
+}
