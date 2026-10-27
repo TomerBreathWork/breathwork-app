@@ -1,0 +1,41 @@
+{
+  "backgrounds": [
+    {
+      "id": "photo-1",
+      "name": "Nature 1",
+      "file": "media/backgrounds/1.webp"
+    },
+    {
+      "id": "photo-2",
+      "name": "Nature 2",
+      "file": "media/backgrounds/2.webp"
+    },
+    {
+      "id": "photo-3",
+      "name": "Nature 3",
+      "file": "media/backgrounds/3.webp"
+    },
+    {
+      "id": "photo-4",
+      "name": "Nature 4",
+      "file": "media/backgrounds/4.webp"
+    },
+    {
+      "id": "photo-5",
+      "name": "Nature 5",
+      "file": "media/backgrounds/5.webp"
+    },
+    {
+      "id": "mountain-lake",
+      "name": "Mountain stillness",
+      "file": "media/backgrounds/breath-flow-lake.webp",
+      "published": false
+    }
+  ],
+  "recordings": {
+    "inhale": "media/audio/inhale 4.MP3",
+    "holdAfterInhale": "media/audio/hold 4.MP3",
+    "exhale": "media/audio/exhale 4.MP3",
+    "holdAfterExhale": "media/audio/hold 4.MP3"
+  }
+}
