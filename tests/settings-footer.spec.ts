@@ -26,7 +26,7 @@ async function settings(
   await page.goto("./");
 }
 for (const [language, t] of Object.entries(dictionaries)) {
-  test(`${language}: four exact preset names in a single mobile row, contact, native share and accessible localized help`, async ({
+  test(`${language}: three localized primary choices in a single mobile row, contact, native share and accessible localized help`, async ({
     page,
   }) => {
     await page.setViewportSize({ width: 375, height: 812 });
@@ -39,14 +39,9 @@ for (const [language, t] of Object.entries(dictionaries)) {
       }),
     );
     await settings(page, language);
-    await expect(page.locator(".presets button")).toHaveText([
-      "Coherent Breath",
-      "Box Breath",
-      "4-7-8",
-      "Custom",
-    ]);
+    await expect(page.locator(".presets button")).toHaveText([t.coherentBreathing,t.custom,t.explore]);
     await expect(
-      page.getByRole("button", { name: "Coherent Breath", exact: true }),
+      page.locator('[data-home-choice="coherent"]'),
     ).toHaveAttribute("aria-pressed", "true");
     const boxes = await page.locator(".presets button").evaluateAll((buttons) =>
       buttons.map((button) => {
@@ -57,7 +52,7 @@ for (const [language, t] of Object.entries(dictionaries)) {
     expect(new Set(boxes.map((box) => box.y)).size).toBe(1);
     boxes.forEach((box, i) => {
       expect(box.height).toBeGreaterThanOrEqual(44);
-      if (i) expect(box.x).toBeGreaterThan(boxes[i - 1].x);
+      if (i) {if(language === "he") expect(box.x).toBeLessThan(boxes[i-1].x); else expect(box.x).toBeGreaterThan(boxes[i - 1].x); }
     });
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth),
@@ -140,14 +135,14 @@ for (const [key, name, rhythm] of [
       volume: 0.25,
     });
     await expect(
-      page.getByRole("button", { name: "Coherent Breath", exact: true }),
+      page.locator('[data-home-choice="coherent"]'),
     ).toHaveAttribute("aria-pressed", "true");
     for (let i = 0; i < 4; i++)
       await expect(page.locator(`#phase-value-${i}`)).toHaveValue(String([5.5,0,5.5,0][i]));
     await expect(page.locator("#duration")).toHaveValue("3");
     await page.reload();
     await expect(
-      page.getByRole("button", { name: "Coherent Breath", exact: true }),
+      page.locator('[data-home-choice="coherent"]'),
     ).toHaveAttribute("aria-pressed", "true");
   });
 test("editing only switches to Custom when necessary, and the last Custom rhythm survives preset switches within a launch", async ({
@@ -160,28 +155,28 @@ test("editing only switches to Custom when necessary, and the last Custom rhythm
   });
   await inhale.fill("5.5");
   await expect(
-    page.getByRole("button", { name: "Coherent Breath", exact: true }),
+    page.locator('[data-home-choice="coherent"]'),
   ).toHaveAttribute("aria-pressed", "true");
   await inhale.fill("6.5");
   await page
     .getByRole("spinbutton", { name: "Hold after inhale seconds", exact: true })
     .fill("1.5");
   await expect(
-    page.getByRole("button", { name: "Custom", exact: true }),
+    page.locator('[data-home-choice="custom"]'),
   ).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: "Box Breath", exact: true }).click();
+  await configureBreathing(page,{preset:"boxBreathing"});
   await page.getByRole("button",{name:en.start,exact:true}).click();
   await page.getByRole("button",{name:en.stop,exact:true}).click();
   await expect(
-    page.getByRole("button", { name: "Box Breath", exact: true }),
-  ).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: "4-7-8", exact: true }).click();
-  await page.getByRole("button", { name: "Custom", exact: true }).click();
+    page.locator(".settings-panel"),
+  ).toHaveAttribute("data-selected-practice", "box");
+  await configureBreathing(page,{preset:"eveningUnwind"});
+  await page.locator('[data-home-choice="custom"]').click();
   await expect(inhale).toHaveValue("6.5");
   await expect(page.locator("#phase-value-1")).toHaveValue("1.5");
   await page.reload();
   await expect(inhale).toHaveValue("5.5");
-  await expect(page.getByRole("button",{name:"Coherent Breath",exact:true})).toHaveAttribute("aria-pressed","true");
+  await expect(page.locator('[data-home-choice="coherent"]')).toHaveAttribute("aria-pressed","true");
 });
 test("unsupported native sharing offers clipboard copy and the confirmation follows language changes", async ({
   page,
@@ -286,7 +281,7 @@ for (const [preset, rhythm] of [
     await configureBreathing(page,{preset,rhythm,minutes:1});
     await page.locator(".language-picker select").selectOption("ja");
     await page.getByRole("button", { name: ja.start, exact: true }).click();
-    await page.clock.runFor(5020);
+    await page.clock.runFor(4020);
     let previousDuration = 0;
     for (let index = 0; index < 4; index++) {
       if (rhythm[index] === 0) continue;

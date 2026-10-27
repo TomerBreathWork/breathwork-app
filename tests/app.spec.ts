@@ -1,13 +1,13 @@
 import { configureBreathing } from "./configure-breathing";
 import {test,expect,type Page} from '@playwright/test';
 test.beforeEach(async({page})=>{await page.clock.install({time:new Date('2026-10-24T12:00:00Z')});await page.clock.pauseAt(new Date('2026-10-24T12:00:01Z'))});
-async function finishPreparation(page:Page){await expect(page.locator('.session-panel')).toHaveAttribute('aria-busy','false',{timeout:15000});await page.clock.fastForward(5001)}
+async function finishPreparation(page:Page){await expect(page.locator('.session-panel')).toHaveAttribute('aria-busy','false',{timeout:15000});await page.clock.fastForward(4001)}
 async function advanced(page:Page){const button=page.getByRole('button',{name:'Advanced Options',exact:true});if(await button.getAttribute('aria-expanded')!=='true')await button.click()}
 
 test('configure within a launch, reload defaults, start, pause, resume and stop',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('./');
- await page.getByRole('button',{name:'Box Breath'}).click();
+ await configureBreathing(page,{preset:"boxBreathing"});
  await page.reload();
  await expect(page.getByRole('spinbutton',{name:'Hold after inhale seconds'})).toHaveValue('0');
  await configureBreathing(page,{preset:'boxBreathing'});
@@ -35,7 +35,7 @@ test('configure within a launch, reload defaults, start, pause, resume and stop'
 });
 test('zero phases skip and completion respects the whole final cycle',async({page})=>{
  await page.goto('./');
- await page.getByRole('button',{name:'4-7-8'}).click();
+ await configureBreathing(page,{preset:"eveningUnwind"});
  await page.locator('#duration').fill('1');
 
  await page.getByRole('button',{name:'Start Practice'}).click();await finishPreparation(page);

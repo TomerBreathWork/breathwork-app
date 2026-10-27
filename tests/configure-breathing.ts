@@ -1,18 +1,27 @@
-import type { Page } from "@playwright/test";
-/** Choose timing through the real UI: saved timings are intentionally ignored. */
+import { expect, type Page } from "@playwright/test";
+/** Configure the real UI, including discovery for named library patterns. */
 export async function configureBreathing(
   page: Page,
   settings: { rhythm?: readonly number[]; minutes?: number; preset?: string },
 ) {
-  const names: Record<string, string> = {
-    coherentBreathing: "Coherent Breath",
-    boxBreathing: "Box Breath",
-    eveningUnwind: "4-7-8",
-    custom: "Custom",
-  };
-  if (settings.preset && names[settings.preset])
+  const preset = settings.preset;
+  if (preset === "boxBreathing" || preset === "eveningUnwind") {
+    const minutes = await page.locator("#duration").inputValue();
+    await page.locator('[data-home-choice="explore"]').click();
+    await page.locator(".category-filters button").first().click();
     await page
-      .getByRole("button", { name: names[settings.preset], exact: true })
+      .locator(`[data-practice="${preset === "boxBreathing" ? "box" : "478"}"]`)
+      .click();
+    await page.locator(".discovery-back").click();
+    await expect(page.locator(".practice-list")).toBeVisible();
+    await page.locator(".discovery-back").click();
+    await expect(page.locator(".settings-panel")).toBeVisible();
+    await page.locator("#duration").fill(minutes);
+  } else if (preset === "coherentBreathing" || preset === "custom")
+    await page
+      .locator(
+        `[data-home-choice="${preset === "custom" ? "custom" : "coherent"}"]`,
+      )
       .click();
   if (settings.rhythm)
     for (const [i, value] of settings.rhythm.entries()) {

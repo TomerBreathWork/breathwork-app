@@ -1,14 +1,17 @@
+import { getPractice, practiceForPreset } from "./practices.ts";
 import { validConfiguredRhythm, migrateRhythm } from "./duration-controls.ts";
 import { restorePreset } from "./presets.ts";
 import type { Rhythm } from "./engine.ts";
 
 export const launchDefaults = {
   preset: "coherentBreathing",
-  rhythm: [5.5, 0, 5.5, 0] as Rhythm,
+  rhythm: [...getPractice("coherent")!.rhythm] as Rhythm,
   minutes: 3,
+  practiceId: "coherent",
 };
 export interface LaunchConfiguration {
   preset: string;
+  practiceId: string;
   rhythm: Rhythm;
   minutes: number;
   customRhythm?: Rhythm;
@@ -27,6 +30,9 @@ function configuration(value: unknown): LaunchConfiguration | undefined {
     return;
   return {
     preset: restorePreset(s.preset, s.rhythm),
+    practiceId:
+      getPractice(s.practiceId)?.id ??
+      practiceForPreset(restorePreset(s.preset, s.rhythm)),
     rhythm: [...s.rhythm],
     minutes: s.minutes,
     customRhythm: migrateRhythm(s.customRhythm),

@@ -1,3 +1,4 @@
+import { PREPARATION_MS } from "./preparation";
 import { useEffect, useRef, useState } from "react";
 import { phaseAt, finishAt, type Rhythm } from "./engine";
 import { validConfiguredRhythm } from "./duration-controls";
@@ -70,12 +71,12 @@ export function useBreathingSession(settings: Settings) {
     const tick = () => {
       const now = base.current + performance.now() - origin.current;
       if (preparation.current) {
-        setPreparationElapsed(Math.min(5000, now));
-        if (now >= 5000) {
+        setPreparationElapsed(Math.min(PREPARATION_MS, now));
+        if (now >= PREPARATION_MS) {
           preparation.current = false;
           setInPreparation(false);
           // Preserve the deadline instead of moving the clock to the next frame.
-          base.current = Math.max(0, now - 5000);
+          base.current = Math.max(0, now - PREPARATION_MS);
           origin.current = performance.now();
           setElapsed(base.current);
         }
@@ -101,7 +102,7 @@ export function useBreathingSession(settings: Settings) {
       return;
     }
     // Cache the unchanged model silently before enabling Start. Unlock still
-    // happens on user input; loading never stretches the five-second countdown.
+    // happens on user input; loading never stretches the four-second countdown.
     let cancelled = false;
     setPreloading(true);
     void audio.current.warmup(soundSets[0]).finally(() => {
@@ -205,7 +206,7 @@ export function useBreathingSession(settings: Settings) {
   function pause() {
     audio.current.stop();
     base.current = preparation.current
-      ? Math.min(5000, stageElapsed())
+      ? Math.min(PREPARATION_MS, stageElapsed())
       : currentElapsed();
     if (preparation.current) setPreparationElapsed(base.current);
     else setElapsed(base.current);

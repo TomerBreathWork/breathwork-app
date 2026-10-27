@@ -1,7 +1,7 @@
 import { configureBreathing } from "./configure-breathing";
 import {test,expect,type Page} from '@playwright/test';
 test.beforeEach(async({page})=>{await page.clock.install({time:new Date('2026-10-24T12:00:00Z')});await page.clock.pauseAt(new Date('2026-10-24T12:00:01Z'))});
-async function finishPreparation(page:Page){await expect(page.locator('.session-panel')).toHaveAttribute('aria-busy','false',{timeout:15000});await page.clock.fastForward(5001)}
+async function finishPreparation(page:Page){await expect(page.locator('.session-panel')).toHaveAttribute('aria-busy','false',{timeout:15000});await page.clock.fastForward(4001)}
 import en from '../src/locales/en.json' with {type:'json'};
 import he from '../src/locales/he.json' with {type:'json'};
 import ja from '../src/locales/ja.json' with {type:'json'};
@@ -53,7 +53,7 @@ test('browser Hebrew detection works before a preference is selected',async({bro
  await page.goto('http://127.0.0.1:5174/breathwork-app/');await expect(page.locator('html')).toHaveAttribute('lang','he');await expect(page.getByRole('button',{name:he.start,exact:true})).toBeVisible();await context.close();
 });
 test('hold water and waves stay stationary while the clockwise ring progresses',async({page})=>{
- await silentSettings(page);await page.getByRole('button',{name:'Box Breath'}).click();await page.getByRole('button',{name:en.start,exact:true}).click();await finishPreparation(page);
+ await silentSettings(page);await configureBreathing(page,{preset:"boxBreathing"});await page.getByRole('button',{name:en.start,exact:true}).click();await finishPreparation(page);
  await page.clock.runFor(4200);await expect(page.locator('.breath-circle')).toHaveAttribute('data-phase','1');
  const high=await page.locator('.water').getAttribute('style'),arc=await page.locator('.ring-progress').getAttribute('stroke-dashoffset');
  expect(await page.locator('.wave').evaluate(el=>getComputedStyle(el).animationPlayState)).toBe('paused');
@@ -79,7 +79,7 @@ test('advanced options expand, remain usable on small screens and allow scrollin
  await page.evaluate(()=>document.documentElement.style.fontSize='200%');await page.getByRole('button',{name:en.start,exact:true}).scrollIntoViewIfNeeded();await expect(page.getByRole('button',{name:en.start,exact:true})).toBeVisible();
 });
 test('custom keeps the existing rhythm and blank session duration does not crash',async({page})=>{
- await silentSettings(page);await page.getByRole('button',{name:'Custom'}).click();await expect(page.getByRole('spinbutton',{name:'Inhale seconds',exact:true})).toHaveValue('4');
+ await silentSettings(page);await page.locator('[data-home-choice="custom"]').click();await expect(page.getByRole('spinbutton',{name:'Inhale seconds',exact:true})).toHaveValue('4');
  await page.locator('#duration').fill('');await expect(page.getByRole('alert')).toBeVisible();await expect(page.getByRole('button',{name:en.start,exact:true})).toBeDisabled();
  await page.locator('#duration').fill('2');await expect(page.getByRole('button',{name:en.start,exact:true})).toBeEnabled();
 });

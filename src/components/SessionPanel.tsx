@@ -1,3 +1,4 @@
+import type { BreathingRoute } from "../practices";
 import type { ReactNode } from "react";
 import type { Language, Translator } from "../i18n";
 import { clockText } from "../settings";
@@ -17,6 +18,7 @@ interface Props {
   preparing: boolean;
   preparationProgress?: number;
   language: Language;
+  routes: { inhale: BreathingRoute; exhale: BreathingRoute };
   restart: () => void;
   pause: () => void;
   resume: () => void;
@@ -31,6 +33,7 @@ export function SessionPanel({
   preparing,
   preparationProgress,
   language,
+  routes,
   restart,
   pause,
   resume,
@@ -39,6 +42,7 @@ export function SessionPanel({
 }: Props) {
   return (
     <main
+      tabIndex={-1}
       className="session-panel"
       aria-label={t("sessionLabel")}
       aria-busy={preparing}
@@ -51,6 +55,7 @@ export function SessionPanel({
           phase={phase}
           preparationProgress={preparationProgress}
           language={language}
+          routes={routes}
         />
         <p className="phase-guidance">
           {t(

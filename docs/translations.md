@@ -9,11 +9,11 @@ Generated from `src/locales/{en,he,ja}.json`. Run `node scripts/generate-transla
 | tagline | Breathe. Be Present. Feel Better. | לנשום. להיות ברגע. להרגיש טוב יותר. | 呼吸して、今を感じて、心地よく。 |
 | language | Language | שפה | 言語 |
 | presets | Find your rhythm | מצאו את הקצב שלכם | 自分のリズムで |
-| coherentBreathing | Coherent Breath | Coherent Breath | Coherent Breath |
+| coherentBreathing | Coherent Breathing | נשימה קוהרנטית | コヒーレント呼吸 |
 | slowSteady | Slow & steady | לאט ובנחת | ゆっくり穏やかに |
-| boxBreathing | Box Breath | Box Breath | Box Breath |
-| eveningUnwind | 4-7-8 | 4-7-8 | 4-7-8 |
-| custom | Custom | Custom | Custom |
+| boxBreathing | Box Breathing | נשימת קופסה | ボックス呼吸 |
+| eveningUnwind | 4-7-8 Breathing | נשימת 4-7-8 | 4-7-8呼吸 |
+| custom | Custom Breathing | נשימה מותאמת | カスタム呼吸 |
 | customHint | Your own rhythm | הקצב שלכם | 自分だけのリズム |
 | inhale | Inhale | שאיפה | 吸う |
 | holdIn | Hold after inhale | עצירה אחרי שאיפה | 止める |
@@ -96,15 +96,57 @@ Generated from `src/locales/{en,he,ja}.json`. Run `node scripts/generate-transla
 | helpTitle | How to Use Breath Flow | איך משתמשים ב־Breath Flow? | Breath Flow の使い方 |
 | helpIntro | Find a comfortable breathing rhythm that works for you. | מצאו קצב נשימה שנעים ומתאים לכם. | 自分に合ったペースで、心地よく呼吸しましょう。 |
 | helpChooseTitle | Choose a breathing pattern | בחרו תרגול נשימה | 呼吸パターンを選ぶ |
-| helpChooseBody | Select Coherent Breath, Box Breath or 4-7-8, or choose Custom to create your own breathing rhythm. | בחרו Coherent Breath, Box Breath או 4-7-8, או בחרו Custom כדי ליצור קצב נשימה אישי. | Coherent Breath、Box Breath、4-7-8 から好きなパターンを選びます。Custom では、自分に合った呼吸のリズムを自由に設定できます。 |
+| helpChooseBody | Choose Coherent Breathing or Custom Breathing on Home, or explore the practice library for more rhythms. | בחרו נשימה קוהרנטית או נשימה מותאמת במסך הבית, או גלו קצבים נוספים בספריית התרגולים. | ホームでコヒーレント呼吸やカスタム呼吸を選ぶか、呼吸エクササイズでほかのリズムを探しましょう。 |
 | helpAdjustTitle | Adjust the breathing times | התאימו את זמני הנשימה | 呼吸の時間を調整する |
 | helpAdjustBody | Set the duration of each phase: inhale, hold, exhale and hold.  You can adjust the timing in 0.5-second increments. Set either hold to 0 if you prefer continuous breathing without pauses. | קבעו את משך השאיפה, העצירה, הנשיפה והעצירה שאחריה.  אפשר להתאים את הזמנים בחצאי שניות. אם אינכם רוצים לעצור את הנשימה, הגדירו את משך העצירה ל־0. | 吸う・止める・吐く・止める、それぞれの時間を調整できます。  0.5秒単位で設定でき、止める時間を0秒にすると、息を止めずに呼吸できます。 |
 | helpLengthTitle | Choose your session length | בחרו את משך התרגול | 練習時間を選ぶ |
 | helpLengthBody | Select how long you would like to practice.  The app always finishes a complete breathing cycle, so a few extra seconds may be added to your selected session length. | בחרו כמה זמן תרצו לתרגל.  האפליקציה תמיד משלימה מחזור נשימה שלם, ולכן ייתכן שיתווספו כמה שניות למשך שבחרתם. | 練習したい時間を選びます。  設定した時間になっても、呼吸の途中では終了せず、最後の呼吸サイクルを終えてから自然に終了します。 |
 | helpStartTitle | Start your practice | התחילו לתרגל | 練習を始める |
-| helpStartBody | Tap Start Practice.  You will have five silent seconds to gently breathe out before the session begins.  Then follow the movement of the water and the sounds at a comfortable pace. | לחצו על Start Practice.  בתחילת התרגול יהיו לכם חמש שניות שקטות להוציא את האוויר בעדינות.  לאחר מכן עקבו אחר תנועת המים והצלילים, ונשמו בקצב שנעים לכם. | 「Start Practice」を押すと、最初に5秒間の準備時間があります。  ゆっくり息を吐き切ってから、画面の水の動きと音に合わせて、無理なく呼吸を続けましょう。 |
+| helpStartBody | Tap Start Practice.  You will have four silent seconds to gently breathe out before the session begins.  Then follow the movement of the water and the sounds at a comfortable pace. | לחצו על התחלת תרגול.  בתחילת התרגול יהיו לכם ארבע שניות שקטות להוציא את האוויר בעדינות.  לאחר מכן עקבו אחר תנועת המים והצלילים, ונשמו בקצב שנעים לכם. | 「セッション開始」を押すと、最初に4秒間の準備時間があります。  ゆっくり息を吐き切ってから、画面の水の動きと音に合わせて、無理なく呼吸を続けましょう。 |
 | helpImportantTitle | Important to Remember | חשוב לזכור | 大切なこと |
 | helpImportantBody | Breathing should feel natural, comfortable and gentle.  There is no need to force a deep inhale, push the air out or hold your breath longer than feels comfortable.  You can shorten the breathing times, remove the holds or return to your natural breathing at any moment.  If you experience dizziness, pain, anxiety, breathlessness or other discomfort, stop the practice and return to your normal breathing.  The goal is not perfect performance. It is to discover a breathing rhythm that feels right for you. | הנשימה צריכה להרגיש טבעית, נוחה ונעימה.  אין צורך לשאוף בכוח, להוציא את כל האוויר במאמץ או להחזיק את הנשימה מעבר למה שנוח לכם.  אפשר לקצר את הזמנים, לוותר על עצירות או לחזור לנשימה רגילה בכל רגע.  אם מופיעים סחרחורת, כאב, תחושת לחץ, קוצר נשימה או אי־נוחות אחרת, הפסיקו את התרגול וחזרו לנשום באופן טבעי.  המטרה אינה לבצע את התרגול בצורה מושלמת, אלא למצוא קצב נשימה שמתאים לכם. | 呼吸は、無理をせず、自然で心地よいペースで行いましょう。  大きく吸おうと頑張ったり、強く吐いたり、苦しくなるまで息を止めたりする必要はありません。  自分に合わないと感じたら、呼吸の時間を短くしたり、息を止める時間を0秒にしたりして調整してください。  めまい、痛み、不安感、息苦しさなどを感じた場合は、練習を中止し、普段の自然な呼吸に戻してください。  大切なのは、上手に呼吸することではなく、今の自分に合った心地よいリズムを見つけることです。 |
 | offlineSaving | Saving the app, photos and sounds for offline use… | האפליקציה, התמונות והצלילים נשמרים לשימוש ללא אינטרנט… | アプリ・写真・音をオフライン用に保存しています… |
 | offlineReady | Saved for offline use on this device. | נשמר לשימוש ללא אינטרנט במכשיר זה. | この端末にオフライン用のデータを保存しました。 |
 | offlineUnavailable | Offline copy unavailable. Connect to the internet to try again. | עותק לשימוש ללא אינטרנט אינו זמין. התחברו לאינטרנט כדי לנסות שוב. | オフライン用のデータを利用できません。インターネットに接続して再試行してください。 |
+| explore | Explore Breathing Practices | ספריית תרגולי נשימה | 呼吸エクササイズ |
+| goBack | Back | חזרה | 戻る |
+| allPractices | All | הכול | すべて |
+| practiceCategories | Practice categories | קטגוריות תרגול | エクササイズの種類 |
+| categoryCalm | Calm | רגיעה | リラックス |
+| categoryEnergy | Energy | ערנות | 活力 |
+| categoryFocus | Focus & Balance | מיקוד ואיזון | 集中とバランス |
+| equalName | 1:1 Breathing | נשימה ביחס 1:1 | 1:1呼吸 |
+| extendedName | Extended Exhale (1:2) | נשיפה ארוכה (1:2) | 長く吐く呼吸 (1:2) |
+| whyPractice | Why it may be useful | למה התרגול עשוי לעזור | 役立つかもしれないこと |
+| whenPractice | When it may fit | מתי הוא עשוי להתאים | 取り入れる場面 |
+| suggestedRhythm | Suggested rhythm | קצב מוצע | 基本のリズム |
+| adjustedRhythm | Your adjusted rhythm keeps this practice selected. | הקצב הותאם, והתרגול שבחרתם נשאר מסומן. | 時間を調整しても、選んだエクササイズは変わりません。 |
+| commonDuration | Each phase | כל שלב | 各ステップの時間 |
+| equalPhasesHint | All four phases use the same duration. Shorten them to stay comfortable. | כל ארבעת השלבים שווים באורכם. קצרו אותם לפי הנוחות. | 4つのステップは同じ長さです。心地よい時間に短くできます。 |
+| ratioHint | Inhale : exhale = 1:{ratio}. The exhale is calculated automatically. | שאיפה : נשיפה = 1:{ratio}. משך הנשיפה מחושב אוטומטית. | 吸う：吐く = 1:{ratio}。吐く時間は自動で計算されます。 |
+| adjustComfort | Use a shorter rhythm whenever you need. Choose Custom Breathing on Home to adjust every phase independently or remove holds. | אפשר לקצר את הקצב בכל רגע. בנשימה מותאמת במסך הבית ניתן לשנות כל שלב בנפרד או להסיר עצירות. | 必要に応じて短くしましょう。ホームのカスタム呼吸では、各時間を個別に変えたり、止める時間を0秒にできます。 |
+| quickLengths | Suggested session lengths | משכי תרגול מוצעים | おすすめの練習時間 |
+| comfortSafety | Keep breathing gentle and comfortable. If you feel dizzy or uncomfortable, return to your natural breathing. | נשמו בעדינות ובנוחות. אם מופיעים סחרחורת או אי־נוחות, חזרו לנשימה הטבעית שלכם. | 無理をせず、やさしく心地よく呼吸しましょう。めまいや不快感を感じたら、普段の自然な呼吸に戻してください。 |
+| holdCaution | Holds are optional. Shorten or skip them if they feel uncomfortable; never strain to follow the suggested pattern. | העצירות אינן חובה. קצרו או הסירו אותן אם אינן נוחות; אין צורך להתאמץ כדי לעמוד בקצב המוצע. | 息を止める必要はありません。苦しければ短くするか0秒にして、基本のリズムに無理に合わせないでください。 |
+| throughNose | Through the nose | דרך האף | 鼻から |
+| throughMouth | Through the mouth | דרך הפה | 口から |
+| coherentShort | An even, unhurried rhythm without holds. | קצב שווה ונינוח, ללא עצירות. | 息を止めず、ゆったり同じ長さで。 |
+| coherentExplanation | Breathe in and out for the same length, with no pauses. The suggested 5.5-second rhythm is a starting point, not a target to achieve. | שאפו ונשפו באותו משך זמן, ללא עצירות. הקצב המוצע של 5.5 שניות הוא נקודת התחלה, ולא יעד שחייבים לעמוד בו. | 吸う時間と吐く時間を同じにし、息は止めません。5.5秒は出発点であり、達成しなければならない目標ではありません。 |
+| coherentBenefit | An even rhythm may support a steadier focus on breathing. A comfortable pace matters more than matching a number. | קצב שווה עשוי לתמוך בקשב יציב יותר לנשימה. הנוחות חשובה יותר מהמספרים. | 均等なリズムは、呼吸へ意識を向ける助けになることがあります。数字に合わせるより、心地よさを大切にしましょう。 |
+| coherentUse | Can be used for a quiet break, a transition between activities, or a few minutes of attentive breathing. | עשוי להתאים להפסקה שקטה, למעבר בין פעילויות או לכמה דקות של נשימה קשובה. | 静かな休憩や活動の切り替え、呼吸に意識を向ける短い時間に取り入れられます。 |
+| boxShort | Four equal phases, including gentle holds. | ארבעה שלבים שווים, עם עצירות עדינות. | 吸う・止める・吐く・止めるを同じ長さで。 |
+| boxExplanation | Follow four equal phases: inhale, hold, exhale, hold. Adjust their common duration together. | עקבו אחר ארבעה שלבים שווים: שאיפה, עצירה, נשיפה, עצירה. אפשר לשנות יחד את משך כל השלבים. | 吸う・止める・吐く・止めるの4つを同じ長さで行います。4つの時間をまとめて調整できます。 |
+| boxBenefit | The repeating structure offers a clear anchor for attention. Some people find the predictable rhythm useful for settling into a task. | המבנה החוזר מציע עוגן ברור לקשב. יש אנשים שקצב צפוי מסייע להם להתכונן לפעילות ממוקדת. | 繰り返す構造は、注意を向ける目印になります。予測できるリズムが、作業前のひと息に役立つ人もいます。 |
+| boxUse | May fit a short pause before a focused activity, when brief holds feel easy and comfortable. | עשוי להתאים להפסקה קצרה לפני משימה, כשהעצירות קלות ונוחות. | 息を止めることが楽で心地よいとき、集中したい活動の前の短い休憩に。 |
+| equalShort | Equal inhale and exhale, at your own pace. | שאיפה ונשיפה שוות, בקצב שלכם. | 自分のペースで、吸う・吐くを同じ長さに。 |
+| equalExplanation | Choose an inhale duration and let the exhale match it. There are no holds. Begin with 4.5 seconds, or choose a shorter pace. | בחרו משך שאיפה, והנשיפה תהיה באותו אורך. אין עצירות. אפשר להתחיל ב־4.5 שניות או לבחור קצב קצר יותר. | 吸う時間を選ぶと、吐く時間も同じになります。息は止めません。4.5秒から、またはもっと短い時間から始められます。 |
+| equalBenefit | A simple, even rhythm can support attention and presence. It does not need to be fast, and the ratio does not guarantee stimulation. | קצב פשוט ושווה עשוי לתמוך בקשב ובנוכחות. אין צורך לנשום מהר, והיחס אינו מבטיח תחושת ערנות. | シンプルな均等のリズムは、今の呼吸に注意を向ける助けになります。速くする必要はなく、比率が活力を保証するものではありません。 |
+| equalUse | Can be used during a daytime break or when you want a gentle return to the present moment. | אפשר לתרגל בהפסקה במהלך היום או כשרוצים לחזור בעדינות לרגע הנוכחי. | 日中の休憩や、今この瞬間にやさしく意識を戻したいときに。 |
+| extendedShort | A gentle exhale twice as long as the inhale. | נשיפה עדינה באורך כפול מהשאיפה. | 吸う時間の2倍の長さで、やさしく吐く。 |
+| extendedExplanation | Choose an inhale duration; the exhale is twice as long. Leave out holds and let the breath stay light. | בחרו משך שאיפה, והנשיפה תהיה ארוכה פי שניים. ללא עצירות, ובלי מאמץ להעמיק את הנשימה. | 吸う時間を選ぶと、吐く時間はその2倍になります。息を止めず、軽く自然に呼吸します。 |
+| extendedBenefit | A longer, easy exhale may help some people slow their pace. Shorten the inhale if the resulting exhale feels too long. | נשיפה ארוכה ונוחה עשויה לעזור לחלק מהאנשים להאט. קצרו את השאיפה אם הנשיפה המחושבת ארוכה מדי. | 楽に長く吐くことで、ペースを落としやすくなる人もいます。吐く時間が長すぎるなら、吸う時間を短くしましょう。 |
+| extendedUse | May fit an evening pause or a moment of slowing down. Return to an equal or natural rhythm whenever that is easier. | עשוי להתאים להפוגה בערב או לרגע של האטה. אפשר לחזור לקצב שווה או טבעי כשזה נוח יותר. | 夕方の休憩や、ひと息つきたいときに。難しく感じたら、同じ長さや普段の呼吸に戻してかまいません。 |
+| 478Short | A suggested inhale–hold–exhale pattern. | תבנית מוצעת של שאיפה, עצירה ונשיפה. | 吸う・止める・吐くの基本パターン。 |
+| 478Explanation | The suggested pattern is 4 seconds in through the nose, a 7-second hold, and 8 seconds out gently through the mouth. Adapt every phase to comfort. | התבנית המוצעת היא שאיפה דרך האף במשך 4 שניות, עצירה של 7 שניות ונשיפה עדינה דרך הפה במשך 8 שניות. התאימו כל שלב לנוחות שלכם. | 基本は鼻から4秒吸い、7秒止め、口からやさしく8秒吐きます。それぞれの時間を、無理のない長さに変えましょう。 |
+| 478Benefit | A defined sequence can give attention a steady structure. The hold is optional; the numbers are not a test or a promise of an outcome. | רצף מוגדר יכול להציע מבנה יציב לקשב. העצירה אינה חובה; המספרים אינם מבחן או הבטחה לתוצאה. | 決まった順序は、注意を向ける目印になります。止めるのは任意で、数字はテストでも効果の約束でもありません。 |
+| 478Use | Can be explored during a quiet break if longer phases feel comfortable. Choose a shorter pattern or remove the hold as needed. | אפשר לנסות בהפסקה שקטה אם שלבים ארוכים מרגישים נוחים. קצרו את התבנית או הסירו את העצירה לפי הצורך. | 長めの呼吸が心地よくできるときの静かな休憩に。必要なら短くしたり、止める時間を0秒にしましょう。 |

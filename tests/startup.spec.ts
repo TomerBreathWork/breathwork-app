@@ -6,7 +6,7 @@ import ja from "../src/locales/ja.json" with { type: "json" };
 
 async function defaults(page: Page) {
   await expect(
-    page.getByRole("button", { name: "Coherent Breath", exact: true }),
+    page.locator('[data-home-choice="coherent"]'),
   ).toHaveAttribute("aria-pressed", "true");
   for (const [i, value] of [5.5, 0, 5.5, 0].entries())
     await expect(page.locator(`#phase-value-${i}`)).toHaveValue(String(value));
@@ -44,12 +44,12 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
       "dir",
       language === "he" ? "rtl" : "ltr",
     );
-    await page.getByRole("button", { name: "Custom", exact: true }).click();
+    await page.locator('[data-home-choice="custom"]').click();
     await expect(page.locator("#phase-value-0")).toHaveValue("5.5"); // Old Custom memory was discarded too.
     const chosen = { preset: "custom", rhythm: [6.5, 1.5, 8, 0.5], minutes: 2 };
     await configureBreathing(page, chosen);
-    await page.getByRole("button", { name: "Box Breath", exact: true }).click();
-    await page.getByRole("button", { name: "Custom", exact: true }).click();
+    await configureBreathing(page,{preset:"boxBreathing"});
+    await page.locator('[data-home-choice="custom"]').click();
     await page.getByRole("button", { name: t.start, exact: true }).click();
     await expect(page.locator(".remaining-value")).toHaveText("02:12");
     await page.getByRole("button", { name: t.stop, exact: true }).click();
@@ -59,7 +59,7 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
       );
     await expect(page.locator("#duration")).toHaveValue("2");
     await expect(
-      page.getByRole("button", { name: "Custom", exact: true }),
+      page.locator('[data-home-choice="custom"]'),
     ).toHaveAttribute("aria-pressed", "true");
     await page.getByRole("button", { name: t.start, exact: true }).click();
     await page.goBack();
@@ -85,7 +85,7 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
     await defaults(page);
   });
 }
-test("a new user receives 187 breathing seconds after five silent preparation seconds and finishes the final exhale", async ({
+test("a new user receives 187 breathing seconds after four silent preparation seconds and finishes the final exhale", async ({
   page,
 }) => {
   await page.goto("./");
@@ -96,7 +96,7 @@ test("a new user receives 187 breathing seconds after five silent preparation se
     .selectOption("silent");
   await page.getByRole("button", { name: en.start, exact: true }).click();
   await expect(page.locator(".remaining-value")).toHaveText("03:07");
-  await page.clock.runFor(4990);
+  await page.clock.runFor(3990);
   await expect(page.locator(".breath-circle")).toHaveAttribute(
     "data-phase",
     "preparation",

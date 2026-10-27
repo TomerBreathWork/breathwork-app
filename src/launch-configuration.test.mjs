@@ -17,6 +17,7 @@ const memory = () => {
 };
 const custom = {
   preset: "custom",
+  practiceId: "custom",
   rhythm: [6.5, 1.5, 8, 0.5],
   minutes: 7,
   customRhythm: [6.5, 1.5, 8, 0.5],
@@ -26,6 +27,7 @@ test("launch defaults give 17 whole cycles and 187 seconds, excluding preparatio
     preset: "coherentBreathing",
     rhythm: [5.5, 0, 5.5, 0],
     minutes: 3,
+    practiceId: "coherent",
   });
   assert.equal(finishAt(launchDefaults.minutes, launchDefaults.rhythm), 187000);
 });

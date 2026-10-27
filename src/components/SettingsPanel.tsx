@@ -1,16 +1,10 @@
-import type { ReactNode, CSSProperties } from "react";
-import { presets, type Settings } from "../settings";
-import { phaseKeys, type Translator, type Language } from "../i18n";
-import type { Rhythm } from "../engine";
+import { PhaseDurations, SessionLength } from "./BreathingControls";
+import { getPractice } from "../practices";
+import type { ReactNode } from "react";
+import { type Settings } from "../settings";
+import { type Translator, type Language } from "../i18n";
 import type { PresetKey } from "../presets";
 import { SettingsFooter } from "./SettingsFooter";
-import {
-  phaseLimits,
-  clampPhaseDuration,
-  holdDurationToSliderPosition,
-  sliderPositionToHoldDuration,
-  nextHoldDuration,
-} from "../duration-controls";
 import { useState } from "react";
 import { Icon } from "./Icons";
 interface Props {
@@ -24,6 +18,7 @@ interface Props {
   valid: boolean;
   preparing: boolean;
   start: () => void;
+  explore: () => void;
 }
 export function SettingsPanel({
   t,
@@ -36,163 +31,54 @@ export function SettingsPanel({
   valid,
   preparing,
   start,
+  explore,
 }: Props) {
   const [editing, setEditing] = useState(false);
   return (
     <main
+      tabIndex={-1}
       className="settings-panel glass-panel"
+      data-selected-practice={settings.practiceId}
       aria-label={t("settingsLabel")}
     >
       <section className="presets-section" aria-label={t("presets")}>
-        <h2 className="section-title">{t("presets")}</h2>
-        <div className="presets" dir="ltr" lang="en">
-          {presets.map((preset) => (
-            <button
-              className={`preset ${settings.preset === preset.key ? "selected" : ""}`}
-              aria-pressed={settings.preset === preset.key}
-              key={preset.key}
-              onClick={() => onPreset(preset.key)}
-            >
-              <strong>{t(preset.key)}</strong>
-            </button>
-          ))}
+        <h2 className="section-title">
+          {t(getPractice(settings.practiceId)?.name ?? "presets")}
+        </h2>
+        <div className="presets home-choices">
           <button
-            className={`preset ${settings.preset === "custom" ? "selected" : ""}`}
-            aria-pressed={settings.preset === "custom"}
+            className={`preset ${settings.practiceId === "coherent" ? "selected" : ""}`}
+            aria-pressed={settings.practiceId === "coherent"}
+            data-home-choice="coherent"
+            onClick={() => onPreset("coherentBreathing")}
+          >
+            <strong>{t("coherentBreathing")}</strong>
+          </button>
+          <button
+            className={`preset ${settings.practiceId === "custom" ? "selected" : ""}`}
+            aria-pressed={settings.practiceId === "custom"}
+            data-home-choice="custom"
             onClick={onCustom}
           >
             <strong>{t("custom")}</strong>
           </button>
+          <button
+            className="preset explore-choice"
+            data-home-choice="explore"
+            onClick={explore}
+          >
+            <strong>{t("explore")}</strong>
+          </button>
         </div>
       </section>
-      <section className="rhythm-grid" aria-label={t("rhythmLabel")}>
-        {phaseKeys.map((key, index) => {
-          const value = settings.rhythm[index];
-          const hold = index === 1 || index === 3;
-          const { min, max } = phaseLimits(index);
-          const displayedValue = Number.isFinite(value)
-            ? clampPhaseDuration(index, value)
-            : min;
-          const position = hold
-            ? holdDurationToSliderPosition(displayedValue)
-            : ((displayedValue - min) / (max - min)) * 100;
-          const controlLabel =
-            language === "ja" && hold ? `${t(key)} (${index + 1})` : t(key);
-          const update = (value: number) => {
-            const rhythm = [...settings.rhythm] as Rhythm;
-            rhythm[index] = value;
-            patch({ rhythm });
-          };
-          return (
-            <div className="phase-row" key={key}>
-              <label htmlFor={`phase-${index}`}>{t(key)}</label>
-              <input
-                id={`phase-${index}`}
-                type="range"
-                min={hold ? 0 : min}
-                max={hold ? 100 : max}
-                step={hold ? "any" : "0.5"}
-                value={hold ? position : displayedValue}
-                onChange={(e) =>
-                  update(
-                    hold
-                      ? sliderPositionToHoldDuration(Number(e.target.value))
-                      : Number(e.target.value),
-                  )
-                }
-                onKeyDown={(event) => {
-                  if (!hold) return;
-                  if (
-                    [
-                      "ArrowUp",
-                      "ArrowRight",
-                      "ArrowDown",
-                      "ArrowLeft",
-                      "Home",
-                      "End",
-                    ].includes(event.key)
-                  ) {
-                    event.preventDefault();
-                    update(
-                      event.key === "Home"
-                        ? 0
-                        : event.key === "End"
-                          ? 120
-                          : nextHoldDuration(
-                              displayedValue,
-                              event.key === "ArrowUp" ||
-                                event.key === "ArrowRight"
-                                ? 1
-                                : -1,
-                            ),
-                    );
-                  }
-                }}
-                aria-label={controlLabel}
-                aria-valuemin={min}
-                aria-valuemax={max}
-                aria-valuenow={displayedValue}
-                aria-valuetext={`${displayedValue} ${t("seconds")}`}
-                style={
-                  {
-                    "--range-progress": `${position}%`,
-                  } as CSSProperties
-                }
-              />
-              <label className="duration-chip">
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  id={`phase-value-${index}`}
-                  min={min}
-                  max={max}
-                  step="0.5"
-                  aria-label={t("phaseSeconds", { phase: controlLabel })}
-                  aria-invalid={
-                    !Number.isFinite(value) || value < min || value > max
-                  }
-                  onFocus={() => setEditing(true)}
-                  onBlur={(event) => {
-                    setEditing(false);
-                    if (
-                      event.target.value !== "" &&
-                      Number.isFinite(Number(event.target.value))
-                    )
-                      update(
-                        clampPhaseDuration(index, Number(event.target.value)),
-                      );
-                  }}
-                  value={Number.isNaN(value) ? "" : value}
-                  onChange={(e) =>
-                    update(e.target.value === "" ? NaN : Number(e.target.value))
-                  }
-                />
-                <span>{t("seconds")}</span>
-              </label>
-            </div>
-          );
-        })}
-      </section>
-      <div className="session-length">
-        <label htmlFor="duration">{t("sessionLength")}</label>
-        <div className="length-control">
-          <input
-            id="duration"
-            aria-label={t("sessionLength")}
-            type="number"
-            min="1"
-            max="120"
-            step="1"
-            value={Number.isNaN(settings.minutes) ? "" : settings.minutes}
-            onChange={(e) =>
-              patch({
-                minutes: e.target.value === "" ? NaN : Number(e.target.value),
-              })
-            }
-          />
-          <span>{t("minutes")}</span>
-        </div>
-      </div>
+      <PhaseDurations
+        t={t}
+        language={language}
+        settings={settings}
+        patch={patch}
+        onEditingChange={setEditing}
+      />
+      <SessionLength t={t} settings={settings} patch={patch} />
       {advanced}
       {!valid && !editing && (
         <p className="error" role="alert">

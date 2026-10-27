@@ -86,7 +86,7 @@ for (const [language, t] of Object.entries(dictionaries)) {
     for (const viewport of sizes) {
       await page.setViewportSize(viewport);
       await fits(page);
-      await expect(page.locator(".presets button")).toHaveCount(4);
+      await expect(page.locator(".presets button")).toHaveCount(3);
       const positions = await page
         .locator(".presets button")
         .evaluateAll((els) => els.map((el) => el.getBoundingClientRect().top));
@@ -97,7 +97,7 @@ for (const [language, t] of Object.entries(dictionaries)) {
       }
       await page.getByRole("button", { name: t.start, exact: true }).click();
       await fits(page);
-      await page.clock.fastForward(5020);
+      await page.clock.fastForward(4020);
       await fits(page);
       const before = await page.locator(".session-controls").boundingBox();
       await page.clock.runFor(2100);
@@ -138,7 +138,7 @@ test("Japanese phase labels are short on Settings, both Practice holds and all h
   await expect(page.getByRole("dialog")).not.toContainText(/吸った後|吐いた後/);
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: ja.start, exact: true }).click();
-  await page.clock.fastForward(9020);
+  await page.clock.fastForward(8020);
   await expect(page.locator(".circle-label h2")).toHaveText("止める");
   await expect(page.locator(".circle-label small")).toHaveCount(0);
   await page.clock.fastForward(8000);
@@ -232,7 +232,7 @@ test("legacy overlong breaths and saved Custom memory are ignored without losing
     volume: 0.25,
     background: "photo-5",
   });
-  await page.getByRole("button", { name: "Custom", exact: true }).click();
+  await page.locator('[data-home-choice="custom"]').click();
   for (const [i, value] of [5.5, 0, 5.5, 0].entries())
     await expect(page.locator(`#phase-value-${i}`)).toHaveValue(String(value));
   await page.reload();
@@ -245,7 +245,7 @@ test("legacy overlong breaths and saved Custom memory are ignored without losing
   expect(saved.volume).toBe(0.25);
   expect(saved.sound).toBe("silent");
   await page
-    .getByRole("button", { name: "Coherent Breath", exact: true })
+    .getByRole("button", { name: en.coherentBreathing, exact: true })
     .click();
   for (const [i, value] of [5.5, 0, 5.5, 0].entries())
     await expect(page.locator(`#phase-value-${i}`)).toHaveValue(String(value));
