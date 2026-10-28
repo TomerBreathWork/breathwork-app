@@ -1,19 +1,12 @@
-import type { Page } from "@playwright/test";
-/** Choose timing through the real UI: saved timings are intentionally ignored. */
+import { type Page } from "@playwright/test";
+/** Configure the real UI, including discovery for named library patterns. */
 export async function configureBreathing(
   page: Page,
   settings: { rhythm?: readonly number[]; minutes?: number; preset?: string },
 ) {
-  const names: Record<string, string> = {
-    coherentBreathing: "Coherent Breath",
-    boxBreathing: "Box Breath",
-    eveningUnwind: "4-7-8",
-    custom: "Custom",
-  };
-  if (settings.preset && names[settings.preset])
-    await page
-      .getByRole("button", { name: names[settings.preset], exact: true })
-      .click();
+  const preset = settings.preset;
+  const choice = { coherentBreathing: "coherent", boxBreathing: "box", eveningUnwind: "478", custom: "custom" }[preset ?? ""];
+  if (choice) await page.locator(`[data-home-choice="${choice}"]`).click();
   if (settings.rhythm)
     for (const [i, value] of settings.rhythm.entries()) {
       await page.locator(`#phase-value-${i}`).fill(String(value));

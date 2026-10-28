@@ -1,3 +1,4 @@
+import { showRetainedAdvanced } from "./retained-advanced";
 import { configureBreathing } from "./configure-breathing";
 import { test, expect, type Page } from "@playwright/test";
 import en from "../src/locales/en.json" with { type: "json" };
@@ -97,7 +98,7 @@ for (const [language, t] of Object.entries(dictionaries)) {
       }
       await page.getByRole("button", { name: t.start, exact: true }).click();
       await fits(page);
-      await page.clock.fastForward(5020);
+      await page.clock.fastForward(3020);
       await fits(page);
       const before = await page.locator(".session-controls").boundingBox();
       await page.clock.runFor(2100);
@@ -138,7 +139,7 @@ test("Japanese phase labels are short on Settings, both Practice holds and all h
   await expect(page.getByRole("dialog")).not.toContainText(/吸った後|吐いた後/);
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: ja.start, exact: true }).click();
-  await page.clock.fastForward(9020);
+  await page.clock.fastForward(7020);
   await expect(page.locator(".circle-label h2")).toHaveText("止める");
   await expect(page.locator(".circle-label small")).toHaveCount(0);
   await page.clock.fastForward(8000);
@@ -220,7 +221,7 @@ test("both hold sliders use the precision mapping and keep exact manually entere
   await page.keyboard.press("End");
   await expect(page.locator("#phase-value-1")).toHaveValue("120");
 });
-test("legacy overlong breaths and saved Custom memory are ignored without losing preferences", async ({
+test("legacy overlong breaths and saved Custom memory are migrated without losing preferences", async ({
   page,
 }) => {
   await open(page, "en", {
@@ -232,12 +233,12 @@ test("legacy overlong breaths and saved Custom memory are ignored without losing
     volume: 0.25,
     background: "photo-5",
   });
-  await page.getByRole("button", { name: "Custom", exact: true }).click();
-  for (const [i, value] of [5.5, 0, 5.5, 0].entries())
+  await page.locator('[data-home-choice="custom"]').click();
+  for (const [i, value] of [40, 31.5, 40, 119.5].entries())
     await expect(page.locator(`#phase-value-${i}`)).toHaveValue(String(value));
   await page.reload();
-  await expect(page.locator("#phase-value-0")).toHaveValue("5.5");
-  await expect(page.locator("#duration")).toHaveValue("3");
+  await expect(page.locator("#phase-value-0")).toHaveValue("40");
+  await expect(page.locator("#duration")).toHaveValue("7");
   const saved = await page.evaluate(() =>
     JSON.parse(localStorage.getItem("still-settings")!),
   );
@@ -245,7 +246,7 @@ test("legacy overlong breaths and saved Custom memory are ignored without losing
   expect(saved.volume).toBe(0.25);
   expect(saved.sound).toBe("silent");
   await page
-    .getByRole("button", { name: "Coherent Breath", exact: true })
+    .getByRole("button", { name: en.coherentBreathing, exact: true })
     .click();
   for (const [i, value] of [5.5, 0, 5.5, 0].entries())
     await expect(page.locator(`#phase-value-${i}`)).toHaveValue(String(value));
@@ -264,7 +265,7 @@ test("safe-area-like padding, reduced viewport height and expanded options keep 
   await fits(page);
   await page.setViewportSize({ width: 390, height: 664 });
   await fits(page);
-  await page.getByRole("button", { name: he.advanced, exact: true }).click();
+  await showRetainedAdvanced(page); await page.getByRole("button", { name: he.advanced, exact: true }).click();
   await expect(
     page.getByRole("combobox", { name: he.background, exact: true }),
   ).toBeVisible();

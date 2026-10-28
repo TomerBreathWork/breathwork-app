@@ -33,9 +33,9 @@
     }
   ],
   "recordings": {
-    "inhale": "media/audio/inhale 4.MP3",
-    "holdAfterInhale": "media/audio/hold 4.MP3",
-    "exhale": "media/audio/exhale 4.MP3",
-    "holdAfterExhale": "media/audio/hold 4.MP3"
+    "inhale": "media/audio/bowls/low_F3_174Hz.mp3",
+    "holdAfterInhale": "media/audio/bowls/high_F4_349Hz.mp3",
+    "exhale": "media/audio/bowls/mid_C4_262Hz.mp3",
+    "holdAfterExhale": "media/audio/bowls/high_F4_349Hz.mp3"
   }
 }

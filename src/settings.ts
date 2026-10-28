@@ -3,6 +3,7 @@ import { type PatternSettings } from "./presets";
 import {
   consumeUpdateConfiguration,
   saveUpdateConfiguration,
+  restoreSavedConfiguration,
 } from "./launch-configuration";
 export { presets } from "./presets";
 export type Settings = typeof appDefaults &
@@ -41,6 +42,8 @@ export function loadSettings(): Settings {
     if (s && typeof s === "object") {
       return {
         ...initial,
+        ...restoreSavedConfiguration(s),
+        ...updateConfiguration,
         sound: ["bowls", "recordings", "silent"].includes(s.sound)
           ? s.sound
           : appDefaults.sound,

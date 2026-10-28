@@ -1,3 +1,5 @@
+import { observeSamples } from "./sample-observer";
+import { showRetainedAdvanced } from "./retained-advanced";
 import { configureBreathing } from "./configure-breathing";
 import { test, expect } from "@playwright/test";
 import en from "../src/locales/en.json" with { type: "json" };
@@ -45,8 +47,8 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
       .click();
     await page.getByRole("button", { name: t.custom, exact: false }).click();
     await page.reload();
-    await expect(page.getByRole("button", {name:t.coherentBreathing,exact:true})).toHaveAttribute("aria-pressed","true");
-    await expect(input).toHaveValue("5.5");
+    await expect(page.getByRole("button", {name:t.custom,exact:true})).toHaveAttribute("aria-pressed","true");
+    await expect(input).toHaveValue("6.5");
     await expect(page.locator("#duration")).toHaveValue("3");
     const center = await page.locator(".brand-mark").boundingBox();
     expect(center!.x + center!.width / 2).toBeCloseTo(187.5, 0);
@@ -65,7 +67,7 @@ for (const saved of [
   },
   { minutes: 7, sound: "silent", volume: 0.25, background: "photo-2" },
 ])
-  test(`saved ${"rhythm" in saved ? "explicit rhythm" : "secondary preferences without a rhythm"} keep secondary preferences but reset startup timing`, async ({
+  test(`saved ${"rhythm" in saved ? "explicit rhythm" : "secondary preferences without a rhythm"} restore valid saved choices and secondary preferences`, async ({
     page,
   }) => {
     await page.addInitScript(
@@ -73,11 +75,11 @@ for (const saved of [
       saved,
     );
     await page.goto("./");
-    await expect(page.locator("#duration")).toHaveValue("3");
+    await expect(page.locator("#duration")).toHaveValue("7");
     await expect(page.locator("#phase-0")).toHaveValue(
-      "5.5",
+      "rhythm" in saved ? "3.5" : "5.5",
     );
-    await page.getByRole("button", { name: en.advanced, exact: true }).click();
+    await showRetainedAdvanced(page); await page.getByRole("button", { name: en.advanced, exact: true }).click();
     await expect(
       page.getByRole("combobox", { name: en.sound, exact: true }),
     ).toHaveValue("silent");
@@ -118,7 +120,7 @@ for (const [rhythm, seconds, lastPhase] of [
     await page.getByRole("button", { name: en.start, exact: true }).click();
     const timer = `01:${String(seconds - 60).padStart(2, "0")}`;
     await expect(page.locator(".remaining-value")).toHaveText(timer);
-    await page.clock.runFor(4990);
+    await page.clock.runFor(2990);
     await expect(page.locator(".breath-circle")).toHaveAttribute(
       "data-phase",
       "preparation",
@@ -167,39 +169,8 @@ test("coherent native audio skips both holds and emits exactly twelve strikes fo
         volume: 0,
       }),
     );
-    const Context = window.AudioContext,
-      Offline = window.OfflineAudioContext,
-      notes = new Map<AudioBuffer, number>();
-    (window as any).played = [];
-    window.OfflineAudioContext = class extends Offline {
-      frequency = 0;
-      createOscillator() {
-        const osc = super.createOscillator(),
-          start = osc.start.bind(osc);
-        osc.start = (...args) => {
-          if (!this.frequency) this.frequency = osc.frequency.value;
-          start(...args);
-        };
-        return osc;
-      }
-      async startRendering() {
-        const buffer = await super.startRendering();
-        notes.set(buffer, this.frequency);
-        return buffer;
-      }
-    };
-    window.AudioContext = class extends Context {
-      createBufferSource() {
-        const source = super.createBufferSource(),
-          start = source.start.bind(source);
-        source.start = (...args) => {
-          (window as any).played.push(notes.get(source.buffer!));
-          start(...args);
-        };
-        return source;
-      }
-    };
   });
+  await page.addInitScript(observeSamples);
   await page.goto("./");
   await configureBreathing(page,{minutes:1});
   await page.getByRole("button", { name: en.start, exact: true }).click();
@@ -208,18 +179,16 @@ test("coherent native audio skips both holds and emits exactly twelve strikes fo
     "false",
     { timeout: 15000 },
   );
-  expect(await page.evaluate(() => (window as any).played)).toEqual([]);
-  await page.clock.runFor(5020);
+  expect(await page.evaluate(() => (window as any).sampleAudio.starts.map((event:any)=>event.url.split("/").at(-1)))).toEqual([]);
+  await page.clock.runFor(3020);
   await expect(page.locator(".phase-count")).toHaveText("5.5");
   for (let phase = 0; phase < 12; phase++) await page.clock.fastForward(5500);
   await expect(
     page.getByRole("heading", { name: en.complete, exact: true }),
   ).toBeVisible();
-  const notes: number[] = await page.evaluate(() => (window as any).played);
+  const notes: string[] = await page.evaluate(() => (window as any).sampleAudio.starts.map((event:any)=>event.url.split("/").at(-1)));
   expect(notes).toHaveLength(12);
-  notes.forEach((frequency, index) =>
-    expect(frequency).toBeCloseTo(index % 2 ? 261.63 : 392, 4),
-  );
+  expect(notes).toEqual(Array.from({length:12}, (_, index) => index % 2 ? "mid_C4_262Hz.mp3" : "low_F3_174Hz.mp3"));
   await page.clock.runFor(20000);
-  expect(await page.evaluate(() => (window as any).played.length)).toBe(12);
+  expect(await page.evaluate(() => (window as any).sampleAudio.starts.length)).toBe(12);
 });

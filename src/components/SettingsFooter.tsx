@@ -1,9 +1,21 @@
+import { CompactLabel } from "./CompactLabel";
 import { useRef, useState } from "react";
 import type { Translator } from "../i18n";
 import { publicAppUrl, contactUrl } from "../links";
 import { Icon } from "./Icons";
 import { HelpDialog } from "./HelpDialog";
+const helpSeenKey = "breath-flow-help-seen";
+let helpOpenedThisVisit = false;
+function firstVisitAttention() {
+  if (helpOpenedThisVisit) return false;
+  try {
+    return localStorage.getItem(helpSeenKey) !== "1";
+  } catch {
+    return true;
+  }
+}
 export function SettingsFooter({ t }: { t: Translator }) {
+  const [attention, setAttention] = useState(firstVisitAttention);
   const [help, setHelp] = useState(false),
     [fallback, setFallback] = useState(false),
     [sharing, setSharing] = useState(false),
@@ -57,7 +69,7 @@ export function SettingsFooter({ t }: { t: Translator }) {
           onClick={() => void share()}
         >
           <Icon name="share" />
-          <span>{t("share")}</span>
+          <span><CompactLabel>{t("share")}</CompactLabel></span>
         </button>
         <a
           className="footer-action"
@@ -66,15 +78,22 @@ export function SettingsFooter({ t }: { t: Translator }) {
           rel="noopener noreferrer"
         >
           <Icon name="message" />
-          <span>{t("contact")}</span>
+          <span><CompactLabel>{t("contact")}</CompactLabel></span>
         </a>
         <button
           type="button"
-          className="footer-action"
-          onClick={() => setHelp(true)}
+          className={`footer-action help-action ${attention ? "help-attention" : ""}`}
+          onClick={() => {
+            helpOpenedThisVisit = true;
+            setAttention(false);
+            try {
+              localStorage.setItem(helpSeenKey, "1");
+            } catch { /* Keep the current visit calm even with restricted storage. */ }
+            setHelp(true);
+          }}
         >
           <Icon name="help" />
-          <span>{t("howToUse")}</span>
+          <span><CompactLabel>{t("howToUse")}</CompactLabel></span>
         </button>
       </div>
       {fallback && (
@@ -93,7 +112,7 @@ export function SettingsFooter({ t }: { t: Translator }) {
             className="small-button"
             onClick={() => void copy()}
           >
-            {t("copyLink")}
+            <CompactLabel>{t("copyLink")}</CompactLabel>
           </button>
         </div>
       )}

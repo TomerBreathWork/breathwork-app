@@ -1,3 +1,5 @@
+import { CompactLabel } from "./CompactLabel";
+import type { BreathingRoute } from "../practices";
 import type { ReactNode } from "react";
 import type { Language, Translator } from "../i18n";
 import { clockText } from "../settings";
@@ -17,11 +19,14 @@ interface Props {
   preparing: boolean;
   preparationProgress?: number;
   language: Language;
+  routes: { inhale: BreathingRoute; exhale: BreathingRoute };
   restart: () => void;
   pause: () => void;
   resume: () => void;
   stop: () => void;
   advanced: ReactNode;
+  muted: boolean;
+  onMute: () => void;
 }
 export function SessionPanel({
   t,
@@ -31,27 +36,43 @@ export function SessionPanel({
   preparing,
   preparationProgress,
   language,
+  routes,
   restart,
   pause,
   resume,
   stop,
   advanced,
+  muted,
+  onMute,
 }: Props) {
   return (
     <main
+      tabIndex={-1}
       className="session-panel"
       aria-label={t("sessionLabel")}
       aria-busy={preparing}
     >
       <div className="practice">
         <p className="session-intro">{t("intro")}</p>
-        <BreathingCircle
-          t={t}
-          status={status}
-          phase={phase}
-          preparationProgress={preparationProgress}
-          language={language}
-        />
+        <div className="breathing-interface">
+          <BreathingCircle
+            t={t}
+            status={status}
+            phase={phase}
+            preparationProgress={preparationProgress}
+            language={language}
+            routes={routes}
+          />
+          <button
+            className="practice-mute"
+            type="button"
+            aria-label={t(muted ? "unmute" : "mute")}
+            aria-pressed={muted}
+            onClick={onMute}
+          >
+            <Icon name={muted ? "mute" : "sound"} />
+          </button>
+        </div>
         <p className="phase-guidance">
           {t(
             status === "completed"
@@ -80,11 +101,11 @@ export function SessionPanel({
         <div className="session-controls">
           <button className="side-button" onClick={restart}>
             <Icon name="restart" />
-            {t("restart")}
+            <CompactLabel>{t("restart")}</CompactLabel>
           </button>
           {status === "completed" ? (
             <button className="primary-control" onClick={stop}>
-              {t("back")}
+              <CompactLabel>{t("back")}</CompactLabel>
             </button>
           ) : (
             <button
@@ -92,16 +113,16 @@ export function SessionPanel({
               onClick={status === "running" ? pause : resume}
             >
               <Icon name={status === "running" ? "pause" : "play"} />
-              {t(status === "running" ? "pause" : "resume")}
+              <CompactLabel>{t(status === "running" ? "pause" : "resume")}</CompactLabel>
             </button>
           )}
           <button className="side-button" onClick={stop}>
             <Icon name="stop" />
-            {t("stop")}
+            <CompactLabel>{t("stop")}</CompactLabel>
           </button>
         </div>
       </div>
-      <div className="session-advanced glass-panel">{advanced}</div>
+      <div hidden data-retained-advanced>{advanced}</div>
     </main>
   );
 }

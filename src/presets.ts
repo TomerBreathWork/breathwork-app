@@ -1,12 +1,15 @@
 import { validRhythm, type Rhythm } from "./engine.ts";
+import { practices } from "./practices.ts";
 
 // IDs stay stable across the renamed buttons, preserving saved configurations.
 export type PresetKey = "coherentBreathing" | "boxBreathing" | "eveningUnwind";
-export const presets: { key: PresetKey; rhythm: Rhythm }[] = [
-  { key: "coherentBreathing", rhythm: [5.5, 0, 5.5, 0] },
-  { key: "boxBreathing", rhythm: [4, 4, 4, 4] },
-  { key: "eveningUnwind", rhythm: [4, 7, 8, 0] },
-];
+// Keep one source for the library and the existing selection/edit helpers.
+export const presets: { key: PresetKey; rhythm: Rhythm }[] = practices
+  .filter((practice) => practice.preset !== "custom")
+  .map((practice) => ({
+    key: practice.preset as PresetKey,
+    rhythm: [...practice.rhythm],
+  }));
 export interface PatternSettings {
   preset: string;
   rhythm: Rhythm;

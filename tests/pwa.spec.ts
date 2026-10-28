@@ -1,3 +1,4 @@
+import { showRetainedAdvanced } from "./retained-advanced";
 import { configureBreathing } from "./configure-breathing";
 import { test as base, expect, type Page } from "@playwright/test";
 import { createServer } from "node:http";
@@ -122,13 +123,13 @@ async function open(page: Page, url: string, sound = "silent") {
   await configureBreathing(page, { minutes: 1 });
 }
 async function ready(page: Page) {
-  await page.getByRole("button", { name: en.advanced, exact: true }).click();
-  await expect(page.locator("[data-offline-status]")).toHaveAttribute(
+  await showRetainedAdvanced(page); await page.getByRole("button", { name: en.advanced, exact: true }).click();
+  await expect(page.locator(".app-view > [data-offline-status]")).toHaveAttribute(
     "data-offline-status",
     "offlineReady",
     { timeout: 15000 },
   );
-  await page.getByRole("button", { name: en.advanced, exact: true }).click();
+  await showRetainedAdvanced(page); await page.getByRole("button", { name: en.advanced, exact: true }).click();
   await expect
     .poll(() => page.evaluate(() => !!navigator.serviceWorker.controller))
     .toBe(true);
@@ -210,7 +211,7 @@ test("offline reload retains settings, all photographs, decoded recordings and a
   context,
   site,
 }) => {
-  test.setTimeout(45000);
+  test.setTimeout(60000);
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await open(page, site.url, "recordings");
@@ -250,9 +251,9 @@ test("offline reload retains settings, all photographs, decoded recordings and a
     );
     const audio = new AudioContext();
     const recordings = await Promise.all(
-      ["inhale 4.MP3", "hold 4.MP3", "exhale 4.MP3"].map(async (file) => {
+      ["inhale 4.MP3", "hold 4.MP3", "exhale 4.MP3", "bowls/low_F3_174Hz.mp3", "bowls/high_F4_349Hz.mp3", "bowls/mid_C4_262Hz.mp3", "bowls/warm_A3_218Hz.mp3"].map(async (file) => {
         const response = await fetch(
-          new URL(`media/audio/${encodeURIComponent(file)}`, location.href),
+          new URL(`media/audio/${file.split("/").map(encodeURIComponent).join("/")}`, location.href),
         );
         return (await audio.decodeAudioData(await response.arrayBuffer()))
           .duration;
@@ -269,7 +270,7 @@ test("offline reload retains settings, all photographs, decoded recordings and a
     "data-phase",
     "preparation",
   );
-  await expect(page.locator(".remaining-value")).toHaveText("03:07");
+  await expect(page.locator(".remaining-value")).toHaveText("01:06");
   expect(await page.evaluate(() => (window as any).offlineVoices)).toBe(0);
   await expect(page.locator(".breath-circle")).toHaveAttribute(
     "data-phase",
@@ -295,11 +296,11 @@ test("offline reload retains settings, all photographs, decoded recordings and a
   );
   await page.getByRole("button", { name: en.stop, exact: true }).click();
   // Default synthesis also renders entirely offline, plus locale switching.
-  await page.getByRole("button", { name: en.advanced, exact: true }).click();
+  await showRetainedAdvanced(page); await page.getByRole("button", { name: en.advanced, exact: true }).click();
   await page
     .getByRole("combobox", { name: en.sound, exact: true })
     .selectOption("bowls");
-  await page.getByRole("button", { name: en.advanced, exact: true }).click();
+  await showRetainedAdvanced(page); await page.getByRole("button", { name: en.advanced, exact: true }).click();
   await page
     .getByRole("combobox", { name: en.language, exact: true })
     .selectOption("ja");
@@ -326,6 +327,26 @@ test("offline reload retains settings, all photographs, decoded recordings and a
     { timeout: 7000 },
   );
   await page.getByRole("button", { name: ja.stop, exact: true }).click();
+  await page.locator('[data-home-choice="explore"]').click();
+  await expect(page.locator(".practice-card")).toHaveCount(5);
+  await page.locator('[data-practice="equal"]').click();
+  await expect(page.locator(".details-body")).toContainText(
+    ja.equalExplanation,
+  );
+  await page.locator("#practice-base").fill("5.5");
+  await page.locator("#duration").fill("1");
+  await page.getByRole("button", { name: ja.start, exact: true }).click();
+  await expect(page.locator(".phase-count")).toHaveText("3");
+  await expect(page.locator(".breath-circle")).toHaveAttribute(
+    "data-phase",
+    "0",
+    { timeout: 7000 },
+  );
+  await page.getByRole("button", { name: ja.stop, exact: true }).click();
+  await expect(page.locator("[data-practice-detail]")).toHaveAttribute(
+    "data-practice-detail",
+    "equal",
+  );
   await page.reload();
   await expect(page.locator(".app-page")).toHaveAttribute("lang", "ja");
   expect(errors).toEqual([]);
@@ -337,8 +358,8 @@ test("failed essential download never claims offline readiness; retry recovers",
 }) => {
   site.fail("media/audio/hold 4.MP3");
   await open(page, site.url);
-  await page.getByRole("button", { name: en.advanced, exact: true }).click();
-  await expect(page.locator("[data-offline-status]")).toHaveAttribute(
+  await showRetainedAdvanced(page); await page.getByRole("button", { name: en.advanced, exact: true }).click();
+  await expect(page.locator(".app-view > [data-offline-status]")).toHaveAttribute(
     "data-offline-status",
     "offlineUnavailable",
     { timeout: 15000 },
@@ -348,7 +369,7 @@ test("failed essential download never claims offline readiness; retry recovers",
   );
   site.fail(undefined);
   await page.evaluate(() => window.dispatchEvent(new Event("online")));
-  await expect(page.locator("[data-offline-status]")).toHaveAttribute(
+  await expect(page.locator(".app-view > [data-offline-status]")).toHaveAttribute(
     "data-offline-status",
     "offlineReady",
     { timeout: 15000 },
@@ -405,9 +426,10 @@ test("update waits through preparation and pause, then reloads safely and remove
   await expect(page.locator("#duration")).toHaveValue("7");
   for (const [i, value] of [6.5, 1.5, 8, 0.5].entries())
     await expect(page.locator(`#phase-value-${i}`)).toHaveValue(String(value));
-  await expect(
-    page.getByRole("button", { name: "Custom", exact: true }),
-  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator('[data-home-choice="custom"]')).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
   const htmlKeys = await page.evaluate(async () =>
     (
       await Promise.all(
@@ -426,11 +448,9 @@ test("update waits through preparation and pause, then reloads safely and remove
     ),
   ).toBe(0.25);
   await page.reload();
-  await expect(page.locator("#duration")).toHaveValue("3");
-  await expect(page.locator("#phase-value-0")).toHaveValue("5.5");
-  await expect(
-    page.getByRole("button", { name: "Coherent Breath", exact: true }),
-  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#duration")).toHaveValue("7");
+  await expect(page.locator("#phase-value-0")).toHaveValue("6.5");
+  await expect(page.locator(".settings-panel")).toHaveAttribute("data-selected-practice", "custom");
 });
 
 test("a second practicing tab blocks an idle tab update; closing it allows eventual activation", async ({
@@ -457,8 +477,11 @@ test("a second practicing tab blocks an idle tab update; closing it allows event
   // The tabs intentionally have different schedules. The idle tab's update
   // must preserve its own configuration rather than the last localStorage writer.
   await configureBreathing(page, { preset: "boxBreathing", minutes: 7 });
+  await showRetainedAdvanced(second);
   await second.getByRole("button", { name: en.advanced, exact: true }).click();
-  await second.getByRole("slider", { name: en.volume, exact: true }).fill("0.3");
+  await second
+    .getByRole("slider", { name: en.volume, exact: true })
+    .fill("0.3");
   await second.close();
   // Returning focus is one of the normal retry triggers (also online/60s).
   await page.evaluate(() =>
@@ -470,9 +493,10 @@ test("a second practicing tab blocks an idle tab update; closing it allows event
     { timeout: 10000 },
   );
   await expect(page.locator("#duration")).toHaveValue("7");
-  await expect(
-    page.getByRole("button", { name: "Box Breath", exact: true }),
-  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".settings-panel")).toHaveAttribute(
+    "data-selected-practice",
+    "box",
+  );
 });
 
 test("a practice started during activation defers the reload until Stop", async ({
@@ -529,7 +553,7 @@ test("full-cycle completion releases a waiting update without interrupting the t
   await page.getByRole("button", { name: en.start, exact: true }).click();
   site.release(2);
   await checkForUpdate(page);
-  await page.clock.runFor(5020);
+  await page.clock.runFor(3020);
   await expect(page.locator(".remaining-value")).toHaveText("01:06");
   await page.clock.fastForward(65000);
   await expect(page.locator(".remaining-value")).toHaveText("00:01");

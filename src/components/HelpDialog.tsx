@@ -79,6 +79,10 @@ export function HelpDialog({
         </ol>
         <h3>{t("helpImportantTitle")}</h3>
         <Paragraphs text={t("helpImportantBody")} />
+        <section className="help-safety" aria-labelledby={`${title}-safety`}>
+          <h3 id={`${title}-safety`}>{t("helpSafetyTitle")}</h3>
+          <Paragraphs text={t("helpSafetyBody")} />
+        </section>
       </div>
     </dialog>
   );

@@ -1,3 +1,13 @@
+import { PREPARATION_MS } from "./preparation";
+import {
+  getPractice,
+  practiceForPreset,
+  type PracticeId,
+  type Category,
+} from "./practices";
+import { useAppNavigation } from "./useAppNavigation";
+import { PracticeLibrary } from "./components/PracticeLibrary";
+import { PracticeDetails } from "./components/PracticeDetails";
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { appDefaults, chooseBackground, mediaUrl } from "./media";
@@ -20,6 +30,7 @@ import { SessionPanel } from "./components/SessionPanel";
 import "./style.css";
 const settingsBackground = mediaUrl("media/backgrounds/3.webp")!;
 function App() {
+  const [category, setCategory] = useState<Category | "all">("all");
   const [settings, setSettings] = useState<Settings>(loadSettings);
   const [background, setBackground] = useState(settingsBackground);
   const [failedImage, setFailedImage] = useState("");
@@ -27,11 +38,28 @@ function App() {
   const { language, setLanguage, t } = useLanguage();
   const session = useBreathingSession(settings),
     active = session.status !== "idle";
+  const navigation = useAppNavigation(active);
   const { offlineStatus, beginPractice } = useOfflineSupport(
     session.status === "running" || session.status === "paused",
     settings,
   );
   useSessionHistory(active, session.stop);
+  useEffect(() => {
+    if (navigation.screen.name !== "details" || active) return;
+    const practice = getPractice(navigation.screen.id)!;
+    setSettings((value) =>
+      value.practiceId === practice.id
+        ? value
+        : {
+            ...value,
+            practiceId: practice.id,
+            preset: practice.preset,
+            rhythm: [...practice.rhythm],
+            minutes: 3,
+          },
+    );
+  }, [navigation.screen, active]);
+
   const displayedBackground = active ? background : settingsBackground;
   const valid =
     validConfiguredRhythm(settings.rhythm) &&
@@ -50,16 +78,20 @@ function App() {
     if (asset && (starting || active)) previousImage.current = asset.id;
     setFailedImage("");
   }
-  function patch(patch: Partial<Settings>) {
+  function patch(patch: Partial<Settings>, keepPractice = false) {
     if (patch.rhythm !== undefined || patch.minutes !== undefined)
       session.cancelPreparation();
     if (patch.sound !== undefined) void session.changeSound(patch.sound);
     if (patch.background !== undefined) selectBackground(patch.background);
-    setSettings((value) =>
-      patch.rhythm !== undefined
-        ? editRhythm({ ...value, ...patch }, patch.rhythm)
-        : { ...value, ...patch },
-    );
+    setSettings((value) => {
+      const next =
+        patch.rhythm !== undefined
+          ? editRhythm({ ...value, ...patch }, patch.rhythm)
+          : { ...value, ...patch };
+      return patch.rhythm !== undefined && !keepPractice
+        ? { ...next, practiceId: practiceForPreset(next.preset) }
+        : next;
+    });
   }
   async function start() {
     if (!valid) return;
@@ -69,11 +101,30 @@ function App() {
   }
   function onPreset(key: PresetKey) {
     session.cancelPreparation();
-    setSettings((value) => selectPreset(value, key));
+    setSettings((value) => ({
+      ...selectPreset(value, key),
+      practiceId: practiceForPreset(key),
+    }));
   }
   function onCustom() {
     session.cancelPreparation();
-    setSettings(selectCustom);
+    setSettings((value) => ({ ...selectCustom(value), practiceId: "custom" }));
+  }
+  function openPractice(id: PracticeId) {
+    const practice = getPractice(id)!;
+    session.cancelPreparation();
+    setSettings((value) =>
+      value.practiceId === id
+        ? value
+        : {
+            ...value,
+            practiceId: id,
+            preset: practice.preset,
+            rhythm: [...practice.rhythm],
+            minutes: 3,
+          },
+    );
+    navigation.open({ name: "details", id });
   }
   function reset() {
     session.cancelPreparation();
@@ -97,7 +148,7 @@ function App() {
   );
   return (
     <div
-      className={`app-page ${active ? "session" : "settings-screen"}`}
+      className={`app-page ${active ? "session" : "settings-screen"} ${!active && navigation.screen.name !== "home" ? "discovery-screen" : ""}`}
       dir={language === "he" ? "rtl" : "ltr"}
       lang={language}
     >
@@ -112,12 +163,35 @@ function App() {
       )}
       <div className="scene-overlay" />
       <div className="app-view">
+        <p className="sr-only" data-offline-status={offlineStatus} aria-live="polite">
+          {t(offlineStatus)}
+        </p>
         <Brand
           t={t}
           language={language}
           onLanguage={active ? undefined : setLanguage}
         />
-        {session.status === "idle" ? (
+        {!active && navigation.screen.name === "library" ? (
+          <PracticeLibrary
+            t={t}
+            category={category}
+            onCategory={setCategory}
+            onSelect={openPractice}
+            back={navigation.back}
+          />
+        ) : !active && navigation.screen.name === "details" ? (
+          <PracticeDetails
+            practice={getPractice(navigation.screen.id)!}
+            t={t}
+            language={language}
+            settings={settings}
+            patch={(p) => patch(p, true)}
+            back={navigation.back}
+            start={() => void start()}
+            valid={valid}
+            preparing={session.preparing}
+          />
+        ) : session.status === "idle" ? (
           <SettingsPanel
             t={t}
             language={language}
@@ -128,6 +202,7 @@ function App() {
             advanced={advanced}
             valid={valid}
             preparing={session.preparing}
+            explore={() => navigation.open({ name: "library" })}
             start={() => void start()}
           />
         ) : (
@@ -136,17 +211,30 @@ function App() {
             status={session.status}
             phase={session.phase}
             language={language}
+            routes={
+              getPractice(settings.practiceId)?.routes ?? {
+                inhale: "nose",
+                exhale: "nose",
+              }
+            }
             remaining={(session.end - session.elapsed) / 1000}
             preparing={session.preparing}
             preparationProgress={
               session.inPreparation
-                ? session.preparationElapsed / 5000
+                ? session.preparationElapsed / PREPARATION_MS
                 : undefined
             }
             restart={() => void start()}
             pause={session.pause}
             resume={() => void session.resume()}
             stop={session.stop}
+            muted={session.muted || settings.sound === "silent"}
+            onMute={() => {
+              if (settings.sound === "silent") {
+                session.setMuted(false);
+                patch({ sound: appDefaults.sound });
+              } else session.setMuted(!session.muted);
+            }}
             advanced={advanced}
           />
         )}

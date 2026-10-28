@@ -1,17 +1,18 @@
+import { showRetainedAdvanced } from "./retained-advanced";
 import { configureBreathing } from "./configure-breathing";
 import {test,expect,type Page} from '@playwright/test';
 test.beforeEach(async({page})=>{await page.clock.install({time:new Date('2026-10-24T12:00:00Z')});await page.clock.pauseAt(new Date('2026-10-24T12:00:01Z'))});
-async function finishPreparation(page:Page){await expect(page.locator('.session-panel')).toHaveAttribute('aria-busy','false',{timeout:15000});await page.clock.fastForward(5001)}
-async function advanced(page:Page){const button=page.getByRole('button',{name:'Advanced Options',exact:true});if(await button.getAttribute('aria-expanded')!=='true')await button.click()}
+async function finishPreparation(page:Page){await expect(page.locator('.session-panel')).toHaveAttribute('aria-busy','false',{timeout:15000});await page.clock.fastForward(3001)}
+async function advanced(page:Page){await showRetainedAdvanced(page);const button=page.getByRole('button',{name:'Advanced Options',exact:true});if(await button.getAttribute('aria-expanded')!=='true')await button.click()}
 
-test('configure within a launch, reload defaults, start, pause, resume and stop',async({page})=>{
+test('configure within a launch, reload choices, start, pause, resume and stop',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('./');
- await page.getByRole('button',{name:'Box Breath'}).click();
+ await configureBreathing(page,{preset:"boxBreathing"});
  await page.reload();
- await expect(page.getByRole('spinbutton',{name:'Hold after inhale seconds'})).toHaveValue('0');
+ await expect(page.getByRole('spinbutton',{name:'Hold after inhale seconds'})).toHaveValue('4');
  await configureBreathing(page,{preset:'boxBreathing'});
- await page.getByRole('button',{name:'Advanced Options'}).click();
+ await showRetainedAdvanced(page); await page.getByRole('button',{name:'Advanced Options'}).click();
  await page.getByRole('combobox',{name:'Sound',exact:true}).selectOption('silent');
 
  await page.getByRole('button',{name:'Start Practice'}).click();await finishPreparation(page);
@@ -35,7 +36,7 @@ test('configure within a launch, reload defaults, start, pause, resume and stop'
 });
 test('zero phases skip and completion respects the whole final cycle',async({page})=>{
  await page.goto('./');
- await page.getByRole('button',{name:'4-7-8'}).click();
+ await configureBreathing(page,{preset:"eveningUnwind"});
  await page.locator('#duration').fill('1');
 
  await page.getByRole('button',{name:'Start Practice'}).click();await finishPreparation(page);
@@ -50,7 +51,7 @@ test('invalid settings block start and image failure falls back safely',async({p
  await page.route(/\/media\/.*\.webp$/,r=>r.abort());await page.goto('./');
  await page.getByRole('spinbutton',{name:'Inhale seconds',exact:true}).fill('');
  await page.getByRole('spinbutton',{name:'Inhale seconds',exact:true}).blur();
- await expect(page.getByRole('button',{name:'Start Practice'})).toBeDisabled();
+ await expect(page.locator('.start-button')).toBeDisabled();
  await expect(page.getByRole('alert')).toBeVisible();
  await advanced(page);
  await page.getByRole('button',{name:'Reset defaults'}).click();
@@ -61,7 +62,7 @@ test('invalid settings block start and image failure falls back safely',async({p
 });
 test('mobile fits viewport and preferences have no horizontal overflow',async({page})=>{
  await page.setViewportSize({width:375,height:812});await page.goto('./');
- await page.getByRole('button',{name:'Advanced Options'}).click();
+ await showRetainedAdvanced(page); await page.getByRole('button',{name:'Advanced Options'}).click();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.screenshot({path:'/tmp/still-mobile.png',fullPage:true});
  await page.getByRole('button',{name:'Start Practice'}).click();await finishPreparation(page);
@@ -87,7 +88,7 @@ test('sound begins only on interaction, skips holds, and hidden tab pauses',asyn
  await expect(page.getByRole('heading',{name:'Exhale',exact:true})).toBeVisible();
  expect(await page.evaluate(()=>(window as any).cueCount)).toBe(2);
  await advanced(page);
- await page.getByRole('button',{name:'Mute sound',exact:true}).click();
+ await page.locator('.practice-mute').click();
  await page.clock.runFor(6100);
  expect(await page.evaluate(()=>(window as any).cueCount)).toBe(2);
  await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'))});
@@ -128,7 +129,7 @@ test('background stays fixed until changed; random mode avoids immediate repeats
  await expect(page.locator('.session')).toBeVisible();
  await expect(page.locator('.scenery')).not.toHaveAttribute('src',previous!);
 });
-test('resume and unmute restore phase audio; volume changes do not restart a voice',async({page})=>{
+test('resume restores tails, unmute enables future cues, and volume never restarts a voice',async({page})=>{
  await page.addInitScript(()=>{
   const Native=window.AudioContext;(window as any).voices=[];
   window.AudioContext=class extends Native {
@@ -147,9 +148,11 @@ test('resume and unmute restore phase audio; volume changes do not restart a voi
  await page.getByRole('slider',{name:'Volume'}).fill('0.1');
  expect(await page.evaluate(()=>(window as any).voices.length)).toBe(count+1);
  await advanced(page);
- await page.getByRole('button',{name:'Mute sound',exact:true}).click();
- await page.getByRole('button',{name:'Unmute sound',exact:true}).click();
- await expect.poll(()=>page.evaluate(()=>(window as any).voices.length)).toBe(count+2);
+ await page.locator('.practice-mute').click();
+ await page.locator('.practice-mute').click();
+ expect(await page.evaluate(()=>(window as any).voices.length)).toBe(count+1);
+ await page.clock.runFor(4600);
+ expect(await page.evaluate(()=>(window as any).voices.length)).toBe(count+2);
  await page.getByRole('button',{name:'Stop',exact:true}).click();
  await page.clock.runFor(20000);expect(await page.evaluate(()=>(window as any).voices.length)).toBe(count+2);
 });
@@ -167,7 +170,7 @@ test('unavailable Web Audio does not prevent silent breathing practice',async({p
 
 test('all five uploaded photographs load and generated backgrounds are not selectable',async({page})=>{
  await page.goto('./');
- await page.getByRole('button',{name:'Advanced Options'}).click();
+ await showRetainedAdvanced(page); await page.getByRole('button',{name:'Advanced Options'}).click();
  await page.getByRole('combobox',{name:'Sound',exact:true}).selectOption('silent');
  await page.getByRole('button',{name:'Start Practice'}).click();await finishPreparation(page);
  await expect(page.locator('.session')).toBeVisible();
@@ -194,16 +197,16 @@ test('the three uploaded MP3 recordings decode with spaces and uppercase extensi
  expect(results).toHaveLength(3);
  for(const result of results){expect(result.duration).toBeGreaterThan(0);expect(result.channels).toBeGreaterThan(0)}
 });
-test('missing recordings use synthesized fallback without blocking the session',async({page})=>{
- await page.route(/\/media\/audio\/.*\.MP3$/,route=>route.abort());
+test('missing samples allow silent practice without synthesized replacements',async({page})=>{
+ await page.route(/\/media\/audio\/.*\.mp3$/i,route=>route.abort());
  await page.goto('./');
- await page.getByRole('button',{name:'Advanced Options'}).click();
+ await showRetainedAdvanced(page); await page.getByRole('button',{name:'Advanced Options'}).click();
  await page.getByRole('combobox',{name:'Sound',exact:true}).selectOption('recordings');
  await page.getByRole('button',{name:'Start Practice'}).click();await finishPreparation(page);
  await expect(page.locator('.session')).toBeVisible();
  await page.getByRole('button',{name:'Stop',exact:true}).click();
  await advanced(page);
- await expect(page.getByRole('status')).toContainText('synthesized');
+ await expect(page.getByRole('status')).toContainText('continue in silence');
 });
 
 test('hiding the page during initial audio preparation starts paused without a cue',async({page})=>{
