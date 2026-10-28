@@ -33,7 +33,7 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
             minutes: 27,
             background: "photo-4",
             sound: "silent",
-            volume: 0.2,
+            audioOutputVersion: 1, volume: 0.2,
           }),
         );
       }

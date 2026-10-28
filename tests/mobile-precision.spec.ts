@@ -230,7 +230,7 @@ test("legacy overlong breaths and saved Custom memory are migrated without losin
     customRhythm: [120, 31.5, 85, 119.5],
     minutes: 7,
     sound: "silent",
-    volume: 0.25,
+    audioOutputVersion: 1, volume: 0.25,
     background: "photo-5",
   });
   await page.locator('[data-home-choice="custom"]').click();

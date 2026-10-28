@@ -10,7 +10,7 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     if (!localStorage.getItem("still-settings")) localStorage.setItem(
       "still-settings",
-      JSON.stringify({ sound: "silent", volume: 0.2, background: "photo-4" }),
+      JSON.stringify({ sound: "silent", audioOutputVersion: 1, volume: 0.2, background: "photo-4" }),
     );
   });
 });

@@ -103,13 +103,13 @@ export function useBreathingSession(settings: Settings) {
     // happens on user input; loading never stretches the preparation countdown.
     let cancelled = false;
     setPreloading(true);
-    void audio.current.warmup(soundSets[0]).finally(() => {
+    void audio.current.warmup(soundSets[0], settings.rhythm).finally(() => {
       if (!cancelled) setPreloading(false);
     });
     return () => {
       cancelled = true;
     };
-  }, [settings.sound, status]);
+  }, [settings.sound, settings.rhythm, status]);
   useEffect(() => {
     audio.current.setVolume(settings.volume);
   }, [settings.volume]);
@@ -144,7 +144,7 @@ export function useBreathingSession(settings: Settings) {
   );
   async function prepare(): Promise<TranslationKey> {
     await audio.current.unlock();
-    await audio.current.prepare(soundSets[0]);
+    await audio.current.prepare(soundSets[0], current.current.settings.rhythm);
     const state = audio.current.recordingStatus;
     return state === "recorded"
       ? "audioRecorded"

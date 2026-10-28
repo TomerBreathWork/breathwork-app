@@ -48,6 +48,9 @@ export function loadSettings(): Settings {
           ? s.sound
           : appDefaults.sound,
         volume:
+          // The hidden legacy 0.35 master caused quiet output even after mix
+          // boosts. Migrate only audio level once; retain all other preferences.
+          s.audioOutputVersion === appDefaults.audioOutputVersion &&
           Number.isFinite(s.volume) && s.volume >= 0 && s.volume <= 1
             ? s.volume
             : appDefaults.volume,

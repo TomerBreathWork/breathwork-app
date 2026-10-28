@@ -1,16 +1,6 @@
 import { phaseAt, phaseMilliseconds, validRhythm, type Rhythm } from "./engine.ts";
 import { phaseRoles, type SoundSet } from "./audio-types.ts";
-
-// The deployed mix gain was 0.3125. Apply the requested relative 70% boost.
-// Cap only the selected master level, never the waveform or individual phases.
-// Stress-rendered short overlaps peak near 3.19 before gain; 0.307 leaves about
-// 2% full-scale clearance. No compressor, limiter or phase-dependent ducking.
-export const SAMPLE_MIX_HEADROOM = 0.3125 * 1.70; // 0.53125 requested multiplier
-export const MAX_SAMPLE_PLAYBACK_GAIN = 0.307;
-export function samplePlaybackGain(value: number): number {
-  const volume = Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0.35;
-  return Math.min(volume * SAMPLE_MIX_HEADROOM, MAX_SAMPLE_PLAYBACK_GAIN);
-}
+import { calibratedSampleGain, samplePeakEnvelope, SAMPLE_OUTPUT_PEAK } from "./sample-level.ts";
 
 interface Voice {
   source: AudioBufferSourceNode;
@@ -37,15 +27,18 @@ interface Timeline {
 export class SampleAudio {
   private context?: AudioContext;
   private master?: GainNode;
+  private mix?: GainNode;
   private muteGate?: GainNode;
   private buffers = new Map<string, AudioBuffer>();
+  private envelopes = new Map<string, Float64Array>();
+  private calibration?: { key: string; gain: number };
   private loading = new Map<string, Promise<void>>();
   private voices = new Set<Voice>();
   private paused: PausedVoice[] = [];
   private seen = new Set<string>();
   private timeline?: Timeline;
   private timer?: ReturnType<typeof setInterval>;
-  private volume = 0.35;
+  private volume = 1;
   private muted = false;
   private releaseUntil = 0;
   private loadState: "recorded" | "partial" | "unavailable" = "unavailable";
@@ -55,13 +48,13 @@ export class SampleAudio {
     this.context ??= new AudioContext();
     if (!this.master) {
       this.master = this.context.createGain();
-      this.master.gain.value = samplePlaybackGain(this.volume) / SAMPLE_MIX_HEADROOM;
+      this.master.gain.value = this.volume;
       this.muteGate = this.context.createGain();
       this.muteGate.gain.value = this.muted ? 0 : 1;
-      const headroom = this.context.createGain();
-      headroom.gain.value = SAMPLE_MIX_HEADROOM;
-      this.master.connect(headroom);
-      headroom.connect(this.muteGate);
+      this.mix = this.context.createGain();
+      this.mix.gain.value = 1;
+      this.master.connect(this.mix);
+      this.mix.connect(this.muteGate);
       this.muteGate.connect(this.context.destination);
     }
     return this.context;
@@ -70,8 +63,8 @@ export class SampleAudio {
     try { await this.ensureContext().resume(); }
     catch { /* Unsupported/blocked audio must not interrupt the breathing clock. */ }
   }
-  async warmup(set: SoundSet) { await this.prepare(set); }
-  async prepare(set: SoundSet) {
+  async warmup(set: SoundSet, rhythm?: Rhythm) { await this.prepare(set, rhythm); }
+  async prepare(set: SoundSet, rhythm?: Rhythm) {
     let context: AudioContext;
     try { context = this.ensureContext(); }
     catch { this.loadState = "unavailable"; return; }
@@ -83,7 +76,10 @@ export class SampleAudio {
           try {
             const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
             if (!response.ok) throw new Error("Recording unavailable");
-            this.buffers.set(url, await context.decodeAudioData(await response.arrayBuffer()));
+            const buffer = await context.decodeAudioData(await response.arrayBuffer());
+            this.buffers.set(url, buffer);
+            this.envelopes.set(url, samplePeakEnvelope(buffer));
+            this.calibration = undefined;
           } catch { /* Keep available samples; never substitute synthesized notes. */ }
         })().finally(() => this.loading.delete(url));
         this.loading.set(url, pending);
@@ -95,11 +91,21 @@ export class SampleAudio {
       return url && this.buffers.has(url);
     }).length;
     this.loadState = loaded === 4 ? "recorded" : loaded ? "partial" : "unavailable";
+    // Analysis is silent and normally completed on Settings/before preparation
+    // ends. Do not apply gain here: preparing cannot change active voice levels.
+    if (rhythm && validRhythm(rhythm)) this.levelFor(set, rhythm);
+  }
+  private levelFor(set: SoundSet, rhythm: Rhythm) {
+    const urls = phaseRoles.map(role => set.recordings[role] ?? "");
+    const key = JSON.stringify([urls, rhythm.map(phaseMilliseconds)]);
+    if (this.calibration?.key !== key)
+      this.calibration = { key, gain: calibratedSampleGain(urls.map(url => this.envelopes.get(url) ?? []), rhythm) };
+    return this.calibration.gain;
   }
   setVolume(value: number) {
-    this.volume = Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0.35;
+    this.volume = Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 1;
     if (this.context && this.master)
-      this.master.gain.setTargetAtTime(samplePlaybackGain(this.volume) / SAMPLE_MIX_HEADROOM, this.context.currentTime, 0.05);
+      this.master.gain.setTargetAtTime(this.volume, this.context.currentTime, 0.05);
   }
   setMuted(muted: boolean) {
     if (this.muted === muted) return;
@@ -197,6 +203,9 @@ export class SampleAudio {
     // Harmless repeated calls (including React renders) do not reset the ledger.
     if (this.timeline || !this.context || this.context.state !== "running" || !validRhythm(rhythm) || elapsedMs >= endMs) return;
     for (const voice of this.voices) if (voice.key === null) this.release(voice);
+    // Set once for this complete rhythm, before any source starts. Neither phase
+    // transitions nor the live voice count ever alter this fixed mix level.
+    this.mix!.gain.value = this.levelFor(set, rhythm);
     this.timeline = {
       set, rhythm: [...rhythm], end: endMs, cursor: elapsedMs,
       wallOrigin: performance.now() - elapsedMs,
@@ -238,6 +247,11 @@ export class SampleAudio {
   preview(set: SoundSet) {
     for (const voice of this.voices) if (voice.key === null) this.release(voice);
     const url = set.recordings.inhale, buffer = url ? this.buffers.get(url) : undefined;
-    if (buffer) this.play(buffer, null, this.context?.currentTime ?? 0);
+    if (buffer) {
+      let peak = 0;
+      for (const value of this.envelopes.get(url!) ?? []) peak = Math.max(peak, value);
+      this.mix!.gain.value = peak > 0 ? SAMPLE_OUTPUT_PEAK / peak : 1;
+      this.play(buffer, null, this.context?.currentTime ?? 0);
+    }
   }
 }

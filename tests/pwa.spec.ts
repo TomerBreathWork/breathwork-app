@@ -112,7 +112,7 @@ async function open(page: Page, url: string, sound = "silent") {
             preset: "coherentBreathing",
             rhythm: [5.5, 0, 5.5, 0],
             minutes: 1,
-            volume: 0.25,
+            audioOutputVersion: 1, volume: 0.25,
             background: "photo-3",
           }),
         );
@@ -218,8 +218,14 @@ test("offline reload retains settings, all photographs, decoded recordings and a
   await ready(page);
   await page.addInitScript(() => {
     (window as any).offlineVoices = 0;
+    (window as any).offlineGains = [];
     const Native = window.AudioContext;
     window.AudioContext = class extends Native {
+      createGain() {
+        const gain = super.createGain();
+        (window as any).offlineGains.push(gain);
+        return gain;
+      }
       createBufferSource() {
         const source = super.createBufferSource(),
           start = source.start.bind(source);
@@ -231,6 +237,13 @@ test("offline reload retains settings, all photographs, decoded recordings and a
       }
     };
   });
+  // A returning offline user may still have the old hidden quiet master. The
+  // cached new application must migrate that audio field without losing rhythm.
+  await page.evaluate(() => {
+    const saved = JSON.parse(localStorage.getItem("still-settings")!);
+    delete saved.audioOutputVersion;
+    localStorage.setItem("still-settings", JSON.stringify(saved));
+  });
   await context.setOffline(true);
   await page.reload();
   await expect(page.locator(".settings-panel")).toBeVisible();
@@ -239,6 +252,7 @@ test("offline reload retains settings, all photographs, decoded recordings and a
       () => JSON.parse(localStorage.getItem("still-settings")!).rhythm,
     ),
   ).toEqual([5.5, 0, 5.5, 0]);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("still-settings")!).volume)).toBe(1);
   const assets = await page.evaluate(async () => {
     const paths = [1, 2, 3, 4, 5].map((i) => `media/backgrounds/${i}.webp`);
     const images = await Promise.all(
@@ -280,6 +294,8 @@ test("offline reload retains settings, all photographs, decoded recordings and a
   await expect
     .poll(() => page.evaluate(() => (window as any).offlineVoices))
     .toBeGreaterThan(0);
+  const offlineGain = await page.evaluate(() => (window as any).offlineGains[0].gain.value * (window as any).offlineGains[2].gain.value);
+  expect(offlineGain).toBeGreaterThan(1.3); expect(offlineGain).toBeLessThan(1.5);
   await page.getByRole("button", { name: en.pause, exact: true }).click();
   const paused = await page.locator(".remaining-value").innerText();
   await page.waitForTimeout(250);
