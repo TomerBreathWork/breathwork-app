@@ -92,6 +92,8 @@ All three assigned samples preload/decode once before Start is enabled. Each non
 
 The new MP3s are included in the existing offline precache and retain GitHub Pages base-path handling. Original recordings, synthesis code and MIT notices remain on disk. The synthesis details below describe the retained legacy implementation, not the active TEST playback path. See `src/sample-audio.test.mjs` and `tests/sample-audio.spec.ts` for current behavior checks, including real MP3 decoding and a rendered overlap/completion test.
 
+The [recorded decay review](docs/sample-decay-review.md) confirms that the existing recordings already include quiet 6–7-second tails and play fully for eight seconds. The audio is preserved without artificial extension. It also documents the existing clipping risk for short custom patterns at high volume; current sound levels were not changed. Real-sample regression coverage is in `tests/sample-decay.spec.ts`.
+
 ## Local photographs and recorded bowls
 
 The photographs and current low/high/mid MP3 samples are registered in the manifest. Original recordings (`inhale 4.MP3`, `hold 4.MP3`, `exhale 4.MP3`) and synthesis remain on disk for future use. The existing illustrations remain on disk but are excluded from the interface and random selection. No service subscriptions or API credentials are needed.
