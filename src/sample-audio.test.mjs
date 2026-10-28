@@ -209,17 +209,19 @@ test('a zero-duration final hold is skipped even when it shares the first hold s
 
 test('fixed mix headroom is independent of phase cues, master volume and mute automation', async t => {
   const { audio, context: c, advance } = await setup(t);
-  assert.equal(SAMPLE_MIX_HEADROOM, .25);
+  assert.equal(SAMPLE_MIX_HEADROOM, .25 * 1.25);
   const master = c.gains[0], mute = c.gains[1], headroom = c.gains[2];
   assert.equal(master.connected, headroom); assert.equal(headroom.connected, mute);
   assert.equal(mute.connected, c.destination);
-  assert.equal(headroom.gain.value, .25); assert.deepEqual(headroom.gain.events, []);
+  assert.equal(headroom.gain.value, SAMPLE_MIX_HEADROOM); assert.deepEqual(headroom.gain.events, []);
   audio.run(set, [1, 1, 1, 1], 0, 4000); advance(.8);
   const count = c.sources.length;
-  audio.setVolume(1); assert.equal(master.gain.events.at(-1)[1], 1);
-  audio.setVolume(0); assert.equal(master.gain.events.at(-1)[1], 0);
-  audio.setVolume(.35); assert.equal(master.gain.events.at(-1)[1], .35);
+  for (const savedVolume of [0, .15, .35, .7, 1]) {
+    audio.setVolume(savedVolume);
+    assert.equal(master.gain.events.at(-1)[1], savedVolume);
+    assert.equal(savedVolume * headroom.gain.value, savedVolume * .25 * 1.25);
+  }
   assert.equal(c.sources.length, count);
   audio.setMuted(true); audio.setMuted(false);
-  assert.equal(headroom.gain.value, .25); assert.deepEqual(headroom.gain.events, []);
+  assert.equal(headroom.gain.value, SAMPLE_MIX_HEADROOM); assert.deepEqual(headroom.gain.events, []);
 });

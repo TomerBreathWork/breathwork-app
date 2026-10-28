@@ -1658,7 +1658,7 @@ input[type="number"],
   border-radius: 10px;
   background: transparent;
   color: var(--teal);
-  font-size: .75rem;
+  font-size: .8625rem;
   text-decoration: underline;
   text-underline-offset: 3px;
 }

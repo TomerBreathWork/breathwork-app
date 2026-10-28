@@ -1,10 +1,10 @@
 import { phaseAt, phaseMilliseconds, validRhythm, type Rhythm } from "./engine.ts";
 import { phaseRoles, type SoundSet } from "./audio-types.ts";
 
-// Fixed -12.04 dB mix headroom. Set once, independently of the user's volume
-// and mute controls; starting another cue never changes this gain. The measured
-// 3.006 peak of an extreme short-hold mix becomes 0.752 at full master volume.
-export const SAMPLE_MIX_HEADROOM = 0.25;
+// Fixed -10.10 dB mix headroom: 25% above the previous 0.25 gain.
+// Set once, independently of user volume and mute; new cues never change it. The measured
+// 3.006 peak of an extreme short-hold mix becomes 0.939 at full master volume.
+export const SAMPLE_MIX_HEADROOM = 0.3125;
 
 interface Voice {
   source: AudioBufferSourceNode;

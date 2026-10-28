@@ -20,18 +20,18 @@ The player already runs each independent source to the recording's natural end. 
 
 ## Fixed headroom update
 
-A dedicated GainNode now applies **0.25 gain (-12.04 dB)** to the mixed recordings. It is initialized once, separately from master volume and mute. It never follows signal level, phase transitions or the number of voices. There is no compressor, limiter, dynamic ducking, added reverb or sample processing. The result is uniformly quieter; master volume and mute still work independently.
+A dedicated GainNode now applies **0.3125 gain (-10.10 dB)** to the mixed recordings. This is exactly 25% above the previous 0.25 gain and applies to both default and saved master volumes without rewriting preferences. It is initialized once, separately from master volume and mute. It never follows signal level, phase transitions or the number of voices. There is no compressor, limiter, dynamic ducking, added reverb or sample processing. The result is uniformly quieter; master volume and mute still work independently.
 
 The previous direct sum could exceed digital full scale (1.0), including with exact short manual/legacy holds. Fixed headroom reduces every sample by the same constant factor without altering its original strike or eight-second decay. Original 48 kHz PCM mix measurements and the resulting fixed-gain levels:
 
 | Rhythm in seconds | Previous peak at volume 1 | With headroom at volume 1 | With headroom at volume 0.35 |
 | --- | ---: | ---: | ---: |
-| 5.5 / 0 / 5.5 / 0 | 0.635 | 0.159 | 0.056 |
-| 4 / 4 / 4 / 4 | 0.676 | 0.169 | 0.059 |
-| 4 / 7 / 8 / 0 | 0.676 | 0.169 | 0.059 |
-| 0.5 / 0.5 / 0.5 / 0.5 | 1.136 | 0.284 | 0.099 |
-| 0.5 / 0 / 0.5 / 0.5 | 1.355 | 0.339 | 0.119 |
-| 0.5 / 0.001 / 0.5 / 0.001 (exact manual/legacy values) | 3.006 | 0.752 | 0.263 |
+| 5.5 / 0 / 5.5 / 0 | 0.635 | 0.198 | 0.069 |
+| 4 / 4 / 4 / 4 | 0.676 | 0.211 | 0.074 |
+| 4 / 7 / 8 / 0 | 0.676 | 0.211 | 0.074 |
+| 0.5 / 0.5 / 0.5 / 0.5 | 1.136 | 0.355 | 0.124 |
+| 0.5 / 0 / 0.5 / 0.5 | 1.355 | 0.423 | 0.148 |
+| 0.5 / 0.001 / 0.5 / 0.001 (exact manual/legacy values) | 3.006 | 0.939 | 0.329 |
 
 Real Web Audio tests render the supplied MP3s at **24, 44.1 and 48 kHz**, at maximum user volume, including fast overlapping cycles and 1 ms legacy holds. They check finite peaks below 0.95, exact trigger counts and survival of all tails after normal completion. Whole-frame schedules also compare against the direct sum of the complete original recordings multiplied only by master volume and fixed headroom. A separate test verifies that neither volume/mute controls nor new phase cues ever automate the headroom node.
 
