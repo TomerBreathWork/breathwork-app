@@ -1,4 +1,4 @@
-import { SAMPLE_MIX_HEADROOM } from '../src/sample-audio';
+import { samplePlaybackGain } from '../src/sample-audio';
 import { test, expect } from '@playwright/test';
 import { build } from 'vite';
 import { resolve } from 'node:path';
@@ -52,7 +52,7 @@ test('each actual MP3 retains its original strike and quiet 6–7s tail through 
   });
   for (const result of results) {
     expect(result.seconds).toBeCloseTo(8, 3);
-    expect(result.gain).toBeCloseTo(.35 * SAMPLE_MIX_HEADROOM, 6);
+    expect(result.gain).toBeCloseTo(samplePlaybackGain(.35), 6);
     // Only constant headroom/master gain is permitted: no added attack, phase
     // envelope, looping, stretching, reverb or tail cutoff changes the recording.
     expect(result.difference).toBeLessThan(1e-6);
@@ -69,10 +69,10 @@ for (const sampleRate of [24000, 44100, 48000]) test(`real recorded mixes keep a
   await page.addScriptTag({ content: audioCode });
   const results = await page.evaluate(async (rate) => {
     const Native = window.AudioContext, nativeNow = performance.now.bind(performance), nativeInterval = window.setInterval;
-    const volume = 1, results = [], headroom = (window as any).AudioTest.SAMPLE_MIX_HEADROOM;
+    const volume = 1, results = [], effectiveGain = (window as any).AudioTest.samplePlaybackGain(volume);
     const files = ['low_F3_174Hz.mp3', 'high_F4_349Hz.mp3', 'mid_C4_262Hz.mp3', 'high_F4_349Hz.mp3'];
     try {
-      for (const rhythm of [[5.5, 0, 5.5, 0], [4, 4, 4, 4], [4, 7, 8, 0], [.5, .5, .5, .5], [.5, 0, .5, 0], [.5, 0, .5, .5], [.5, .001, .5, .001]]) {
+      for (const rhythm of [[5.5, 0, 5.5, 0], [4, 4, 4, 4], [4, 7, 8, 0], [.5, .5, .5, .5], [.5, 0, .5, 0], [.5, 0, .5, .5], [.5, .001, .5, .001], [.6, .05, .5, .001]]) {
         const cycle = rhythm.reduce((sum, seconds) => sum + seconds, 0), end = Math.ceil(16 / cycle) * cycle;
         const context = new OfflineAudioContext(2, Math.round(rate * (end + 8.2)), rate);
         const voices: { buffer: AudioBuffer; start: number }[] = [];
@@ -104,7 +104,7 @@ for (const sampleRate of [24000, 44100, 48000]) test(`real recorded mixes keep a
           // The final tails must survive the session deadline, without ducking.
           for (let i = 0; i < data.length; i += 32) {
             let expected = 0;
-            for (const voice of voices) { const offset = i - voice.start; if (offset >= 0 && offset < voice.buffer.length) expected += voice.buffer.getChannelData(ch)[offset] * volume * headroom; }
+            for (const voice of voices) { const offset = i - voice.start; if (offset >= 0 && offset < voice.buffer.length) expected += voice.buffer.getChannelData(ch)[offset] * effectiveGain; }
             difference = Math.max(difference, Math.abs(data[i] - expected));
           }
         }
@@ -120,7 +120,7 @@ for (const sampleRate of [24000, 44100, 48000]) test(`real recorded mixes keep a
   }, sampleRate);
   for (const result of results) {
     expect(result.count).toBe(result.expectedCount);
-    expect(result.peak).toBeGreaterThan(.1); expect(result.peak).toBeLessThan(.95);
+    expect(result.peak).toBeGreaterThan(.1); expect(result.peak).toBeLessThan(.99);
     // At 44.1 kHz, 1 ms is a fractional audio frame; the browser quantizes those
     // starts. Whole-frame schedules still compare sample-for-sample.
     if (result.rhythm.every(seconds => Number.isInteger(seconds * sampleRate)))

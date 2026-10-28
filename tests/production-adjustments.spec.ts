@@ -4,7 +4,7 @@ import he from '../src/locales/he.json' with { type: 'json' };
 import ja from '../src/locales/ja.json' with { type: 'json' };
 
 for (const [language, t] of Object.entries({ en, he, ja })) {
-  test(`${language}: library link is 15% larger, fits mobile, and saved volume gets the 25% playback increase`, async ({ page }) => {
+  test(`${language}: library link is 15% larger, fits mobile, and saved volume gets the requested 70% playback increase`, async ({ page }) => {
     await page.addInitScript(language => {
       localStorage.setItem('breath-flow-language', language);
       localStorage.setItem('still-settings', JSON.stringify({ volume: .35, sound: 'bowls', background: 'photo-3' }));
@@ -22,7 +22,7 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
     // Inspect the real graph after restoring an old saved preference. Neither
     // changing the default alone nor migrating only new users would pass this.
     const effective = await page.evaluate(() => (window as any).audioGains[0].gain.value * (window as any).audioGains[2].gain.value);
-    expect(effective).toBeCloseTo(saved * .25 * 1.25, 6);
+    expect(effective).toBeCloseTo(saved * .3125 * 1.70, 6);
     for (const viewport of [{ width: 320, height: 568 }, { width: 360, height: 640 }, { width: 390, height: 844 }]) {
       await page.setViewportSize(viewport);
       const link = page.locator('[data-home-choice="explore"]');

@@ -1,6 +1,6 @@
 # Recorded bowl decay review
 
-Reviewed baseline: `6055469`, 2026-10-28. The mapping remains Low → High → Mid → High. The follow-up update adds the requested fixed mix headroom while retaining the entire eight-second recordings, their natural envelopes, the user volume control, breathing timings and UI.
+Reviewed baseline: `6055469`, 2026-10-28. The mapping remains Low → High → Mid → High. The follow-up updates add fixed mix headroom and the requested relative playback boost while retaining the entire eight-second recordings, their natural envelopes, the user volume control, breathing timings and UI.
 
 ## Recordings and playback
 
@@ -18,23 +18,22 @@ The player already runs each independent source to the recording's natural end. 
 
 `tests/sample-decay.spec.ts` renders the actual MP3s in Chromium, checks their quiet nonzero 6–7-second tails and silence after the full recording ends, and compares every original waveform against playback with constant master gain. It also compares polyphonic mixes with the direct sum of original samples, including tails after normal completion and exact trigger counts. The existing control and preparation tests remain in place.
 
-## Fixed headroom update
+## Relative 70% playback increase and clean-output ceiling
 
-A dedicated GainNode now applies **0.3125 gain (-10.10 dB)** to the mixed recordings. This is exactly 25% above the previous 0.25 gain and applies to both default and saved master volumes without rewriting preferences. It is initialized once, separately from master volume and mute. It never follows signal level, phase transitions or the number of voices. There is no compressor, limiter, dynamic ducking, added reverb or sample processing. The result is uniformly quieter; master volume and mute still work independently.
+The previously deployed mix multiplier was **0.3125** (commit `9955f1e`). The requested new multiplier is **0.3125 × 1.70 = 0.53125**. With the default or saved master volume of 0.35, actual gain increases from **0.109375 to 0.1859375**, exactly 70%. The original recordings and their full eight-second decay are unchanged.
 
-The previous direct sum could exceed digital full scale (1.0), including with exact short manual/legacy holds. Fixed headroom reduces every sample by the same constant factor without altering its original strike or eight-second decay. Original 48 kHz PCM mix measurements and the resulting fixed-gain levels:
+Applying the entire increase at maximum saved volume would clip unusually rapid overlapping custom patterns. A scan of 7,744 short patterns followed by full-rate PCM measurements found a raw peak near 3.19 for 0.6 / 0.05 / 0.5 / 0.001 seconds. These include exact manual/legacy values even though sliders use half-second increments. Measured raw peaks for that pattern:
 
-| Rhythm in seconds | Previous peak at volume 1 | With headroom at volume 1 | With headroom at volume 0.35 |
+| Sample rate | Raw mixed peak | Peak with uncapped 0.53125 gain | Peak with 0.307 ceiling |
 | --- | ---: | ---: | ---: |
-| 5.5 / 0 / 5.5 / 0 | 0.635 | 0.198 | 0.069 |
-| 4 / 4 / 4 / 4 | 0.676 | 0.211 | 0.074 |
-| 4 / 7 / 8 / 0 | 0.676 | 0.211 | 0.074 |
-| 0.5 / 0.5 / 0.5 / 0.5 | 1.136 | 0.355 | 0.124 |
-| 0.5 / 0 / 0.5 / 0.5 | 1.355 | 0.423 | 0.148 |
-| 0.5 / 0.001 / 0.5 / 0.001 (exact manual/legacy values) | 3.006 | 0.939 | 0.329 |
+| 24 kHz | 3.18175 | 1.69031 | 0.97680 |
+| 44.1 kHz | 3.19046 | 1.69493 | 0.97947 |
+| 48 kHz | 3.18420 | 1.69161 | 0.97755 |
 
-Real Web Audio tests render the supplied MP3s at **24, 44.1 and 48 kHz**, at maximum user volume, including fast overlapping cycles and 1 ms legacy holds. They check finite peaks below 0.95, exact trigger counts and survival of all tails after normal completion. Whole-frame schedules also compare against the direct sum of the complete original recordings multiplied only by master volume and fixed headroom. A separate test verifies that neither volume/mute controls nor new phase cues ever automate the headroom node.
+The applied effective gain is therefore **`min(requestedVolume × 0.53125, 0.307)`**. The ceiling rounds down the measured clean level with about 2% full-scale clearance. Requested volumes up to approximately 0.578 receive the full increase; higher volumes are capped. At requested volume 1, this is 0.307 versus the previously deployed 0.3125, so that extreme setting cannot receive a clean 70% increase. This limitation is intentional and does not rewrite any saved preference.
 
-All recordings continue playing for their full **8.000 decoded seconds**, including the quiet final tail. No looping, stretching, artificial sustain or phase-duration gate was introduced. Pause/resume preserves offsets; explicit mute/Stop/Restart retain their existing short de-click releases. Tests establish headroom for the supplied recordings and tested patterns; new media should be measured again before changing the fixed gain.
+The graph remains independent sample gain → selected master gain → fixed mix gain → mute gate. Only initialization and explicit master-volume changes calculate the ceiling. Phase transitions never alter another voice's volume. There is **no compressor, limiter, dynamic ducking, added reverb, looping, stretching or generated tail**. Normal session completion retains all active tails; Pause/Resume preserves offsets and mute/Stop/Restart keep their existing short de-click releases.
 
-Measurements used FFmpeg decoding to stereo float32 PCM and NumPy summing/half-second RMS analysis. These are review tools only, not application dependencies. The automated browser tests use native Web Audio and require neither tool. Listen on the target phone/headphones for the final subjective check.
+Real Web Audio tests render the actual MP3s at **24, 44.1 and 48 kHz**, at maximum requested volume, including the additional stress pattern above. They check finite peaks below 0.99, exact trigger counts, full tails after normal completion and sample-for-sample agreement with constant-gain sums for whole-frame schedules. Real application graph tests restore saved volume in all three languages and verify the effective gain. Unit tests cover both initial and later high-volume settings, independent mute, mapping, zero holds and duplicate prevention.
+
+These measurements establish clean output for the supplied recordings and tested patterns, not every possible device or future recording. New media should be measured again before raising the ceiling. Measurements used FFmpeg decoding to stereo float32 PCM and NumPy analysis; these are review tools only, not application dependencies. Browser tests use native Web Audio. Final subjective loudness and fidelity should be checked on the target phone/headphones.

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { SampleAudio, SAMPLE_MIX_HEADROOM } from './sample-audio.ts';
+import { SampleAudio, SAMPLE_MIX_HEADROOM, MAX_SAMPLE_PLAYBACK_GAIN, samplePlaybackGain } from './sample-audio.ts';
 
 const recordings = { inhale: 'low.mp3', holdAfterInhale: 'high.mp3', exhale: 'mid.mp3', holdAfterExhale: 'high.mp3' };
 const set = { id: 'samples', name: 'Samples', recordings, frequencies: {} };
@@ -209,7 +209,7 @@ test('a zero-duration final hold is skipped even when it shares the first hold s
 
 test('fixed mix headroom is independent of phase cues, master volume and mute automation', async t => {
   const { audio, context: c, advance } = await setup(t);
-  assert.equal(SAMPLE_MIX_HEADROOM, .25 * 1.25);
+  assert.equal(SAMPLE_MIX_HEADROOM, .3125 * 1.70);
   const master = c.gains[0], mute = c.gains[1], headroom = c.gains[2];
   assert.equal(master.connected, headroom); assert.equal(headroom.connected, mute);
   assert.equal(mute.connected, c.destination);
@@ -218,10 +218,32 @@ test('fixed mix headroom is independent of phase cues, master volume and mute au
   const count = c.sources.length;
   for (const savedVolume of [0, .15, .35, .7, 1]) {
     audio.setVolume(savedVolume);
-    assert.equal(master.gain.events.at(-1)[1], savedVolume);
-    assert.equal(savedVolume * headroom.gain.value, savedVolume * .25 * 1.25);
+    const applied = master.gain.events.at(-1)[1];
+    assert.equal(applied, samplePlaybackGain(savedVolume) / SAMPLE_MIX_HEADROOM);
+    assert(Math.abs(applied * headroom.gain.value - samplePlaybackGain(savedVolume)) < 1e-12);
   }
   assert.equal(c.sources.length, count);
   audio.setMuted(true); audio.setMuted(false);
   assert.equal(headroom.gain.value, SAMPLE_MIX_HEADROOM); assert.deepEqual(headroom.gain.events, []);
+});
+
+test('playback gain increases existing deployed output by 70 percent until the clean ceiling', () => {
+  assert.equal(SAMPLE_MIX_HEADROOM, .53125);
+  assert.equal(MAX_SAMPLE_PLAYBACK_GAIN, .307);
+  for (const volume of [0, .1, .15, .25, .35, .5]) {
+    assert(Math.abs(samplePlaybackGain(volume) - volume * .3125 * 1.70) < 1e-12);
+  }
+  assert(Math.abs(samplePlaybackGain(.35) - .1859375) < 1e-12);
+  for (const volume of [.6, .7, 1, 10]) assert.equal(samplePlaybackGain(volume), .307);
+  assert.equal(samplePlaybackGain(-1), 0);
+  assert.equal(samplePlaybackGain(NaN), samplePlaybackGain(.35));
+});
+test('a previously saved high volume is clean on initial context creation and later updates', async t => {
+  const { audio, context: c } = await setup(t);
+  const master = c.gains[0], headroom = c.gains[2];
+  audio.setVolume(1);
+  assert(Math.abs(master.gain.events.at(-1)[1] * headroom.gain.value - .307) < 1e-12);
+  const returning = new SampleAudio(); returning.setVolume(1); await returning.unlock();
+  assert(Math.abs(c.gains[3].gain.value * c.gains[5].gain.value - .307) < 1e-12);
+  returning.stop();
 });

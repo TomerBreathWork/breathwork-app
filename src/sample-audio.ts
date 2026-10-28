@@ -1,10 +1,16 @@
 import { phaseAt, phaseMilliseconds, validRhythm, type Rhythm } from "./engine.ts";
 import { phaseRoles, type SoundSet } from "./audio-types.ts";
 
-// Fixed -10.10 dB mix headroom: 25% above the previous 0.25 gain.
-// Set once, independently of user volume and mute; new cues never change it. The measured
-// 3.006 peak of an extreme short-hold mix becomes 0.939 at full master volume.
-export const SAMPLE_MIX_HEADROOM = 0.3125;
+// The deployed mix gain was 0.3125. Apply the requested relative 70% boost.
+// Cap only the selected master level, never the waveform or individual phases.
+// Stress-rendered short overlaps peak near 3.19 before gain; 0.307 leaves about
+// 2% full-scale clearance. No compressor, limiter or phase-dependent ducking.
+export const SAMPLE_MIX_HEADROOM = 0.3125 * 1.70; // 0.53125 requested multiplier
+export const MAX_SAMPLE_PLAYBACK_GAIN = 0.307;
+export function samplePlaybackGain(value: number): number {
+  const volume = Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0.35;
+  return Math.min(volume * SAMPLE_MIX_HEADROOM, MAX_SAMPLE_PLAYBACK_GAIN);
+}
 
 interface Voice {
   source: AudioBufferSourceNode;
@@ -49,7 +55,7 @@ export class SampleAudio {
     this.context ??= new AudioContext();
     if (!this.master) {
       this.master = this.context.createGain();
-      this.master.gain.value = this.volume;
+      this.master.gain.value = samplePlaybackGain(this.volume) / SAMPLE_MIX_HEADROOM;
       this.muteGate = this.context.createGain();
       this.muteGate.gain.value = this.muted ? 0 : 1;
       const headroom = this.context.createGain();
@@ -93,7 +99,7 @@ export class SampleAudio {
   setVolume(value: number) {
     this.volume = Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0.35;
     if (this.context && this.master)
-      this.master.gain.setTargetAtTime(this.volume, this.context.currentTime, 0.05);
+      this.master.gain.setTargetAtTime(samplePlaybackGain(this.volume) / SAMPLE_MIX_HEADROOM, this.context.currentTime, 0.05);
   }
   setMuted(muted: boolean) {
     if (this.muted === muted) return;
