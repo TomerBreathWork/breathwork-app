@@ -171,13 +171,16 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
 test('group 5 Japanese: meaningful units fit compact controls without changing the text', async ({ page }) => {
   await page.addInitScript(()=>{localStorage.setItem('breath-flow-language','ja');localStorage.setItem('still-settings',JSON.stringify({sound:'silent'}));});
   await page.goto('./');
+  await expect(page.locator('.start-button')).toBeEnabled();
   for (const viewport of [{width:320,height:568},{width:360,height:640},{width:375,height:812},{width:390,height:844}]) {
     await page.setViewportSize(viewport);
     await expect(page.locator('.presets button')).toHaveText([ja.coherentBreathing,ja.boxBreathing,ja.preset478,ja.custom]);
     await expect(page.locator('.presets .ja-text-unit').filter({hasText:/^コヒーレント$/})).toHaveCount(1);
     await expect(page.locator('.footer-actions .ja-text-unit').filter({hasText:/^お問い合わせ$/})).toHaveCount(1);
-    for (const unit of await page.locator('button .ja-text-unit,.footer-action .ja-text-unit').all()) {
-      const dimensions=await unit.evaluate(el=>({width:el.getBoundingClientRect().width,parent:el.parentElement!.getBoundingClientRect().width,scroll:el.scrollWidth,client:el.clientWidth,font:parseFloat(getComputedStyle(el).fontSize)}));
+    // Read one DOM snapshot; preparing/ready labels can contain different counts
+    // of spans, making asynchronous nth-position lookups stale.
+    const units = await page.locator('button .ja-text-unit,.footer-action .ja-text-unit').evaluateAll(els => els.map(el=>({width:el.getBoundingClientRect().width,parent:el.parentElement!.getBoundingClientRect().width,scroll:el.scrollWidth,client:el.clientWidth,font:parseFloat(getComputedStyle(el).fontSize)})));
+    for (const dimensions of units) {
       expect(dimensions.width).toBeGreaterThan(0);
       expect(dimensions.font).toBeGreaterThanOrEqual(8.5);
       expect(dimensions.width).toBeLessThanOrEqual(dimensions.parent+1);

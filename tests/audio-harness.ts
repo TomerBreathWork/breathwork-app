@@ -9,4 +9,4 @@ export {renderBowl} from '../src/bowl-render';
 
 export {soundSets} from '../src/media';
 
-export {SampleAudio} from '../src/sample-audio';
+export {SampleAudio, SAMPLE_MIX_HEADROOM} from '../src/sample-audio';

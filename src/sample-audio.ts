@@ -1,6 +1,11 @@
 import { phaseAt, phaseMilliseconds, validRhythm, type Rhythm } from "./engine.ts";
 import { phaseRoles, type SoundSet } from "./audio-types.ts";
 
+// Fixed -12.04 dB mix headroom. Set once, independently of the user's volume
+// and mute controls; starting another cue never changes this gain. The measured
+// 3.006 peak of an extreme short-hold mix becomes 0.752 at full master volume.
+export const SAMPLE_MIX_HEADROOM = 0.25;
+
 interface Voice {
   source: AudioBufferSourceNode;
   gain: GainNode;
@@ -47,7 +52,10 @@ export class SampleAudio {
       this.master.gain.value = this.volume;
       this.muteGate = this.context.createGain();
       this.muteGate.gain.value = this.muted ? 0 : 1;
-      this.master.connect(this.muteGate);
+      const headroom = this.context.createGain();
+      headroom.gain.value = SAMPLE_MIX_HEADROOM;
+      this.master.connect(headroom);
+      headroom.connect(this.muteGate);
       this.muteGate.connect(this.context.destination);
     }
     return this.context;
@@ -132,7 +140,9 @@ export class SampleAudio {
     source.onended = () => {
       source.disconnect(); gain.disconnect(); this.voices.delete(voice);
     };
-    source.start(at, offset); // No loop, phase gate, artificial decay or scheduled stop.
+    // Play the entire recording, including its quiet tail: all assigned MP3s
+    // decode to eight seconds. Nothing here depends on the phase duration.
+    source.start(at, offset); // No loop, stretch, phase gate or scheduled stop.
   }
   private release(voice: Voice) {
     const c = this.context;

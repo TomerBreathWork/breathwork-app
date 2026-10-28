@@ -1,6 +1,6 @@
 # Recorded bowl decay review
 
-TEST baseline: `6055469`, 2026-10-28. The mapping remains Low → High → Mid → High. No recording, playback envelope, volume curve, phase timing or UI changes were needed to preserve the requested natural decay.
+Reviewed baseline: `6055469`, 2026-10-28. The mapping remains Low → High → Mid → High. The follow-up update adds the requested fixed mix headroom while retaining the entire eight-second recordings, their natural envelopes, the user volume control, breathing timings and UI.
 
 ## Recordings and playback
 
@@ -18,21 +18,23 @@ The player already runs each independent source to the recording's natural end. 
 
 `tests/sample-decay.spec.ts` renders the actual MP3s in Chromium, checks their quiet nonzero 6–7-second tails and silence after the full recording ends, and compares every original waveform against playback with constant master gain. It also compares polyphonic mixes with the direct sum of original samples, including tails after normal completion and exact trigger counts. The existing control and preparation tests remain in place.
 
-## Measured mix headroom limitation
+## Fixed headroom update
 
-No loudness was increased. Individual source peaks are approximately 0.608 (-4.3 dBFS). The ordinary presets and tested half-second patterns do not clip at the existing default master volume of 0.35. This does **not** establish that every possible custom pattern is safe at every volume.
+A dedicated GainNode now applies **0.25 gain (-12.04 dB)** to the mixed recordings. It is initialized once, separately from master volume and mute. It never follows signal level, phase transitions or the number of voices. There is no compressor, limiter, dynamic ducking, added reverb or sample processing. The result is uniformly quieter; master volume and mute still work independently.
 
-Direct 48 kHz PCM mix measurements (1.0 is digital full scale):
+The previous direct sum could exceed digital full scale (1.0), including with exact short manual/legacy holds. Fixed headroom reduces every sample by the same constant factor without altering its original strike or eight-second decay. Original 48 kHz PCM mix measurements and the resulting fixed-gain levels:
 
-| Rhythm in seconds | Peak at volume 1 | Peak at volume 0.35 |
-| --- | ---: | ---: |
-| 5.5 / 0 / 5.5 / 0 | 0.635 | 0.222 |
-| 4 / 4 / 4 / 4 | 0.676 | 0.237 |
-| 4 / 7 / 8 / 0 | 0.676 | 0.237 |
-| 0.5 / 0.5 / 0.5 / 0.5 | 1.136 | 0.398 |
-| 0.5 / 0 / 0.5 / 0.5 | 1.355 | 0.474 |
-| 0.5 / 0.001 / 0.5 / 0.001 (exact manual/legacy values) | 3.006 | 1.052 |
+| Rhythm in seconds | Previous peak at volume 1 | With headroom at volume 1 | With headroom at volume 0.35 |
+| --- | ---: | ---: | ---: |
+| 5.5 / 0 / 5.5 / 0 | 0.635 | 0.159 | 0.056 |
+| 4 / 4 / 4 / 4 | 0.676 | 0.169 | 0.059 |
+| 4 / 7 / 8 / 0 | 0.676 | 0.169 | 0.059 |
+| 0.5 / 0.5 / 0.5 / 0.5 | 1.136 | 0.284 | 0.099 |
+| 0.5 / 0 / 0.5 / 0.5 | 1.355 | 0.339 | 0.119 |
+| 0.5 / 0.001 / 0.5 / 0.001 (exact manual/legacy values) | 3.006 | 0.752 | 0.263 |
 
-This is a **pre-existing summing risk**, not a new tail or gain change. Short overlapping custom patterns can exceed full scale at high volume; extreme exact manual values can also do so at the default volume. Eliminating it while keeping every original waveform and avoiding ducking requires fixed mix headroom (quieter playback), or a separately agreed volume strategy. No such change was applied without resolving that tradeoff. No limiter, compressor or dynamic attenuation was added, because it could change the existing strikes or reduce previous sounds when a new voice starts.
+Real Web Audio tests render the supplied MP3s at **24, 44.1 and 48 kHz**, at maximum user volume, including fast overlapping cycles and 1 ms legacy holds. They check finite peaks below 0.95, exact trigger counts and survival of all tails after normal completion. Whole-frame schedules also compare against the direct sum of the complete original recordings multiplied only by master volume and fixed headroom. A separate test verifies that neither volume/mute controls nor new phase cues ever automate the headroom node.
+
+All recordings continue playing for their full **8.000 decoded seconds**, including the quiet final tail. No looping, stretching, artificial sustain or phase-duration gate was introduced. Pause/resume preserves offsets; explicit mute/Stop/Restart retain their existing short de-click releases. Tests establish headroom for the supplied recordings and tested patterns; new media should be measured again before changing the fixed gain.
 
 Measurements used FFmpeg decoding to stereo float32 PCM and NumPy summing/half-second RMS analysis. These are review tools only, not application dependencies. The automated browser tests use native Web Audio and require neither tool. Listen on the target phone/headphones for the final subjective check.

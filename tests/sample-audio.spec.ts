@@ -1,3 +1,4 @@
+import { SAMPLE_MIX_HEADROOM } from '../src/sample-audio';
 import { test, expect } from '@playwright/test';
 import { build } from 'vite';
 import { resolve } from 'node:path';
@@ -105,7 +106,7 @@ test('real Web Audio rendering retains overlap and final tails through normal co
     return [.025, .075, .125, .175, .225, 1.9, 2.025, 2.075, 2.125, 2.2].map(time => data[Math.round(time * rate)]);
   });
   // Chromium normalizes positive PCM16 samples against 32767.
-  const one = 16000 / 32767 * .25;
+  const one = 16000 / 32767 * .25 * SAMPLE_MIX_HEADROOM;
   // No dipping at phase boundaries, no fade at the 0.2s session boundary.
   [1, 2, 3, 4, 4, 4, 3, 2, 1, 0].forEach((voices, index) => expect(output[index]).toBeCloseTo(one * voices, 5));
 });

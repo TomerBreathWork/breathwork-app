@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { SampleAudio } from './sample-audio.ts';
+import { SampleAudio, SAMPLE_MIX_HEADROOM } from './sample-audio.ts';
 
 const recordings = { inhale: 'low.mp3', holdAfterInhale: 'high.mp3', exhale: 'mid.mp3', holdAfterExhale: 'high.mp3' };
 const set = { id: 'samples', name: 'Samples', recordings, frequencies: {} };
@@ -205,4 +205,21 @@ test('a zero-duration final hold is skipped even when it shares the first hold s
   for (const time of [.8, 1.3, 2.5]) advance(time);
   assert.deepEqual(c.sources.map(source => source.buffer.name), ['low.mp3', 'high.mp3', 'mid.mp3']);
   audio.finish(); advance(12); assert.equal(c.sources.length, 3);
+});
+
+test('fixed mix headroom is independent of phase cues, master volume and mute automation', async t => {
+  const { audio, context: c, advance } = await setup(t);
+  assert.equal(SAMPLE_MIX_HEADROOM, .25);
+  const master = c.gains[0], mute = c.gains[1], headroom = c.gains[2];
+  assert.equal(master.connected, headroom); assert.equal(headroom.connected, mute);
+  assert.equal(mute.connected, c.destination);
+  assert.equal(headroom.gain.value, .25); assert.deepEqual(headroom.gain.events, []);
+  audio.run(set, [1, 1, 1, 1], 0, 4000); advance(.8);
+  const count = c.sources.length;
+  audio.setVolume(1); assert.equal(master.gain.events.at(-1)[1], 1);
+  audio.setVolume(0); assert.equal(master.gain.events.at(-1)[1], 0);
+  audio.setVolume(.35); assert.equal(master.gain.events.at(-1)[1], .35);
+  assert.equal(c.sources.length, count);
+  audio.setMuted(true); audio.setMuted(false);
+  assert.equal(headroom.gain.value, .25); assert.deepEqual(headroom.gain.events, []);
 });
