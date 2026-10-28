@@ -66,6 +66,7 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
         .getByRole("button", { name: t.allPractices, exact: true })
         .click();
       for (const practice of practices) {
+        await expect(page.locator(`[data-practice="${practice.id}"]`).getByText(t[practice.short], { exact: true })).toHaveCount(1);
         await page.locator(`[data-practice="${practice.id}"]`).click();
         await expect(page.locator("[data-practice-detail] h2")).toHaveText(
           t[practice.name],
@@ -74,9 +75,8 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
         await expect(
           page.getByRole("button", { name: t.start, exact: true }),
         ).toBeInViewport();
-        await expect(page.locator(".details-body")).toContainText(
-          t[practice.explanation],
-        );
+        for (const key of [practice.explanation, practice.benefit, practice.useCases, "adjustComfort", "comfortSafety", ...(practice.caution ? [practice.caution] : [])] as const)
+          await expect(page.locator(".details-body")).toContainText(t[key as keyof typeof t]);
         await page.goBack();
         await expect(page.locator(".practice-list")).toBeVisible();
       }

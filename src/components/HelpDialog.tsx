@@ -6,6 +6,11 @@ const steps: [TranslationKey, TranslationKey][] = [
   ["helpLengthTitle", "helpLengthBody"],
   ["helpStartTitle", "helpStartBody"],
 ];
+const additionalSections: [TranslationKey, TranslationKey][] = [
+  ["helpInstallTitle", "helpInstallBody"],
+  ["helpFutureTitle", "helpFutureBody"],
+  ["helpContactTitle", "helpContactBody"],
+];
 function Paragraphs({ text }: { text: string }) {
   return text.split("\n\n").map((paragraph, i) => <p key={i}>{paragraph}</p>);
 }
@@ -83,6 +88,12 @@ export function HelpDialog({
           <h3 id={`${title}-safety`}>{t("helpSafetyTitle")}</h3>
           <Paragraphs text={t("helpSafetyBody")} />
         </section>
+        {additionalSections.map(([heading, body]) => (
+          <section key={heading} aria-labelledby={`${title}-${heading}`}>
+            <h3 id={`${title}-${heading}`}>{t(heading)}</h3>
+            <Paragraphs text={t(body)} />
+          </section>
+        ))}
       </div>
     </dialog>
   );

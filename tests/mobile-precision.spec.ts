@@ -109,7 +109,7 @@ for (const [language, t] of Object.entries(dictionaries)) {
     }
   });
 }
-test("Japanese phase labels are short on Settings, both Practice holds and all help instructions", async ({
+test("Japanese phase labels stay short on Settings and both Practice holds; help uses approved instructions", async ({
   page,
 }) => {
   await open(page, "en", {sound:"silent"});
@@ -133,10 +133,8 @@ test("Japanese phase labels are short on Settings, both Practice holds and all h
     "止める (4)",
   );
   await page.getByRole("button", { name: ja.howToUse, exact: true }).click();
-  await expect(page.getByRole("dialog")).toContainText(
-    "吸う・止める・吐く・止める",
-  );
-  await expect(page.getByRole("dialog")).not.toContainText(/吸った後|吐いた後/);
+  for (const paragraph of ja.helpAdjustBody.split("\n\n"))
+    await expect(page.getByRole("dialog").getByText(paragraph, { exact: true })).toBeVisible();
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: ja.start, exact: true }).click();
   await page.clock.fastForward(7020);

@@ -90,7 +90,9 @@ export function SettingsPanel({
             <strong><CompactLabel>{t("custom")}</CompactLabel></strong>
           </button>
         </div>
-        <p className="selected-explanation">{t(description)}</p>
+        <p className="selected-explanation" data-layout-copy={t("homeCoherentDescription")}>
+          <span>{t(description)}</span>
+        </p>
       </section>
       <PhaseDurations
         t={t}

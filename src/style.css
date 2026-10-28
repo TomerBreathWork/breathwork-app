@@ -1697,13 +1697,56 @@ input[type="number"],
   white-space: nowrap;
 }
 .selected-explanation {
-  /* Reserve the usual three lines so selecting Custom does not shift controls. */
+  display: grid;
   min-block-size: calc(3lh + 1px);
   margin: 3px 2px 0;
   color: #365c59;
   font-size: 0.78rem;
   line-height: 1.4;
   text-align: center;
+}
+/* Reserve the longest approved home copy at its actual wrapped height, without
+   showing it twice. Preset changes then leave the controls in the same place. */
+.selected-explanation::before {
+  content: attr(data-layout-copy);
+  visibility: hidden;
+  grid-area: 1 / 1;
+}
+.selected-explanation > span {
+  grid-area: 1 / 1;
+}
+@media (min-width:601px) and (max-height:950px) {
+  .settings-screen:not(.discovery-screen) .settings-panel { gap: 8px; }
+}
+@media (max-width:600px) and (min-height:701px) and (max-height:900px) {
+  .settings-screen:not(.discovery-screen) .settings-panel {
+    padding-block: 14px;
+    gap: 4px;
+  }
+}
+@container app-viewport (max-width:600px) and (max-height:700px) {
+  .settings-screen:not(.discovery-screen) .settings-panel {
+    padding-block: 6px;
+    gap: 2px;
+  }
+}
+@media (max-width:600px) and (max-height:590px) {
+  .settings-screen:not(.discovery-screen) {
+    padding-top: max(2px, env(safe-area-inset-top));
+    padding-bottom: max(2px, env(safe-area-inset-bottom));
+  }
+}
+@container app-viewport (max-width:600px) and (max-height:590px) {
+  .settings-screen:not(.discovery-screen) .app-header {
+    gap: 0;
+    margin-bottom: 0;
+  }
+  .settings-screen:not(.discovery-screen) .brand { gap: 0; }
+  .settings-screen:not(.discovery-screen) .attribution { margin-top: 0; }
+  .settings-screen:not(.discovery-screen) .settings-panel {
+    padding-block: 2px;
+    gap: 0;
+  }
 }
 @container app-viewport (max-width:600px) and (max-height:700px) {
   .selected-explanation { margin: 1px 0 0; }

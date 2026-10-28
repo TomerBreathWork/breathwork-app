@@ -88,6 +88,12 @@ for (const [language, t] of Object.entries(dictionaries)) {
       t.helpStartTitle,
       t.helpImportantTitle,
       t.helpSafetyTitle,
+      t.helpInstallTitle,
+      t.helpFutureTitle,
+      t.helpContactTitle,
+      ...t.helpInstallBody.split("\n\n"),
+      t.helpFutureBody,
+      t.helpContactBody,
       ...t.helpSafetyBody.split("\n\n"),
       ...t.helpImportantBody.split("\n\n"),
     ])
@@ -116,6 +122,42 @@ for (const [language, t] of Object.entries(dictionaries)) {
       .click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(help).toBeFocused();
+  });
+  test(`${language}: approved help paragraphs and final contact section remain accessible on mobile and desktop`, async ({ page }) => {
+    const errors: string[] = [];
+    page.on("pageerror", error => errors.push(error.message));
+    await settings(page, language);
+    for (const viewport of [{ width: 320, height: 568 }, { width: 375, height: 812 }, { width: 1280, height: 900 }]) {
+      await page.setViewportSize(viewport);
+      await page.getByRole("button", { name: t.howToUse, exact: true }).click();
+      const dialog = page.getByRole("dialog"), body = dialog.locator(".help-body");
+      await expect(dialog.locator("h3")).toHaveText([
+        t.helpChooseTitle, t.helpAdjustTitle, t.helpLengthTitle, t.helpStartTitle,
+        t.helpImportantTitle, t.helpSafetyTitle,
+        t.helpInstallTitle, t.helpFutureTitle, t.helpContactTitle,
+      ]);
+      const paragraphs = [
+        t.helpIntro, t.helpChooseBody, t.helpAdjustBody, t.helpLengthBody,
+        t.helpStartBody, t.helpImportantBody, t.helpSafetyBody,
+        t.helpInstallBody, t.helpFutureBody, t.helpContactBody,
+      ].flatMap(text => text.split("\n\n"));
+      // textContent preserves the approved punctuation, whitespace and Hebrew
+      // backslashes rather than normalizing them like a visible-text matcher.
+      expect(await body.locator("p").allTextContents()).toEqual(paragraphs);
+      await expect(body.locator(":scope > section:last-child h3")).toHaveText(t.helpContactTitle);
+      await expect(body.locator(":scope > section:last-child p")).toHaveText(t.helpContactBody);
+      expect(await body.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+      await body.evaluate(el => { el.scrollTop = el.scrollHeight; });
+      await expect(body.getByText(t.helpContactBody, { exact: true })).toBeInViewport();
+      await expect(dialog.getByRole("button", { name: t.close, exact: true })).toBeInViewport();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      if (viewport.width === 375)
+        await page.screenshot({ path: `/tmp/breath-flow-approved-help-${language}.png` });
+      await page.keyboard.press("Escape");
+      await expect(dialog).toHaveCount(0);
+      await expect(page.getByRole("button", { name: t.howToUse, exact: true })).toBeFocused();
+    }
+    expect(errors).toEqual([]);
   });
 }
 for (const [key, name, rhythm] of [

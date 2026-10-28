@@ -278,6 +278,14 @@ test("offline reload retains settings, all photographs, decoded recordings and a
   });
   assets.images.forEach((width) => expect(width).toBeGreaterThan(0));
   assets.recordings.forEach((duration) => expect(duration).toBeGreaterThan(0));
+  // The approved installation guidance and new sections are available from the
+  // cached locale bundle too, without fetching anything while the dialog opens.
+  await page.getByRole("button", { name: en.howToUse, exact: true }).click();
+  const help = page.getByRole("dialog");
+  for (const title of [en.helpInstallTitle, en.helpFutureTitle, en.helpContactTitle])
+    await expect(help.getByRole("heading", { name: title, exact: true })).toHaveCount(1);
+  await expect(help.locator(".help-body > section:last-child h3")).toHaveText(en.helpContactTitle);
+  await page.keyboard.press("Escape");
   // The real recorded-audio mode unlocks, loads and plays offline.
   await page.getByRole("button", { name: en.start, exact: true }).click();
   await expect(page.locator(".breath-circle")).toHaveAttribute(
