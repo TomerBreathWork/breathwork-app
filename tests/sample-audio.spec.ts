@@ -12,15 +12,16 @@ test.beforeAll(async () => {
   audioCode = chunk.code;
 });
 
-test('real MP3 samples preload once and play low/high/mid/warm independently without phase cutoffs', async ({ page }) => {
+test('real MP3 samples preload once and play low/high/mid/high independently without phase cutoffs', async ({ page }) => {
   await page.clock.install(); await page.clock.pauseAt(new Date());
   await page.addInitScript(observeSamples);
   await page.addInitScript(() => localStorage.setItem('still-settings', JSON.stringify({ preset: 'custom', practiceId: 'custom', rhythm: [1, 1, 1, 1], minutes: 1, sound: 'bowls', volume: .25, background: 'photo-3' })));
   await page.goto('./');
   await expect(page.locator('.start-button')).toBeEnabled();
   const decoded = await page.evaluate(() => (window as any).sampleAudio.decoded);
-  expect(decoded).toHaveLength(4);
-  expect(decoded.map((sample: any) => sample.url.split('/').at(-1)).sort()).toEqual(['high_F4_349Hz.mp3', 'low_F3_174Hz.mp3', 'mid_C4_262Hz.mp3', 'warm_A3_218Hz.mp3']);
+  expect(decoded).toHaveLength(3);
+  expect(decoded.some((sample: any) => sample.url.includes('warm_A3_218Hz'))).toBe(false);
+  expect(decoded.map((sample: any) => sample.url.split('/').at(-1)).sort()).toEqual(['high_F4_349Hz.mp3', 'low_F3_174Hz.mp3', 'mid_C4_262Hz.mp3']);
   for (const sample of decoded) { expect(sample.duration).toBeCloseTo(8, 2); expect(sample.channels).toBe(2); expect(sample.url).toContain('/breathwork-app/media/audio/bowls/'); }
   expect(await page.evaluate(() => (window as any).sampleAudio.starts)).toEqual([]);
   await page.locator('.start-button').click(); await page.clock.runFor(2990);
@@ -29,8 +30,8 @@ test('real MP3 samples preload once and play low/high/mid/warm independently wit
   await expect(page.locator('.breath-circle')).toHaveAttribute('data-phase', '0');
   for (let index = 0; index < 3; index++) await page.clock.runFor(1000);
   const starts = await page.evaluate(() => (window as any).sampleAudio.starts);
-  expect(starts.map((event: any) => event.url.split('/').at(-1))).toEqual(['low_F3_174Hz.mp3', 'high_F4_349Hz.mp3', 'mid_C4_262Hz.mp3', 'warm_A3_218Hz.mp3']);
-  expect(starts[1].url).not.toBe(starts[3].url);
+  expect(starts.map((event: any) => event.url.split('/').at(-1))).toEqual(['low_F3_174Hz.mp3', 'high_F4_349Hz.mp3', 'mid_C4_262Hz.mp3', 'high_F4_349Hz.mp3']);
+  expect(starts[1].url).toBe(starts[3].url);
   for (const event of starts) { expect(event.offset).toBe(0); expect(event.stops).toEqual([]); expect(event.duration).toBeCloseTo(8, 2); }
   // All later phase deadlines use the same precise audio origin.
   expect(starts[2].at - starts[1].at).toBeCloseTo(1, 6);
@@ -42,7 +43,7 @@ test('real MP3 samples preload once and play low/high/mid/warm independently wit
   await page.getByRole('slider', { name: 'Volume', exact: true }).fill('0.15');
   await page.getByRole('combobox', { name: 'Background', exact: true }).selectOption('photo-2');
   expect(await page.evaluate(() => (window as any).sampleAudio.starts.length)).toBe(4);
-  expect(await page.evaluate(() => (window as any).sampleAudio.decoded.length)).toBe(4);
+  expect(await page.evaluate(() => (window as any).sampleAudio.decoded.length)).toBe(3);
   await page.getByRole('button', { name: 'Stop', exact: true }).click();
 });
 

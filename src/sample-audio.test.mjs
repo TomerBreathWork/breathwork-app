@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { SampleAudio } from './sample-audio.ts';
 
-const recordings = { inhale: 'low.mp3', holdAfterInhale: 'high.mp3', exhale: 'mid.mp3', holdAfterExhale: 'warm.mp3' };
+const recordings = { inhale: 'low.mp3', holdAfterInhale: 'high.mp3', exhale: 'mid.mp3', holdAfterExhale: 'high.mp3' };
 const set = { id: 'samples', name: 'Samples', recordings, frequencies: {} };
 class Param {
   value = 0; events = [];
@@ -51,25 +51,25 @@ async function setup(t, { duration = 8, fail = [], prepared = true } = {}) {
   return { audio, context, fetched, advance(seconds) { now = seconds; context.currentTime = seconds; ended(); t.mock.timers.tick(25); ended(); } };
 }
 
-test('the supplied manifest maps low / high / mid / warm and keeps the original recordings', () => {
+test('the supplied manifest maps low / high / mid / high and keeps the original recordings', () => {
   const manifest = JSON.parse(readFileSync(new URL('../public/media/manifest.json', import.meta.url)));
-  assert.deepEqual(Object.values(manifest.recordings).map(path => path.split('/').at(-1)), ['low_F3_174Hz.mp3', 'high_F4_349Hz.mp3', 'mid_C4_262Hz.mp3', 'warm_A3_218Hz.mp3']);
+  assert.deepEqual(Object.values(manifest.recordings).map(path => path.split('/').at(-1)), ['low_F3_174Hz.mp3', 'high_F4_349Hz.mp3', 'mid_C4_262Hz.mp3', 'high_F4_349Hz.mp3']);
   for (const path of Object.values(manifest.recordings)) assert(readFileSync(new URL('../public/' + path, import.meta.url)).length > 100000);
   for (const file of ['inhale 4.MP3', 'hold 4.MP3', 'exhale 4.MP3']) assert(readFileSync(new URL('../public/media/audio/' + file, import.meta.url)).length);
 });
-test('all four samples preload/decode once, even with concurrent warmup and prepare, without a voice', async t => {
+test('all three samples preload/decode once, even with concurrent warmup and prepare, without a voice', async t => {
   const { audio, context, fetched } = await setup(t, { prepared: false });
   await Promise.all([audio.warmup(set), audio.prepare(set), audio.prepare(set)]);
-  assert.equal(audio.recordingStatus, 'recorded'); assert.equal(context.decodes, 4);
-  assert.deepEqual(fetched, ['low.mp3', 'high.mp3', 'mid.mp3', 'warm.mp3']); assert.equal(context.sources.length, 0);
+  assert.equal(audio.recordingStatus, 'recorded'); assert.equal(context.decodes, 3);
+  assert.deepEqual(fetched, ['low.mp3', 'high.mp3', 'mid.mp3']); assert.equal(context.sources.length, 0);
 });
 test('four exact phase starts are independent, overlap naturally and retain all eight seconds', async t => {
   const { audio, context: c, advance } = await setup(t);
   audio.run(set, [.5, .5, .5, .5], 0, 2000);
   for (const time of [.3, .8, 1.3, 2]) advance(time);
   assert.deepEqual(c.sources.map(s => s.at), [0, .5, 1, 1.5]);
-  assert.deepEqual(c.sources.map(s => s.buffer.name), ['low.mp3', 'high.mp3', 'mid.mp3', 'warm.mp3']);
-  assert.notEqual(c.sources[1].buffer, c.sources[3].buffer); assert.equal(new Set(c.sources.map(s => s.buffer)).size, 4);
+  assert.deepEqual(c.sources.map(s => s.buffer.name), ['low.mp3', 'high.mp3', 'mid.mp3', 'high.mp3']);
+  assert.equal(c.sources[1].buffer, c.sources[3].buffer); assert.notEqual(c.sources[1], c.sources[3]);
   for (const source of c.sources) {
     assert.equal(source.offset, 0); assert.equal(source.loop, false); assert.equal(source.buffer.duration, 8);
     assert.deepEqual(source.stops, []); assert.deepEqual(source.gain.gain.events, []); assert.equal(source.gain.gain.value, 1);
@@ -99,7 +99,7 @@ test('muting discards tails; unmute never replays current or skipped phases', as
   audio.run(set, [.5, .5, .5, .5], 0, 2000); advance(.2); audio.setMuted(true);
   assert.equal(c.sources[0].stops.at(-1), .22);
   advance(1.2); audio.setMuted(false); assert.equal(c.sources.length, 1);
-  advance(1.3); assert.equal(c.sources.length, 2); assert.equal(c.sources[1].at, 1.5); assert.equal(c.sources[1].buffer.name, 'warm.mp3');
+  advance(1.3); assert.equal(c.sources.length, 2); assert.equal(c.sources[1].at, 1.5); assert.equal(c.sources[1].buffer.name, 'high.mp3');
 });
 test('mute cancels prequeued cues; unmuting before their boundary schedules exactly one audible cue', async t => {
   const { audio, context: c, advance } = await setup(t);
@@ -123,7 +123,7 @@ test('pause preserves all overlapping offsets; resume smoothly restores tails, n
     assert.equal(source.buffer, c.sources[index].buffer);
     assert.deepEqual(source.gain.gain.events, [['set', 0, 10], ['ramp', 1, 10.004]]);
   });
-  advance(10.1); assert.equal(c.sources.at(-1).buffer.name, 'warm.mp3'); assert(Math.abs(c.sources.at(-1).at - 10.3) < 1e-9);
+  advance(10.1); assert.equal(c.sources.at(-1).buffer.name, 'high.mp3'); assert(Math.abs(c.sources.at(-1).at - 10.3) < 1e-9);
 });
 test('pause cancels a future source and resume cues its boundary once', async t => {
   const { audio, context: c, advance } = await setup(t);
@@ -164,7 +164,7 @@ test('missing/corrupt recordings skip their role safely and never synthesize rep
   const { audio, context: c, advance } = await setup(t, { fail: ['high.mp3'] });
   assert.equal(audio.recordingStatus, 'partial'); audio.run(set, [.5, .5, .5, .5], 0, 2000);
   for (const time of [.3, .8, 1.3]) advance(time);
-  assert.deepEqual(c.sources.map(s => s.buffer.name), ['low.mp3', 'mid.mp3', 'warm.mp3']);
+  assert.deepEqual(c.sources.map(s => s.buffer.name), ['low.mp3', 'mid.mp3']);
 });
 test('corrupt MP3 decoding fails safely without losing the other recordings', async t => {
   const { audio, context: c, advance } = await setup(t, { prepared: false });
@@ -176,7 +176,7 @@ test('corrupt MP3 decoding fails safely without losing the other recordings', as
   await audio.prepare(set); assert.equal(audio.recordingStatus, 'partial');
   audio.run(set, [.5, .5, .5, .5], 0, 2000);
   for (const time of [.3, .8, 1.3]) advance(time);
-  assert.deepEqual(c.sources.map(s => s.buffer.name), ['low.mp3', 'mid.mp3', 'warm.mp3']);
+  assert.deepEqual(c.sources.map(s => s.buffer.name), ['low.mp3', 'mid.mp3']);
 });
 test('invalid/zero rhythms and unavailable audio never start an invalid scheduler', async t => {
   const { audio, context: c } = await setup(t);
@@ -188,7 +188,7 @@ test('invalid/zero rhythms and unavailable audio never start an invalid schedule
 test('a main-thread stall does not replay missed phase attacks', async t => {
   const { audio, context: c, advance } = await setup(t);
   audio.run(set, [1, 1, 1, 1], 0, 4000); advance(2.8);
-  assert.equal(c.sources.length, 2); assert.equal(c.sources[1].buffer.name, 'warm.mp3'); assert.equal(c.sources[1].at, 3);
+  assert.equal(c.sources.length, 2); assert.equal(c.sources[1].buffer.name, 'high.mp3'); assert.equal(c.sources[1].at, 3);
 });
 
 test('an interrupted AudioContext never consumes a future cue before it can actually play', async t => {
@@ -199,9 +199,8 @@ test('an interrupted AudioContext never consumes a future cue before it can actu
   assert.equal(c.sources[1].at, 1); assert.equal(c.sources[1].buffer.name, 'high.mp3');
 });
 
-test('a zero-duration final hold never triggers the preloaded warm sample', async t => {
+test('a zero-duration final hold is skipped even when it shares the first hold sample', async t => {
   const { audio, context: c, advance } = await setup(t);
-  assert.equal(c.decodes, 4);
   audio.run(set, [1, .5, 1, 0], 0, 2500);
   for (const time of [.8, 1.3, 2.5]) advance(time);
   assert.deepEqual(c.sources.map(source => source.buffer.name), ['low.mp3', 'high.mp3', 'mid.mp3']);
