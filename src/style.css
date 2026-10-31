@@ -1617,6 +1617,25 @@ input[type="number"],
 .practice-card {
   min-height: 80px;
 }
+/* Fit the complete Coherent summary in two lines without growing its card:
+   reclaim the two 5px gaps and one line's height from vertical padding. */
+.practice-card[data-practice="coherent"] {
+  padding-block: calc(18px - .553rem);
+}
+.practice-card[data-practice="coherent"] > span {
+  gap: 0;
+}
+.practice-card[data-practice="coherent"] > span > span {
+  min-block-size: 2lh;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+@container app-viewport (max-width:600px) and (max-height:700px) {
+  .practice-card[data-practice="coherent"] {
+    padding-block: calc(15px - .553rem);
+  }
+}
 @media (min-width: 341px) and (max-width: 600px) {
   .category-filters {
     flex-wrap: nowrap;

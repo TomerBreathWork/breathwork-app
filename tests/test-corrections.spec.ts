@@ -83,7 +83,7 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
     }
     await page.locator('[data-home-choice="box"]').click();
     await page.locator('#phase-value-0').fill('5.5'); await page.locator('#phase-value-0').blur();
-    await expect(description).toHaveText(t.homeCustomDescription);
+    await expect(description).toHaveText(t.homeBoxDescription);
     // The library keeps its existing technical descriptions, including the other practices.
     await page.locator('[data-home-choice="explore"]').click();
     await expect(page.locator('[data-practice="coherent"]')).toContainText(t.coherentShort);

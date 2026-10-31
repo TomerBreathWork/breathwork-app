@@ -15,8 +15,23 @@ export interface PatternSettings {
   rhythm: Rhythm;
   customRhythm?: Rhythm;
 }
+export function editPhase(
+  settings: { preset?: string; rhythm: Rhythm },
+  index: number,
+  duration: number,
+): Rhythm {
+  if (settings.preset === "boxBreathing")
+    return [duration, duration, duration, duration];
+  const rhythm = [...settings.rhythm] as Rhythm;
+  rhythm[index] = duration;
+  return rhythm;
+}
 const sameRhythm = (a: Rhythm, b: Rhythm) => a.every((n, i) => n === b[i]);
+const boxRhythm = (rhythm: Rhythm) =>
+  validRhythm(rhythm) && rhythm[0] >= 0.5 && rhythm[0] <= 40 &&
+  rhythm.every((duration) => duration === rhythm[0]);
 export function restorePreset(id: unknown, rhythm: Rhythm): string {
+  if (id === "boxBreathing" && boxRhythm(rhythm)) return id;
   if (
     id === "custom" ||
     (typeof id === "string" &&
@@ -31,6 +46,11 @@ export function editRhythm<T extends PatternSettings>(
   rhythm: Rhythm,
 ): T {
   const selected = presets.find((p) => p.key === settings.preset);
+  if (selected?.key === "boxBreathing" && rhythm.every(duration => Object.is(duration, rhythm[0]))) {
+    // Both the four phase controls and the guided common-duration control send
+    // equal values, including temporary blank drafts. Keep their Box identity.
+    return { ...settings, rhythm: [...rhythm] };
+  }
   const preset =
     selected && sameRhythm(selected.rhythm, rhythm) ? selected.key : "custom";
   return {

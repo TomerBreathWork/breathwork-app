@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import type { Rhythm } from "../engine";
+import { editPhase } from "../presets";
 import { phaseKeys, type Language, type Translator } from "../i18n";
 import {
   phaseLimits,
@@ -17,28 +18,32 @@ export function PhaseDurations({
 }: {
   t: Translator;
   language: Language;
-  settings: { rhythm: Rhythm };
+  settings: { rhythm: Rhythm; preset?: string };
   patch: (p: { rhythm: Rhythm }) => void;
   onEditingChange?: (editing: boolean) => void;
 }) {
+  const box = settings.preset === "boxBreathing";
   return (
     <section className="rhythm-grid" aria-label={t("rhythmLabel")}>
       {phaseKeys.map((key, index) => {
         const value = settings.rhythm[index];
         const hold = index === 1 || index === 3;
-        const { min, max } = phaseLimits(index);
+        // Equal Box phases must satisfy the inhale/exhale limits as well as
+        // the hold limits. Custom and other presets retain their original range.
+        const limitIndex = box ? 0 : index;
+        const { min, max } = phaseLimits(limitIndex);
         const displayedValue = Number.isFinite(value)
-          ? clampPhaseDuration(index, value)
+          ? clampPhaseDuration(limitIndex, value)
           : min;
+        const sliderMin = hold ? holdDurationToSliderPosition(min) : min;
+        const sliderMax = hold ? holdDurationToSliderPosition(max) : max;
         const position = hold
           ? holdDurationToSliderPosition(displayedValue)
           : ((displayedValue - min) / (max - min)) * 100;
         const controlLabel =
           language === "ja" && hold ? `${t(key)} (${index + 1})` : t(key);
         const update = (value: number) => {
-          const rhythm = [...settings.rhythm] as Rhythm;
-          rhythm[index] = value;
-          patch({ rhythm });
+          patch({ rhythm: editPhase(settings, index, value) });
         };
         return (
           <div className="phase-row" key={key}>
@@ -46,16 +51,16 @@ export function PhaseDurations({
             <input
               id={`phase-${index}`}
               type="range"
-              min={hold ? 0 : min}
-              max={hold ? 100 : max}
+              min={sliderMin}
+              max={sliderMax}
               step={hold ? "any" : "0.5"}
               value={hold ? position : displayedValue}
               onChange={(e) =>
-                update(
+                update(clampPhaseDuration(limitIndex,
                   hold
                     ? sliderPositionToHoldDuration(Number(e.target.value))
                     : Number(e.target.value),
-                )
+                ))
               }
               onKeyDown={(event) => {
                 if (!hold) return;
@@ -70,11 +75,11 @@ export function PhaseDurations({
                   ].includes(event.key)
                 ) {
                   event.preventDefault();
-                  update(
+                  update(clampPhaseDuration(limitIndex,
                     event.key === "Home"
-                      ? 0
+                      ? min
                       : event.key === "End"
-                        ? 120
+                        ? max
                         : nextHoldDuration(
                             displayedValue,
                             event.key === "ArrowUp" ||
@@ -82,7 +87,7 @@ export function PhaseDurations({
                               ? 1
                               : -1,
                           ),
-                  );
+                  ));
                 }
               }}
               aria-label={controlLabel}
@@ -92,7 +97,7 @@ export function PhaseDurations({
               aria-valuetext={`${displayedValue} ${t("seconds")}`}
               style={
                 {
-                  "--range-progress": `${position}%`,
+                  "--range-progress": `${hold ? ((position - sliderMin) / (sliderMax - sliderMin)) * 100 : position}%`,
                 } as CSSProperties
               }
             />
@@ -116,7 +121,7 @@ export function PhaseDurations({
                     Number.isFinite(Number(event.target.value))
                   )
                     update(
-                      clampPhaseDuration(index, Number(event.target.value)),
+                      clampPhaseDuration(limitIndex, Number(event.target.value)),
                     );
                 }}
                 value={Number.isNaN(value) ? "" : value}
