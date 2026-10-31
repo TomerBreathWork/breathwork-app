@@ -160,5 +160,13 @@
   "helpFutureTitle": "これからのBreath Flow",
   "helpFutureBody": "現在のBreath Flowでは、穏やかでリラックスして行える呼吸練習を中心に紹介しています。これから少しずつ練習の種類を増やし、ライブラリを充実させて、皆さんが自分に合った呼吸のリズムをもっと見つけられるようにしていきたいと思っています。",
   "helpContactTitle": "ご質問はありますか？",
-  "helpContactBody": "ご質問や気になること、個別に相談したいことがあれば、アプリの「お問い合わせ」ボタンからお気軽にご連絡ください。お力になれたらうれしいです。WhatsAppでできるだけ早くお返事します。"
+  "helpContactBody": "ご質問や気になること、個別に相談したいことがあれば、アプリの「お問い合わせ」ボタンからお気軽にご連絡ください。お力になれたらうれしいです。WhatsAppでできるだけ早くお返事します。",
+  "analyticsPreferences": "アクセス解析の設定",
+  "analyticsTitle": "任意のアクセス解析",
+  "analyticsBody": "同意いただいた場合、Google Analytics が Cookie と仮名識別子を使い、訪問や呼吸練習の利用状況、ブラウザや端末の情報を集計します。お問い合わせのメッセージや個人的な呼吸体験の情報は送信しません。同意しなくても練習は同じように使えます。設定画面の盾のボタンから、いつでも選択を変更できます。",
+  "analyticsEnabled": "アクセス解析は現在許可されています。",
+  "analyticsDisabled": "アクセス解析は現在オフです。",
+  "analyticsGooglePrivacy": "Google のプライバシーポリシー",
+  "analyticsDecline": "解析を許可しない",
+  "analyticsAllow": "解析を許可する"
 }

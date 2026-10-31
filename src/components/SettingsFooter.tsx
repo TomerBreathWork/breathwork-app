@@ -4,6 +4,7 @@ import type { Translator } from "../i18n";
 import { publicAppUrl, contactUrl } from "../links";
 import { Icon } from "./Icons";
 import { HelpDialog } from "./HelpDialog";
+import { analytics } from "../analytics";
 const helpSeenKey = "breath-flow-help-seen";
 let helpOpenedThisVisit = false;
 function firstVisitAttention() {
@@ -74,6 +75,7 @@ export function SettingsFooter({ t }: { t: Translator }) {
         <a
           className="footer-action"
           href={contactUrl(t("contactMessage"))}
+          onClick={() => analytics.contactClicked()}
           target="_blank"
           rel="noopener noreferrer"
         >

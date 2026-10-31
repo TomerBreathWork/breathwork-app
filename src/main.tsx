@@ -27,6 +27,8 @@ import { Brand } from "./components/Brand";
 import { AdvancedOptions } from "./components/AdvancedOptions";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { SessionPanel } from "./components/SessionPanel";
+import { AnalyticsConsent } from "./components/AnalyticsConsent";
+import { analytics, type AnalyticsView } from "./analytics";
 import "./style.css";
 const settingsBackground = mediaUrl("media/backgrounds/3.webp")!;
 function App() {
@@ -36,9 +38,16 @@ function App() {
   const [failedImage, setFailedImage] = useState("");
   const previousImage = useRef("");
   const { language, setLanguage, t } = useLanguage();
-  const session = useBreathingSession(settings),
+  const session = useBreathingSession(settings, language),
     active = session.status !== "idle";
   const navigation = useAppNavigation(active);
+  const analyticsView: AnalyticsView = active
+    ? session.status === "completed" ? "completed" : session.inPreparation ? "preparation" : "practice"
+    : navigation.screen.name === "details" ? `details/${navigation.screen.id}`
+      : navigation.screen.name === "library" ? "library" : "settings";
+  useEffect(() => {
+    analytics.open(analyticsView, language, import.meta.env.PROD);
+  }, [analyticsView, language]);
   const { offlineStatus, beginPractice } = useOfflineSupport(
     session.status === "running" || session.status === "paused",
     settings,
@@ -100,6 +109,8 @@ function App() {
     if (await session.start()) selectBackground(settings.background, true);
   }
   function onPreset(key: PresetKey) {
+    if (settings.practiceId !== practiceForPreset(key))
+      analytics.selectPractice(practiceForPreset(key), language);
     session.cancelPreparation();
     setSettings((value) => ({
       ...selectPreset(value, key),
@@ -107,10 +118,12 @@ function App() {
     }));
   }
   function onCustom() {
+    if (settings.practiceId !== "custom") analytics.selectPractice("custom", language);
     session.cancelPreparation();
     setSettings((value) => ({ ...selectCustom(value), practiceId: "custom" }));
   }
   function openPractice(id: PracticeId) {
+    analytics.selectPractice(id, language);
     const practice = getPractice(id)!;
     session.cancelPreparation();
     setSettings((value) =>
@@ -162,6 +175,7 @@ function App() {
         />
       )}
       <div className="scene-overlay" />
+      <AnalyticsConsent t={t} active={active} />
       <div className="app-view">
         <p className="sr-only" data-offline-status={offlineStatus} aria-live="polite">
           {t(offlineStatus)}

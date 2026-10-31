@@ -8,6 +8,9 @@ export default defineConfig({
   testDir: './tests',
   use: {
     baseURL: url,
+    // Existing behavior suites exercise the app with optional analytics declined.
+    // The analytics suite overrides this with a genuinely fresh consent state.
+    storageState: { cookies: [], origins: [{ origin: "http://127.0.0.1:5174", localStorage: [{ name: "breath-flow-analytics-consent", value: "denied" }] }] },
     // Existing network-mocking tests exercise application logic directly. The
     // dedicated production PWA suite explicitly enables real service workers.
     serviceWorkers: 'block',

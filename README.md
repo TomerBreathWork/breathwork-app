@@ -286,3 +286,9 @@ See [the review guide](docs/practice-library-review.md) for the optional library
 ### Current targeted TEST UI
 
 See [the staged corrections](docs/test-corrections.md). Advanced Options are temporarily hidden on Home and Practice; the earlier sections describe their retained implementation. Current saved audio/background preferences remain in use. Home shows the selected rhythm above Start; Practice offers the speaker mute toggle. Preparation lasts three silent seconds. Energy is hidden from the filters and Box belongs only to Focus. No production deployment is authorized.
+
+## Optional GA4 analytics
+
+The production build includes the public Measurement ID `G-9GMF53JNC3`. Analytics uses a localized opt-in notice and a persistent shield button on Settings; declining does not affect practice. No Google tag is loaded before permission. Existing breathing, audio, media and PWA behavior is preserved.
+
+See [analytics setup, privacy boundaries, events and live verification](docs/analytics.md). **Enhanced Measurement must be OFF in the GA4 web stream**, since its automatic links/history collection can conflict with our privacy and deduplication requirements. Local tests mock Google and cannot establish that Google received events.

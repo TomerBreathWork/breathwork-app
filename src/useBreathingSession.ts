@@ -6,8 +6,9 @@ import { SampleAudio } from "./sample-audio";
 import { soundSets } from "./media";
 import type { Settings } from "./settings";
 import type { TranslationKey } from "./i18n";
+import { analytics, type PracticeAnalytics } from "./analytics";
 export type SessionStatus = "idle" | "running" | "paused" | "completed";
-export function useBreathingSession(settings: Settings) {
+export function useBreathingSession(settings: Settings, language = "en") {
   const [status, setStatus] = useState<SessionStatus>("idle"),
     [elapsed, setElapsed] = useState(0);
   const [muted, setMuted] = useState(false),
@@ -24,12 +25,13 @@ export function useBreathingSession(settings: Settings) {
   } | null>(null);
   const rhythm = configuration?.rhythm ?? settings.rhythm;
   const preparation = useRef(false);
+  const metrics = useRef<PracticeAnalytics | undefined>(undefined);
   const audio = useRef(new SampleAudio()),
     operation = useRef(0),
     base = useRef(0),
     origin = useRef(0);
-  const current = useRef({ status, settings });
-  current.current = { status, settings };
+  const current = useRef({ status, settings, language });
+  current.current = { status, settings, language };
   const timingValid =
     validConfiguredRhythm(settings.rhythm) &&
     Number.isFinite(settings.minutes) &&
@@ -71,6 +73,7 @@ export function useBreathingSession(settings: Settings) {
       if (preparation.current) {
         setPreparationElapsed(Math.min(PREPARATION_MS, now));
         if (now >= PREPARATION_MS) {
+          metrics.current?.start();
           preparation.current = false;
           setInPreparation(false);
           // Preserve the deadline instead of moving the clock to the next frame.
@@ -82,6 +85,7 @@ export function useBreathingSession(settings: Settings) {
         return;
       }
       if (now >= end) {
+        metrics.current?.complete();
         base.current = end;
         setElapsed(end);
         transition("completed");
@@ -160,6 +164,12 @@ export function useBreathingSession(settings: Settings) {
   }
   function start() {
     if (!timingValid) return false;
+    metrics.current?.stop(currentElapsed() / 1000);
+    metrics.current = analytics.createPractice(
+      current.current.settings.practiceId,
+      current.current.language,
+      finishAt(current.current.settings.minutes, current.current.settings.rhythm) / 1000,
+    );
     setConfiguration({
       rhythm: [...current.current.settings.rhythm] as Rhythm,
       end: finishAt(
@@ -191,6 +201,8 @@ export function useBreathingSession(settings: Settings) {
     return true;
   }
   function stop() {
+    metrics.current?.stop(currentElapsed() / 1000);
+    metrics.current = undefined;
     cancelPreparation();
     preparation.current = false;
     setInPreparation(false);
@@ -207,7 +219,7 @@ export function useBreathingSession(settings: Settings) {
     if (preparation.current) setPreparationElapsed(base.current);
     else setElapsed(base.current);
     const completed = !preparation.current && base.current >= endRef.current;
-    if (completed) audio.current.finish();
+    if (completed) { metrics.current?.complete(); audio.current.finish(); }
     else audio.current.pause();
     transition(completed ? "completed" : "paused");
   }

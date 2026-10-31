@@ -104,6 +104,8 @@ test.skip(
 async function open(page: Page, url: string, sound = "silent") {
   await page.addInitScript(
     ({ sound }) => {
+      if (!localStorage.getItem("breath-flow-analytics-consent"))
+        localStorage.setItem("breath-flow-analytics-consent", "denied");
       if (!localStorage.getItem("still-settings"))
         localStorage.setItem(
           "still-settings",
@@ -589,4 +591,26 @@ test("full-cycle completion releases a waiting update without interrupting the t
     { timeout: 10000 },
   );
   await expect(page.locator(".settings-panel")).toBeVisible();
+});
+
+test('offline consented usage works without Google requests or replaying offline events', async ({ page, context, site }) => {
+  await context.route('https://www.googletagmanager.com/**', route => route.fulfill({ contentType: 'text/javascript', body: '' }));
+  await context.route('https://*.google-analytics.com/**', route => route.abort());
+  await open(page, site.url); await ready(page);
+  await page.getByRole('button', { name: en.analyticsPreferences, exact: true }).click();
+  await page.getByRole('button', { name: en.analyticsAllow, exact: true }).click();
+  await context.setOffline(true);
+  const google: string[] = []; page.on('request', r => { if (/googletagmanager|google-analytics/.test(r.url())) google.push(r.url()); });
+  await page.reload(); await expect(page.locator('.start-button')).toBeEnabled();
+  expect(await page.evaluate(() => (window.dataLayer ?? []).filter(value => Array.from(value as ArrayLike<unknown>)[0] === 'event').length)).toBe(0);
+  await page.getByRole('button', { name: en.start, exact: true }).click();
+  await expect(page.locator('.breath-circle')).toHaveAttribute('data-phase', '0', { timeout: 7000 });
+  await page.getByRole('button', { name: en.stop, exact: true }).click();
+  expect(google).toEqual([]);
+  await context.setOffline(false);
+  await expect.poll(() => page.evaluate(() => (window.dataLayer ?? []).filter(value => {
+    const command = Array.from(value as ArrayLike<unknown>); return command[0] === 'event' && command[1] === 'app_opened';
+  }).length)).toBe(1);
+  const names = await page.evaluate(() => (window.dataLayer ?? []).map(value => Array.from(value as ArrayLike<unknown>)).filter(cmd => cmd[0] === 'event').map(cmd => cmd[1]));
+  expect(names).toEqual(['app_opened', 'page_view']);
 });
