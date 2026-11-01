@@ -125,7 +125,7 @@ export function SettingsPanel({
         <Icon name="play" />
         <CompactLabel>{t(preparing ? "preparing" : "start")}</CompactLabel>
       </button>
-      <SettingsFooter t={t} />
+      <SettingsFooter t={t} language={language} />
     </main>
   );
 }
