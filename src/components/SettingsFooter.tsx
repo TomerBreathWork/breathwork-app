@@ -1,6 +1,6 @@
 import { CompactLabel } from "./CompactLabel";
 import { useRef, useState } from "react";
-import type { Translator } from "../i18n";
+import type { Language, Translator } from "../i18n";
 import { publicAppUrl, contactUrl } from "../links";
 import { Icon } from "./Icons";
 import { HelpDialog } from "./HelpDialog";
@@ -14,7 +14,7 @@ function firstVisitAttention() {
     return true;
   }
 }
-export function SettingsFooter({ t }: { t: Translator }) {
+export function SettingsFooter({ t, language }: { t: Translator; language: Language }) {
   const [attention, setAttention] = useState(firstVisitAttention);
   const [help, setHelp] = useState(false),
     [fallback, setFallback] = useState(false),
@@ -73,7 +73,7 @@ export function SettingsFooter({ t }: { t: Translator }) {
         </button>
         <a
           className="footer-action"
-          href={contactUrl(t("contactMessage"))}
+          href={contactUrl(t("contactMessage"), language)}
           target="_blank"
           rel="noopener noreferrer"
         >

@@ -62,10 +62,12 @@ for (const [language, t] of Object.entries(dictionaries)) {
     ).toBe(812);
     const contact = page.getByRole("link", { name: t.contact, exact: true });
     const url = new URL((await contact.getAttribute("href"))!);
-    expect(url.origin + url.pathname).toBe("https://wa.me/972509266969");
-    expect(url.searchParams.get("text")).toBe(
-      messages[language as keyof typeof messages],
-    );
+    if (language === "ja") {
+      expect(url.href).toBe("https://line.me/ti/p/dDHE5dIChq");
+    } else {
+      expect(url.origin + url.pathname).toBe("https://wa.me/972509266969");
+      expect(url.searchParams.get("text")).toBe(messages[language as "en" | "he"]);
+    }
     await expect(contact).toHaveAttribute("target", "_blank");
     await page.getByRole("button", { name: t.share, exact: true }).click();
     expect(await page.evaluate(() => (window as any).shared)).toEqual({
