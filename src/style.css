@@ -1036,6 +1036,36 @@ select:focus-visible {
   height: 15px;
   flex: none;
 }
+/* Japanese footer labels stay whole, including without Intl.Segmenter.
+   Content-based widths give Contact room while retaining 44px touch targets. */
+[lang="ja"] .settings-footer .footer-actions {
+  display: flex;
+  gap: 2px;
+}
+[lang="ja"] .settings-footer .footer-action {
+  flex: 1 0 auto;
+  min-width: 44px;
+  gap: 3px;
+  padding-inline: 0;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  word-break: keep-all;
+}
+[lang="ja"] .settings-footer .footer-action > span {
+  flex: none;
+  max-inline-size: none;
+}
+[lang="ja"] .settings-footer .compact-ja-label {
+  inline-size: auto;
+  max-inline-size: none;
+  container-type: normal;
+}
+[lang="ja"] .settings-footer .footer-action span {
+  font-size: inherit;
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
 .footer-action:focus-visible {
   outline: 3px solid var(--teal);
   outline-offset: 2px;
