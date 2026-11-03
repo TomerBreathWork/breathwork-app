@@ -162,11 +162,12 @@
   "helpContactTitle": "Have a Question?",
   "helpContactBody": "Have a question, something you're unsure about, or would you like personal guidance? You're welcome to reach out through the Contact button in the app. I'll be happy to help and will do my best to reply on WhatsApp as soon as I can.",
   "analyticsPreferences": "Analytics preferences",
-  "analyticsTitle": "Optional usage analytics",
-  "analyticsBody": "With your permission, Google Analytics uses cookies and pseudonymous identifiers to measure visits and breathing practice use, along with browser and device information. We do not send your contact messages or personal breathing information. Practice works the same if you decline. You can change your choice using the shield button in Settings.",
+  "analyticsTitle": "Help us improve Breath Flow 🌿",
+  "analyticsBody": "We use Google Analytics to understand how people use the app and make it better.\n\nThis includes usage information and technical details about your device and browser, but not your name, contact details, or personal content from your breathing experience.\n\nIt's your choice, and the app works just the same if you decline.",
   "analyticsEnabled": "Analytics is currently allowed.",
   "analyticsDisabled": "Analytics is currently off.",
   "analyticsGooglePrivacy": "Google’s privacy policy",
-  "analyticsDecline": "Decline analytics",
-  "analyticsAllow": "Allow analytics"
+  "analyticsDecline": "No thanks",
+  "analyticsAllow": "Allow",
+  "analyticsFooter": "You can change your choice anytime using the shield icon."
 }

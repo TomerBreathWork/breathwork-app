@@ -19,13 +19,14 @@ export function AnalyticsConsent({ t, active }: { t: Translator; active: boolean
     {(expanded || consent === null) && <aside id="analytics-notice" className="analytics-notice" aria-labelledby="analytics-title" onKeyDown={event => { if (event.key === "Escape") close(); }}>
       <button type="button" className="analytics-close" aria-label={t("close")} onClick={close}>×</button>
       <h2 id="analytics-title">{t("analyticsTitle")}</h2>
-      <p>{t("analyticsBody")}</p>
-      <p className="analytics-choice">{t(consent === "granted" ? "analyticsEnabled" : "analyticsDisabled")}</p>
+      <div className="analytics-copy">{t("analyticsBody").split("\n\n").map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
+      {expanded && <p className="analytics-choice">{t(consent === "granted" ? "analyticsEnabled" : "analyticsDisabled")}</p>}
       <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">{t("analyticsGooglePrivacy")}</a>
       <div className="analytics-actions">
-        <button type="button" onClick={() => { analytics.setConsent("denied"); setExpanded(false); button.current?.focus(); }}>{t("analyticsDecline")}</button>
-        <button type="button" onClick={() => { analytics.setConsent("granted"); setExpanded(false); button.current?.focus(); }}>{t("analyticsAllow")}</button>
+        <button className="analytics-secondary" type="button" onClick={() => { analytics.setConsent("denied"); setExpanded(false); button.current?.focus(); }}>{t("analyticsDecline")}</button>
+        <button className="analytics-primary" type="button" onClick={() => { analytics.setConsent("granted"); setExpanded(false); button.current?.focus(); }}>{t("analyticsAllow")}</button>
       </div>
+      <p className="analytics-footer">{t("analyticsFooter")}</p>
     </aside>}
   </>;
 }

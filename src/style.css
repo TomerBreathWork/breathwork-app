@@ -1888,28 +1888,28 @@ input[type="number"],
   display: grid;
   place-items: center;
 }
-.analytics-preferences svg { width: 20px; height: 20px; }
+.analytics-preferences svg { width: 17px; height: 17px; }
 .analytics-notice {
   position: fixed;
   z-index: 5;
   inset-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right));
   bottom: max(12px, env(safe-area-inset-bottom));
   margin-inline: auto;
-  width: min(460px, calc(100% - 24px));
-  max-height: min(75dvh, 450px);
+  width: min(420px, 88vw, calc(100% - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)));
+  max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 18px;
+  padding: 14px;
   border: 1px solid #ffffffb3;
   border-radius: 22px;
   background: #f6f1e8fa;
   color: var(--teal);
-  box-shadow: 0 10px 45px #19484a33;
-  font-size: .82rem;
-  line-height: 1.5;
+  box-shadow: 0 6px 24px #19484a20;
+  font-size: .8rem;
+  line-height: 1.45;
 }
-.analytics-notice h2 { font-size: 1rem; margin: 0 0 10px; padding-inline-end: 34px; }
-.analytics-notice p { margin: 10px 0; }
+.analytics-notice h2 { font-size: .95rem; line-height: 1.4; margin: 0 0 8px; padding-inline-end: 28px; text-wrap: balance; }
+.analytics-notice p { margin: 7px 0; }
 .analytics-notice a { color: inherit; text-underline-offset: 3px; }
 .analytics-choice { font-weight: 600; }
 .analytics-close {
@@ -1923,7 +1923,7 @@ input[type="number"],
   border: 0;
   font-size: 1.5rem;
 }
-.analytics-actions { display: flex; gap: 8px; margin-top: 14px; }
+.analytics-actions { display: flex; gap: 8px; margin-top: 10px; }
 .analytics-actions button {
   flex: 1;
   min-width: 0;
@@ -1935,3 +1935,10 @@ input[type="number"],
   background: #a6c9c240;
   font-size: .82rem;
 }
+
+.analytics-actions .analytics-primary { background: #45685b; color: #fff; border-color: #45685b; }
+.analytics-actions .analytics-secondary { background: #faf7f0; border-color: #19484a35; }
+.analytics-notice .analytics-footer { font-size: .74rem; margin: 9px 0 0; }
+.analytics-notice > a { font-size: .74rem; }
+[lang="ja"] .analytics-notice h2 { line-break: strict; word-break: normal; overflow-wrap: normal; }
+[lang="ja"] .analytics-actions button { white-space: nowrap; word-break: keep-all; }

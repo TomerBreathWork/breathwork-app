@@ -38,6 +38,15 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
       await expect(page.getByRole('button', { name: t.analyticsAllow, exact: true })).toBeInViewport();
       if (viewport.width === 375) await page.screenshot({ path: `/tmp/breath-flow-analytics-consent-${language}.png` });
     }
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.evaluate(() => { document.documentElement.style.fontSize = '20px'; });
+    const notice = page.locator('.analytics-notice');
+    expect(await notice.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+    await page.getByRole('button', { name: t.analyticsAllow, exact: true }).scrollIntoViewIfNeeded();
+    await expect(page.getByRole('button', { name: t.analyticsAllow, exact: true })).toBeInViewport();
+    await expect(page.getByRole('button', { name: t.analyticsDecline, exact: true })).toBeInViewport();
+    await page.evaluate(() => { document.documentElement.style.fontSize = ''; });
+    await expect(notice.locator('.analytics-footer')).toHaveText(t.analyticsFooter);
     const before = await page.evaluate(() => localStorage.getItem('still-settings'));
     await page.getByRole('button', { name: t.analyticsDecline, exact: true }).click();
     await expect(page.locator('.analytics-notice')).toHaveCount(0);
