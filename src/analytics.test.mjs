@@ -100,7 +100,7 @@ test('all event parameters are bounded canonical values, with no raw URL, query,
   const params=browser.events('practice_selected')[0][2];assert.equal(params.practice_id,'custom');assert.equal(params.language,'en');
   for(const [,name,event] of browser.events()){
     assert(['app_opened','page_view','practice_selected','contact_clicked'].includes(name));
-    assert.deepEqual(Object.keys(event).filter(key=>!['practice_id','practice_name','duration_seconds','language','display_mode','page_location','page_referrer','page_title'].includes(key)),[]);
+    assert.deepEqual(Object.keys(event).filter(key=>!['practice_id','practice_name','preset','duration_seconds','planned_duration_minutes','actual_duration_seconds','elapsed_duration_seconds','app_language','contact_method','language','display_mode','page_location','page_referrer','page_title'].includes(key)),[]);
     assert.equal(event.page_referrer,'');
   }
 });
@@ -130,4 +130,15 @@ test('existing browser opt-out flags and blocked data layers are respected, neve
   const blocked=new Browser('granted');Object.defineProperty(blocked,'dataLayer',{get(){throw new Error('Blocked');}});
   const unavailable=new AnalyticsClient(blocked);assert.doesNotThrow(()=>unavailable.open('settings','en',true));assert.doesNotThrow(()=>unavailable.contactClicked());
   assert.equal(blocked.scripts.length,0);
+});
+test('updated reporting parameters use requested minutes and distinct elapsed/actual durations', () => {
+ const {browser,client}=opened('granted');
+ const run=client.createPractice('coherent','he',187,3);run.start();run.complete();
+ assert.equal(browser.events('practice_started')[0][2].planned_duration_minutes,3);
+ assert.equal(browser.events('practice_started')[0][2].app_language,'he');
+ assert.equal(browser.events('practice_completed')[0][2].actual_duration_seconds,187);
+ assert.equal(browser.events('practice_completed')[0][2].preset,'coherentBreathing');
+ const stopped=client.createPractice('box','ja',192,3);stopped.start();stopped.stop(12.5);
+ assert.equal(browser.events('practice_stopped')[0][2].elapsed_duration_seconds,12.5);
+ for(const lang of ['en','he','ja']) {client.open('settings',lang,true);client.contactClicked();assert.equal(browser.events('contact_clicked').at(-1)[2].contact_method,lang==='ja'?'line':'whatsapp');}
 });

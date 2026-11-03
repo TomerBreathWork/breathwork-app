@@ -170,13 +170,16 @@ export class AnalyticsClient {
     }
     return true;
   }
-  private send(event: EventName, practice?: string, seconds?: number, language: string = this.language) {
+  private send(event: EventName, practice?: string, seconds?: number, language: string = this.language, plannedMinutes?: number) {
     if (!this.ensureTag()) return false;
     const id = practice === undefined ? undefined : practiceId(practice);
     const params: Record<string, string | number> = {
-      language: safeLanguage(language), display_mode: this.displayMode(),
+      ...(plannedMinutes !== undefined && Number.isFinite(plannedMinutes) ? { planned_duration_minutes: plannedMinutes } : {}),
+      app_language: safeLanguage(language), language: safeLanguage(language), display_mode: this.displayMode(),
       page_location: `${publicUrl}#${this.view}`, page_referrer: "", page_title: viewTitle(this.view),
-      ...(id === undefined ? {} : { practice_id: id, practice_name: names[id] }),
+      ...(id === undefined ? {} : { practice_id: id, practice_name: names[id], preset: id === "coherent" ? "coherentBreathing" : id === "box" ? "boxBreathing" : id === "478" ? "eveningUnwind" : "custom" }),
+      ...(event === "contact_clicked" ? { contact_method: this.language === "ja" ? "line" : "whatsapp" } : {}),
+      ...(seconds === undefined || !Number.isFinite(seconds) ? {} : event === "practice_completed" ? { actual_duration_seconds: Math.max(0, Math.round(seconds * 10) / 10) } : event === "practice_stopped" ? { elapsed_duration_seconds: Math.max(0, Math.round(seconds * 10) / 10) } : {}),
       ...(seconds === undefined || !Number.isFinite(seconds) ? {} : { duration_seconds: Math.max(0, Math.round(seconds * 10) / 10) }),
     };
     return this.command("event", event, params);
@@ -192,22 +195,22 @@ export class AnalyticsClient {
   }
   selectPractice(id: string, language: string) { this.send("practice_selected", id, undefined, language); }
   contactClicked() { this.send("contact_clicked"); }
-  createPractice(id: string, language: string, durationSeconds: number) {
+  createPractice(id: string, language: string, durationSeconds: number, plannedMinutes = durationSeconds / 60) {
     let started = false, terminal = false, emitted = false;
     return {
       start: () => {
         if (started || terminal) return;
-        started = true; emitted = this.send("practice_started", id, durationSeconds, language);
+        started = true; emitted = this.send("practice_started", id, durationSeconds, language, plannedMinutes);
       },
       complete: () => {
         if (terminal) return;
         terminal = true;
-        if (started && emitted) this.send("practice_completed", id, durationSeconds, language);
+        if (started && emitted) this.send("practice_completed", id, durationSeconds, language, plannedMinutes);
       },
       stop: (elapsedSeconds: number) => {
         if (terminal) return;
         terminal = true;
-        if (started && emitted) this.send(elapsedSeconds >= durationSeconds ? "practice_completed" : "practice_stopped", id, Math.min(elapsedSeconds, durationSeconds), language);
+        if (started && emitted) this.send(elapsedSeconds >= durationSeconds ? "practice_completed" : "practice_stopped", id, Math.min(elapsedSeconds, durationSeconds), language, elapsedSeconds >= durationSeconds ? plannedMinutes : undefined);
       },
     };
   }

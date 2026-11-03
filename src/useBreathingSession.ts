@@ -169,6 +169,7 @@ export function useBreathingSession(settings: Settings, language = "en") {
       current.current.settings.practiceId,
       current.current.language,
       finishAt(current.current.settings.minutes, current.current.settings.rhythm) / 1000,
+      current.current.settings.minutes,
     );
     setConfiguration({
       rhythm: [...current.current.settings.rhythm] as Rhythm,

@@ -19,6 +19,7 @@ test.beforeEach(async ({ context }) => {
   await context.route('https://www.googletagmanager.com/**', route => route.fulfill({ contentType: 'text/javascript', body: 'window.__mockGoogleTagLoaded = true;' }));
   await context.route('https://*.google-analytics.com/**', route => route.abort());
   await context.route('https://wa.me/**', route => route.abort());
+  await context.route('https://line.me/**', route => route.abort());
 });
 for (const [language, t] of Object.entries({ en, he, ja })) {
   test(`${language}: consent defaults off, can be declined/changed/revoked, and never changes existing preferences`, async ({ page }) => {
