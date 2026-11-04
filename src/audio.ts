@@ -6,6 +6,8 @@ import {referenceMix,referenceVolumeGain} from './bowl-synth.ts';
 import {renderBowl} from './bowl-render.ts';
 interface Voice { sources: AudioScheduledSourceNode[]; gain: GainNode; start: number; end: number; levelAt: (time:number)=>number; volume?:GainNode; synthesized:boolean }
 
+// Retained synthesis/recording adapter for explicit consumers. Normal app sessions
+// use SampleAudio (useBreathingSession.ts), not this class or its default mode.
 export class BowlAudio {
  private context?: AudioContext;
  private render: typeof renderBowl;

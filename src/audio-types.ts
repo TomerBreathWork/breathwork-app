@@ -8,9 +8,10 @@ export interface SoundSet {
 }
 
 export type AudioMode = 'synthesized' | 'recorded';
+// Retained synthesis uses the same nominal pitches as the recorded MP3 cues.
 export const phaseNotes: Record<PhaseRole, {note: string; frequency: number}> = {
- inhale:{note:'G4',frequency:392.00},
- holdAfterInhale:{note:'E4',frequency:329.63},
- exhale:{note:'C4',frequency:261.63},
- holdAfterExhale:{note:'E4',frequency:329.63},
+ inhale:{note:'F4',frequency:349},
+ holdAfterInhale:{note:'C4',frequency:262},
+ exhale:{note:'F3',frequency:174},
+ holdAfterExhale:{note:'C4',frequency:262},
 };

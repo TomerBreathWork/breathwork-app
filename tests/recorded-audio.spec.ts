@@ -189,7 +189,7 @@ test('prepared C4 remains below full scale at maximum master volume',async({page
  expect(metrics.nonfinite).toBe(0);expect(metrics.peak).toBeGreaterThan(.05);expect(metrics.peak).toBeLessThan(1);
 });
 
-test('retained legacy synthesis assignments still render G4 E4 C4 E4 using actual oscillator frequencies',async({page})=>{
+test('retained synthesis assignments render F4 C4 F3 C4 using actual oscillator frequencies',async({page})=>{
  await page.goto('./');await page.addScriptTag({content:audioCode});
  const cycle=await page.evaluate(async()=>{
   const NativeAudio=window.AudioContext,NativeOffline=window.OfflineAudioContext;
@@ -210,7 +210,7 @@ test('retained legacy synthesis assignments still render G4 E4 C4 E4 using actua
   return{sequence,sameHolds:buffers[1]===buffers[3]};
  });
  expect(cycle.sequence).toHaveLength(4);
- [392,329.63,261.63,329.63].forEach((frequency,index)=>expect(cycle.sequence[index]).toBeCloseTo(frequency,4));
+ [349,262,174,262].forEach((frequency,index)=>expect(cycle.sequence[index]).toBeCloseTo(frequency,4));
  expect(cycle.sequence[1]).toBe(cycle.sequence[3]);
  expect(cycle.sequence[0]).toBeGreaterThan(cycle.sequence[1]);
  expect(cycle.sameHolds).toBe(true);

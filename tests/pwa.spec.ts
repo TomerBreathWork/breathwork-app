@@ -1,3 +1,4 @@
+import { observeSamples } from "./sample-observer";
 import { showRetainedAdvanced } from "./retained-advanced";
 import { configureBreathing } from "./configure-breathing";
 import { test as base, expect, type Page } from "@playwright/test";
@@ -613,4 +614,28 @@ test('offline consented usage works without Google requests or replaying offline
   }).length)).toBe(1);
   const names = await page.evaluate(() => (window.dataLayer ?? []).map(value => Array.from(value as ArrayLike<unknown>)).filter(cmd => cmd[0] === 'event').map(cmd => cmd[1]));
   expect(names).toEqual(['app_opened', 'page_view']);
+});
+
+
+test("offline production sessions use recorded high/middle/low/middle cues", async ({ page, context, site }) => {
+  await page.addInitScript(observeSamples);
+  await open(page, site.url, "bowls");
+  await ready(page);
+  await context.setOffline(true);
+  await page.reload();
+  await configureBreathing(page, { preset: "custom", rhythm: [1, 1, 1, 1], minutes: 1 });
+  await page.clock.install();
+  await page.clock.pauseAt(new Date());
+  await page.locator('.start-button').click();
+  await page.clock.runFor(2990);
+  expect(await page.evaluate(() => (window as any).sampleAudio.starts)).toEqual([]);
+  await page.clock.runFor(30);
+  for (let phase = 0; phase < 7; phase++) await page.clock.runFor(1000);
+  const result = await page.evaluate(() => ({
+    files: (window as any).sampleAudio.starts.map((event: any) => event.url.split('/').at(-1)),
+    oscillators: (window as any).sampleAudio.oscillators,
+  }));
+  expect(result.files).toEqual(Array(2).fill(['high_F4_349Hz.mp3', 'mid_C4_262Hz.mp3', 'low_F3_174Hz.mp3', 'mid_C4_262Hz.mp3']).flat());
+  expect(result.oscillators).toBe(0);
+  await page.getByRole('button', { name: en.stop, exact: true }).click();
 });

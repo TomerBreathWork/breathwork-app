@@ -101,7 +101,7 @@ test('pause cancels future source, resume uses current phase offset, master is i
 test('missing recordings use fallback; stop cancels all future playback',async t=>{
  const {audio,c,advance}=await setup(t,{fail:true});assert.equal(audio.recordingStatus,'fallback');
  audio.run(set,[1,1,1,1],0,4000);assert.equal(c.sources.length,1);
- audio.stop();advance(3);assert.equal(c.sources.length,1);assert.equal(c.sources[0].buffer.frequency,392);
+ audio.stop();advance(3);assert.equal(c.sources.length,1);assert.equal(c.sources[0].buffer.frequency,349);
 });
 test('the second hold can use an independent recording',async t=>{
  const {audio,c,advance}=await setup(t);
@@ -112,14 +112,14 @@ test('the second hold can use an independent recording',async t=>{
  assert.notEqual(c.sources[1].buffer,c.sources[3].buffer);
 });
 
-test('default synthesis caches exactly three notes and maps G4/E4/C4/E4',async t=>{
+test('default synthesis caches exactly three notes and maps F4/C4/F3/C4',async t=>{
  const {audio,c,fetched,renders,advance}=await setup(t);
  const loaded=fetched.length;await audio.prepare(set);await audio.prepare(set);
  assert.equal(audio.recordingStatus,'synthesized');assert.equal(fetched.length,loaded);
- assert.deepEqual(renders,[392,329.63,261.63]);
+ assert.deepEqual(renders,[349,262,174]);
  audio.run(set,[1,1,1,1],0,4000);
  for(const time of [.8,1.8,2.8])advance(time);
- assert.deepEqual(c.sources.map(source=>source.buffer.frequency),[392,329.63,261.63,329.63]);
+ assert.deepEqual(c.sources.map(source=>source.buffer.frequency),[349,262,174,262]);
  assert.equal(c.sources[1].buffer,c.sources[3].buffer);assert.equal(c.oscillators.length,0);
  for(let i=0;i<3;i++)assert.equal(c.sources[i].stops[0],c.sources[i+1].startAt);
  advance(4);assert.equal(c.sources.length,4);
@@ -203,7 +203,7 @@ test('six coherent cycles schedule twelve half-second-precise strikes, with no h
  for(let time=.25;time<=66;time+=.25)advance(time);
  assert.equal(c.sources.length,12);
  assert.deepEqual(c.sources.map(s=>s.startAt),Array.from({length:12},(_,i)=>i*5.5));
- assert.deepEqual(c.sources.map(s=>s.buffer.frequency),Array.from({length:12},(_,i)=>i%2?261.63:392));
+ assert.deepEqual(c.sources.map(s=>s.buffer.frequency),Array.from({length:12},(_,i)=>i%2?174:349));
  for(let i=0;i<12;i++){
   assert.equal(c.sources[i].stops[0],(i+1)*5.5);
   const envelope=c.sources[i].gain.connected.connected.gain.events;
