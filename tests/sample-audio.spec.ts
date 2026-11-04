@@ -12,7 +12,7 @@ test.beforeAll(async () => {
   audioCode = chunk.code;
 });
 
-test('real MP3 samples preload once and play low/high/mid/high independently without phase cutoffs', async ({ page }) => {
+test('real MP3 samples preload once and play high/mid/low/mid independently without phase cutoffs', async ({ page }) => {
   await page.clock.install(); await page.clock.pauseAt(new Date());
   await page.addInitScript(observeSamples);
   await page.addInitScript(() => localStorage.setItem('still-settings', JSON.stringify({ preset: 'custom', practiceId: 'custom', rhythm: [1, 1, 1, 1], minutes: 1, sound: 'bowls', volume: .25, background: 'photo-3' })));
@@ -30,7 +30,7 @@ test('real MP3 samples preload once and play low/high/mid/high independently wit
   await expect(page.locator('.breath-circle')).toHaveAttribute('data-phase', '0');
   for (let index = 0; index < 3; index++) await page.clock.runFor(1000);
   const starts = await page.evaluate(() => (window as any).sampleAudio.starts);
-  expect(starts.map((event: any) => event.url.split('/').at(-1))).toEqual(['low_F3_174Hz.mp3', 'high_F4_349Hz.mp3', 'mid_C4_262Hz.mp3', 'high_F4_349Hz.mp3']);
+  expect(starts.map((event: any) => event.url.split('/').at(-1))).toEqual(['high_F4_349Hz.mp3', 'mid_C4_262Hz.mp3', 'low_F3_174Hz.mp3', 'mid_C4_262Hz.mp3']);
   expect(starts[1].url).toBe(starts[3].url);
   for (const event of starts) { expect(event.offset).toBe(0); expect(event.stops).toEqual([]); expect(event.duration).toBeCloseTo(8, 2); }
   // All later phase deadlines use the same precise audio origin.
@@ -62,7 +62,7 @@ test('mute/unmute changes future cues only; pause/resume retains an already-play
   await page.getByRole('button', { name: 'Resume', exact: true }).click();
   await expect.poll(() => page.evaluate(() => (window as any).sampleAudio.starts.length)).toBe(2);
   const resumed = await page.evaluate(() => (window as any).sampleAudio.starts[1]);
-  expect(resumed.offset).toBeGreaterThan(.05); expect(resumed.url).toContain('low_F3_174Hz.mp3');
+  expect(resumed.offset).toBeGreaterThan(.05); expect(resumed.url).toContain('high_F4_349Hz.mp3');
   const mute = page.locator('.practice-mute');
   await mute.click(); await expect(mute).toHaveAttribute('aria-pressed', 'true');
   await page.clock.runFor(2000); await mute.click();
@@ -144,6 +144,6 @@ test('a delayed unmute unlock cannot start an old rhythm after Stop and a new St
   await page.evaluate(() => { (window as any).holdUnlocks = false; (window as any).pendingUnlocks[1](); });
   await expect.poll(() => page.evaluate(() => (window as any).sampleAudio.starts.length)).toBe(2);
   await page.clock.runFor(4100);
-  expect(await page.evaluate(() => (window as any).sampleAudio.starts.at(-1).url)).toContain('high_F4_349Hz.mp3');
+  expect(await page.evaluate(() => (window as any).sampleAudio.starts.at(-1).url)).toContain('mid_C4_262Hz.mp3');
   await page.getByRole('button', { name: 'Stop', exact: true }).click();
 });

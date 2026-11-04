@@ -56,9 +56,9 @@ async function setup(t, { duration = 8, fail = [], prepared = true } = {}) {
   return { audio, context, fetched, advance(seconds) { now = seconds; context.currentTime = seconds; ended(); t.mock.timers.tick(25); ended(); } };
 }
 
-test('the supplied manifest maps low / high / mid / high and keeps the original recordings', () => {
+test('the supplied manifest maps high / mid / low / mid and keeps the original recordings', () => {
   const manifest = JSON.parse(readFileSync(new URL('../public/media/manifest.json', import.meta.url)));
-  assert.deepEqual(Object.values(manifest.recordings).map(path => path.split('/').at(-1)), ['low_F3_174Hz.mp3', 'high_F4_349Hz.mp3', 'mid_C4_262Hz.mp3', 'high_F4_349Hz.mp3']);
+  assert.deepEqual(Object.values(manifest.recordings).map(path => path.split('/').at(-1)), ['high_F4_349Hz.mp3', 'mid_C4_262Hz.mp3', 'low_F3_174Hz.mp3', 'mid_C4_262Hz.mp3']);
   for (const path of Object.values(manifest.recordings)) assert(readFileSync(new URL('../public/' + path, import.meta.url)).length > 100000);
   for (const file of ['inhale 4.MP3', 'hold 4.MP3', 'exhale 4.MP3']) assert(readFileSync(new URL('../public/media/audio/' + file, import.meta.url)).length);
 });

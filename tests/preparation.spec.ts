@@ -34,9 +34,9 @@ test('preparation pause/resume/restart/stop preserve time and never trigger soun
  await expect(page.locator('.session-panel')).toHaveAttribute('aria-busy','false',{timeout:15000});
  await showRetainedAdvanced(page); await page.getByRole('button',{name:en.advanced,exact:true}).click();await expect(page.getByRole('button',{name:en.preview,exact:true})).toBeDisabled();
  await page.clock.runFor(2990);expect(await page.evaluate(()=>(window as any).sampleAudio.starts.map((event:any)=>event.url.split("/").at(-1)))).toEqual([]);
- await page.clock.runFor(30);await expect(page.getByRole('heading',{name:en.inhale,exact:true})).toBeVisible();expect(await page.evaluate(()=>(window as any).sampleAudio.starts.map((event:any)=>event.url.split("/").at(-1)))).toEqual(["low_F3_174Hz.mp3"]);
+ await page.clock.runFor(30);await expect(page.getByRole('heading',{name:en.inhale,exact:true})).toBeVisible();expect(await page.evaluate(()=>(window as any).sampleAudio.starts.map((event:any)=>event.url.split("/").at(-1)))).toEqual(["high_F4_349Hz.mp3"]);
  await page.getByRole('button',{name:en.restart,exact:true}).click();await expect(page.locator('.phase-count')).toHaveText('3');
- await page.getByRole('button',{name:en.stop,exact:true}).click();await page.clock.runFor(10000);await expect(page.locator('.settings-panel')).toBeVisible();expect(await page.evaluate(()=>(window as any).sampleAudio.starts.map((event:any)=>event.url.split("/").at(-1)))).toEqual(["low_F3_174Hz.mp3"]);
+ await page.getByRole('button',{name:en.stop,exact:true}).click();await page.clock.runFor(10000);await expect(page.locator('.settings-panel')).toBeVisible();expect(await page.evaluate(()=>(window as any).sampleAudio.starts.map((event:any)=>event.url.split("/").at(-1)))).toEqual(["high_F4_349Hz.mp3"]);
 });
 test('settings opacity stays 35 percent while practice uses 80 percent and full-opacity controls',async({page})=>{
  await page.goto('./');expect(await page.locator('.scenery').evaluate(el=>getComputedStyle(el).opacity)).toBe('0.35');
