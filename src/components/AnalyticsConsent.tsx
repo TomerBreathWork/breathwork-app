@@ -1,11 +1,13 @@
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { analytics } from "../analytics";
 import type { Translator } from "../i18n";
 
-export function AnalyticsConsent({ t, active }: { t: Translator; active: boolean }) {
+export function AnalyticsConsent({ t, active, onVisibility }: { t: Translator; active: boolean; onVisibility?: (visible: boolean) => void }) {
   const consent = useSyncExternalStore(analytics.subscribe, analytics.getConsent, () => null);
   const [expanded, setExpanded] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
+  const visible = !active && (expanded || consent === null);
+  useLayoutEffect(() => { onVisibility?.(visible); }, [visible, onVisibility]);
   if (active) return null;
   const close = () => {
     if (consent === null) analytics.setConsent("denied");

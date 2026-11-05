@@ -92,6 +92,7 @@ export function HelpDialog({
           <section key={heading} aria-labelledby={`${title}-${heading}`}>
             <h3 id={`${title}-${heading}`}>{t(heading)}</h3>
             <Paragraphs text={t(body)} />
+            {heading === "helpInstallTitle" && <p>{t("installBrowserGuide")}</p>}
           </section>
         ))}
       </div>

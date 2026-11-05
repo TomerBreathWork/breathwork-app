@@ -1,3 +1,4 @@
+import { installInvitation } from "./install";
 import { PREPARATION_MS } from "./preparation";
 import { useEffect, useRef, useState } from "react";
 import { phaseAt, finishAt, type Rhythm } from "./engine";
@@ -73,6 +74,7 @@ export function useBreathingSession(settings: Settings, language = "en") {
       if (preparation.current) {
         setPreparationElapsed(Math.min(PREPARATION_MS, now));
         if (now >= PREPARATION_MS) {
+          installInvitation.practiceStarted();
           metrics.current?.start();
           preparation.current = false;
           setInPreparation(false);

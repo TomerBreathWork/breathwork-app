@@ -163,11 +163,17 @@
   "helpContactBody": "ご質問や気になること、個別に相談したいことがあれば、アプリの「お問い合わせ」ボタンからお気軽にご連絡ください。お力になれたらうれしいです。WhatsAppでできるだけ早くお返事します。",
   "analyticsPreferences": "アクセス解析の設定",
   "analyticsTitle": "Breath Flowをより良くするために 🌿",
-  "analyticsBody": "アプリをより使いやすくするため、Google Analyticsで利用状況を確認しています。\n\n収集するのは利用状況や端末・ブラウザに関する情報で、お名前や連絡先、呼吸の体験に関する個人的な内容は送信しません。\n\n同意しなくても、アプリはこれまでどおりご利用いただけます。",
+  "analyticsBody": "アプリの利用状況を計測してもよろしいですか？再び利用してくださる方の数や、選ばれた呼吸法、練習の完了状況を把握し、改善に役立てます。ブラウザの識別情報や技術情報は含まれますが、お名前や連絡先は収集しません。",
   "analyticsEnabled": "アクセス解析は現在許可されています。",
   "analyticsDisabled": "アクセス解析は現在オフです。",
   "analyticsGooglePrivacy": "Google のプライバシーポリシー",
   "analyticsDecline": "同意しない",
   "analyticsAllow": "同意する",
-  "analyticsFooter": "設定画面の盾のアイコンから、いつでも変更できます。"
+  "analyticsFooter": "いつでも変更できます",
+  "installTitle": "🌿 いつでもそばに、Breath Flow",
+  "installBody": "ホーム画面に追加すれば、いつでも気軽に立ち止まって、呼吸を整える時間を持てます。",
+  "installAdd": "ホーム画面に追加",
+  "installLater": "今はしない",
+  "installSafariGuide": "Safariの共有メニューから「ホーム画面に追加」を選び、「追加」を押してください。共有メニューをスクロールすると見つかる場合があります。",
+  "installBrowserGuide": "iPhone・iPadではSafari、AndroidではChromeでBreath Flowを開いてください。Safariでは共有メニューから「ホーム画面に追加」を選びます。Chromeでは、対応している場合にブラウザのメニューに「アプリをインストール」や「ホーム画面に追加」が表示されます。"
 }

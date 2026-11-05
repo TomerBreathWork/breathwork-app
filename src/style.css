@@ -1942,3 +1942,33 @@ input[type="number"],
 .analytics-notice > a { font-size: .74rem; }
 [lang="ja"] .analytics-notice h2 { line-break: strict; word-break: normal; overflow-wrap: normal; }
 [lang="ja"] .analytics-actions button { white-space: nowrap; word-break: keep-all; }
+
+/* A post-practice invitation; independent of the consent notice's styling. */
+.install-invitation {
+  position: fixed;
+  z-index: 5;
+  inset-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right));
+  bottom: max(12px, env(safe-area-inset-bottom));
+  margin-inline: auto;
+  width: min(420px, 88vw, calc(100% - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)));
+  max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px;
+  border: 1px solid #ffffffa0;
+  border-radius: 22px;
+  background: #f1f2f0;
+  color: #233d3b;
+  box-shadow: 0 6px 24px #19484a18;
+  font-size: .85rem;
+  line-height: 1.5;
+}
+.install-invitation h2 { display: flex; align-items: center; gap: 8px; font-size: 1rem; line-height: 1.4; margin: 0 0 10px; }
+.install-invitation h2 svg { flex: 0 0 22px; width: 22px; height: 22px; color: #526b64; }
+.install-invitation h2 span { min-width: 0; text-wrap: balance; }
+.install-invitation p { margin: 0 0 12px; }
+.install-actions { display: flex; gap: 8px; }
+.install-actions button { flex: 1; min-width: 0; min-height: 44px; padding: 8px; border: 1px solid transparent; border-radius: 14px; background: transparent; color: #505954; font: inherit; }
+.install-actions .install-primary { background: #456f61; color: #fff; flex-grow: 1.5; }
+[lang="ja"] .install-invitation { line-break: strict; word-break: normal; }
+[lang="ja"] .install-actions button { font-size: .8rem; white-space: nowrap; word-break: keep-all; }

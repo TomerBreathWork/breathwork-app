@@ -27,11 +27,13 @@ import { Brand } from "./components/Brand";
 import { AdvancedOptions } from "./components/AdvancedOptions";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { SessionPanel } from "./components/SessionPanel";
+import { InstallInvitation } from "./components/InstallInvitation";
 import { AnalyticsConsent } from "./components/AnalyticsConsent";
 import { analytics, type AnalyticsView } from "./analytics";
 import "./style.css";
 const settingsBackground = mediaUrl("media/backgrounds/3.webp")!;
 function App() {
+  const [privacyOpen, setPrivacyOpen] = useState(false);
   const [category, setCategory] = useState<Category | "all">("all");
   const [settings, setSettings] = useState<Settings>(loadSettings);
   const [background, setBackground] = useState(settingsBackground);
@@ -175,7 +177,8 @@ function App() {
         />
       )}
       <div className="scene-overlay" />
-      <AnalyticsConsent t={t} active={active} />
+      <AnalyticsConsent t={t} active={active} onVisibility={setPrivacyOpen} />
+      <InstallInvitation t={t} home={!active && navigation.screen.name === "home"} privacyOpen={privacyOpen} />
       <div className="app-view">
         <p className="sr-only" data-offline-status={offlineStatus} aria-live="polite">
           {t(offlineStatus)}

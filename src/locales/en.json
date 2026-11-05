@@ -162,12 +162,18 @@
   "helpContactTitle": "Have a Question?",
   "helpContactBody": "Have a question, something you're unsure about, or would you like personal guidance? You're welcome to reach out through the Contact button in the app. I'll be happy to help and will do my best to reply on WhatsApp as soon as I can.",
   "analyticsPreferences": "Analytics preferences",
-  "analyticsTitle": "Help us improve Breath Flow 🌿",
-  "analyticsBody": "We use Google Analytics to understand how people use the app and make it better.\n\nThis includes usage information and technical details about your device and browser, but not your name, contact details, or personal content from your breathing experience.\n\nIt's your choice, and the app works just the same if you decline.",
+  "analyticsTitle": "Help us improve 🌿",
+  "analyticsBody": "May we measure how Breath Flow is used? This helps us understand how many people return and which breathing practices are selected and completed. Analytics includes a browser identifier and technical information, but no names or contact details.",
   "analyticsEnabled": "Analytics is currently allowed.",
   "analyticsDisabled": "Analytics is currently off.",
   "analyticsGooglePrivacy": "Google’s privacy policy",
   "analyticsDecline": "No thanks",
   "analyticsAllow": "Allow",
-  "analyticsFooter": "You can change your choice anytime using the shield icon."
+  "analyticsFooter": "Your choice · Change anytime",
+  "installTitle": "🌿 Breath Flow, always with you",
+  "installBody": "Add Breath Flow to your Home Screen, so you can pause and breathe whenever you need a moment.",
+  "installAdd": "Add to Home Screen",
+  "installLater": "Not now",
+  "installSafariGuide": "In Safari, open the Share menu, choose Add to Home Screen, then tap Add. You may need to scroll through the Share menu.",
+  "installBrowserGuide": "Open Breath Flow in Safari on iPhone or iPad, or Chrome on Android. In Safari, use Share → Add to Home Screen. In Chrome, look in the browser menu for Install app or Add to Home Screen, when available."
 }
