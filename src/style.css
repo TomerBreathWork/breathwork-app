@@ -1189,19 +1189,38 @@ select:focus-visible {
   min-width: 0;
 }
 .phase-row {
-  grid-template-columns: minmax(84px, 1fr) minmax(0, 1.35fr) 76px;
+  --duration-chip-width: max(76px, calc(5ch + 1.8rem));
+  grid-template-columns: minmax(84px, 1fr) minmax(0, 1.35fr) var(--duration-chip-width);
   gap: 8px;
 }
 [lang="ja"] .phase-row {
-  grid-template-columns: minmax(44px, 0.55fr) minmax(0, 1.8fr) 76px;
+  grid-template-columns: minmax(44px, 0.55fr) minmax(0, 1.8fr) var(--duration-chip-width);
 }
 .duration-chip {
   padding-inline: 4px;
   gap: 1px;
 }
 .duration-chip input {
-  width: 44px;
+  width: max(44px, 5ch);
+  flex: none;
   font-variant-numeric: tabular-nums;
+}
+.length-control {
+  width: max(87px, calc(4ch + 2.3rem));
+  flex: none;
+}
+.length-control input {
+  width: max(38px, 4ch);
+  flex: none;
+}
+/* At enlarged text sizes, keep labels readable and give the slider/chip a row.
+   The em threshold follows the container's font size, not a device assumption. */
+@container app-viewport (max-width: 15em) {
+  .phase-row, [lang="ja"] .phase-row {
+    grid-template-columns: minmax(0, 1fr) var(--duration-chip-width);
+  }
+  .phase-row > label:first-child { grid-column: 1 / -1; }
+  .session-length { flex-wrap: wrap; }
 }
 /* Safari zooms focused text fields below 16px, causing apparent sideways panning. */
 input[type="number"],
@@ -1896,7 +1915,7 @@ input[type="number"],
   bottom: max(12px, env(safe-area-inset-bottom));
   margin-inline: auto;
   width: min(420px, 88vw, calc(100% - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)));
-  max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  max-height: min(60dvh, calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)));
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 14px;
@@ -1923,7 +1942,7 @@ input[type="number"],
   border: 0;
   font-size: 1.5rem;
 }
-.analytics-actions { display: flex; gap: 8px; margin-top: 10px; }
+.analytics-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 7em), 1fr)); gap: 8px; margin-top: 10px; }
 .analytics-actions button {
   flex: 1;
   min-width: 0;
@@ -1942,6 +1961,15 @@ input[type="number"],
 .analytics-notice > a { font-size: .74rem; }
 [lang="ja"] .analytics-notice h2 { line-break: strict; word-break: normal; overflow-wrap: normal; }
 [lang="ja"] .analytics-actions button { white-space: nowrap; word-break: keep-all; }
+
+/* Clearance exists only while analytics preferences are visible. The spacer
+   lets the last Home control scroll above the fixed notice without a modal. */
+.app-page[data-analytics-notice="open"] { scroll-padding-block: 60px var(--analytics-clearance); }
+.app-page[data-analytics-notice="open"] .app-view::after {
+  content: "";
+  display: block;
+  height: var(--analytics-clearance);
+}
 
 /* A post-practice invitation; independent of the consent notice's styling. */
 .install-invitation {
