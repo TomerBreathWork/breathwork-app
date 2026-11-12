@@ -1,4 +1,5 @@
 import { appDefaults, selectableBackgrounds } from "./media";
+import { hasSavedHomeSelection } from "./home-selection";
 import { type PatternSettings } from "./presets";
 import {
   consumeUpdateConfiguration,
@@ -7,7 +8,7 @@ import {
 } from "./launch-configuration";
 export { presets } from "./presets";
 export type Settings = typeof appDefaults &
-  Pick<PatternSettings, "customRhythm">;
+  Pick<PatternSettings, "customRhythm"> & { homePracticeSelected?: boolean };
 // Consume once per document, outside React's double-invoked StrictMode initializer.
 const updateConfiguration = (() => {
   try {
@@ -32,6 +33,7 @@ export function preserveConfigurationForUpdate(settings: Settings) {
 export function loadSettings(): Settings {
   const initial = {
     ...appDefaults,
+    homePracticeSelected: false,
     ...updateConfiguration,
     rhythm: [
       ...(updateConfiguration?.rhythm ?? appDefaults.rhythm),
@@ -44,6 +46,7 @@ export function loadSettings(): Settings {
         ...initial,
         ...restoreSavedConfiguration(s),
         ...updateConfiguration,
+        homePracticeSelected: updateConfiguration?.homePracticeSelected ?? hasSavedHomeSelection(s),
         sound: ["bowls", "recordings", "silent"].includes(s.sound)
           ? s.sound
           : appDefaults.sound,

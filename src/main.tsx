@@ -36,6 +36,7 @@ function App() {
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [category, setCategory] = useState<Category | "all">("all");
   const [settings, setSettings] = useState<Settings>(loadSettings);
+  const [choosingPractice, setChoosingPractice] = useState(() => !settings.homePracticeSelected);
   const [background, setBackground] = useState(settingsBackground);
   const [failedImage, setFailedImage] = useState("");
   const previousImage = useRef("");
@@ -57,12 +58,14 @@ function App() {
   useSessionHistory(active, session.stop);
   useEffect(() => {
     if (navigation.screen.name !== "details" || active) return;
+    setChoosingPractice(false);
     const practice = getPractice(navigation.screen.id)!;
     setSettings((value) =>
       value.practiceId === practice.id
         ? value
         : {
             ...value,
+            homePracticeSelected: true,
             practiceId: practice.id,
             preset: practice.preset,
             rhythm: [...practice.rhythm],
@@ -111,28 +114,33 @@ function App() {
     if (await session.start()) selectBackground(settings.background, true);
   }
   function onPreset(key: PresetKey) {
-    if (settings.practiceId !== practiceForPreset(key))
+    if (choosingPractice || settings.practiceId !== practiceForPreset(key))
       analytics.selectPractice(practiceForPreset(key), language);
     session.cancelPreparation();
+    setChoosingPractice(false);
     setSettings((value) => ({
-      ...selectPreset(value, key),
+      ...(value.practiceId === practiceForPreset(key) ? value : selectPreset(value, key)),
+      homePracticeSelected: true,
       practiceId: practiceForPreset(key),
     }));
   }
   function onCustom() {
-    if (settings.practiceId !== "custom") analytics.selectPractice("custom", language);
+    if (choosingPractice || settings.practiceId !== "custom") analytics.selectPractice("custom", language);
     session.cancelPreparation();
-    setSettings((value) => ({ ...selectCustom(value), practiceId: "custom" }));
+    setChoosingPractice(false);
+    setSettings((value) => ({ ...selectCustom(value), homePracticeSelected: true, practiceId: "custom" }));
   }
   function openPractice(id: PracticeId) {
     analytics.selectPractice(id, language);
+    setChoosingPractice(false);
     const practice = getPractice(id)!;
     session.cancelPreparation();
     setSettings((value) =>
       value.practiceId === id
-        ? value
+        ? { ...value, homePracticeSelected: true }
         : {
             ...value,
+            homePracticeSelected: true,
             practiceId: id,
             preset: practice.preset,
             rhythm: [...practice.rhythm],
@@ -213,6 +221,8 @@ function App() {
             t={t}
             language={language}
             settings={settings}
+            choosing={choosingPractice}
+            chooseAnother={() => setChoosingPractice(true)}
             onCustom={onCustom}
             onPreset={onPreset}
             patch={patch}

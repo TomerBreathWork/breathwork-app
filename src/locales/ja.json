@@ -175,5 +175,13 @@
   "installAdd": "ホーム画面に追加",
   "installLater": "今はしない",
   "installSafariGuide": "Safariの共有メニューから「ホーム画面に追加」を選び、「追加」を押してください。共有メニューをスクロールすると見つかる場合があります。",
-  "installBrowserGuide": "iPhone・iPadではSafari、AndroidではChromeでBreath Flowを開いてください。Safariでは共有メニューから「ホーム画面に追加」を選びます。Chromeでは、対応している場合にブラウザのメニューに「アプリをインストール」や「ホーム画面に追加」が表示されます。"
+  "installBrowserGuide": "iPhone・iPadではSafari、AndroidではChromeでBreath Flowを開いてください。Safariでは共有メニューから「ホーム画面に追加」を選びます。Chromeでは、対応している場合にブラウザのメニューに「アプリをインストール」や「ホーム画面に追加」が表示されます。",
+  "choosePractice": "呼吸法を選ぶ",
+  "chooseAnotherPractice": "別の呼吸法を選ぶ",
+  "homeCalmBalance": "穏やかさとバランス",
+  "homeFocusBalance": "集中とバランス",
+  "homeRelaxUnwind": "リラックスと休息",
+  "homeOwnRhythm": "自分だけのリズム",
+  "homeWelcome": "今日はどんな呼吸をしましょうか？",
+  "homeExploreHint": "心地よい呼吸法を見つけましょう。"
 }

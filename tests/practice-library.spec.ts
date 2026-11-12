@@ -41,8 +41,8 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
       language,
     );
     await page.goto("./");
-    await expect(page.locator("#duration")).toHaveValue("3");
-    await expect(page.locator("#phase-value-0")).toHaveValue("5.5");
+    await expect(page.locator(".settings-panel")).toHaveAttribute("data-home-state", "choosing");
+    await expect(page.locator("#duration, #phase-value-0")).toHaveCount(0);
     for (const viewport of [
       { width: 320, height: 568 },
       { width: 360, height: 640 },

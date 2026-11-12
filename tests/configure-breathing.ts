@@ -6,7 +6,11 @@ export async function configureBreathing(
 ) {
   const preset = settings.preset;
   const choice = { coherentBreathing: "coherent", boxBreathing: "box", eveningUnwind: "478", custom: "custom" }[preset ?? ""];
-  if (choice) await page.locator(`[data-home-choice="${choice}"]`).click();
+  if (choice) {
+    const chooseAnother = page.locator(".choose-another");
+    if (await chooseAnother.isVisible()) await chooseAnother.click();
+    await page.locator(`[data-home-choice="${choice}"]`).click();
+  }
   if (settings.rhythm)
     for (const [i, value] of settings.rhythm.entries()) {
       await page.locator(`#phase-value-${i}`).fill(String(value));

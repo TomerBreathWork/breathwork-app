@@ -2000,3 +2000,125 @@ input[type="number"],
 .install-actions .install-primary { background: #456f61; color: #fff; flex-grow: 1.5; }
 [lang="ja"] .install-invitation { line-break: strict; word-break: normal; }
 [lang="ja"] .install-actions button { font-size: .8rem; white-space: nowrap; word-break: keep-all; }
+
+/* Home disclosure reuses the existing compact form; selection needs no form. */
+.settings-panel[data-home-state="choosing"] .home-choices {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.settings-panel[data-home-state="choosing"] .preset {
+  min-height: 92px;
+  padding: 12px 8px;
+  gap: 7px;
+}
+.settings-panel[data-home-state="choosing"] .preset strong {
+  font-size: 1rem;
+  line-height: 1.35;
+  text-wrap: balance;
+}
+.choice-subtitle {
+  width: 100%;
+  font-size: .8rem;
+  line-height: 1.4;
+  text-wrap: balance;
+}
+.selected-practice-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 44px;
+}
+.selected-practice-heading h2 {
+  font-size: .85rem;
+  font-weight: 500;
+  line-height: 1.35;
+  margin: 0;
+  min-width: 0;
+}
+.selected-practice-heading h2:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+.choose-another {
+  min-height: 44px;
+  max-width: 55%;
+  padding: 5px 4px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--teal);
+  font-size: .78rem;
+  line-height: 1.4;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.choose-another:hover, .settings-panel[data-home-state] .explore-choice:hover {
+  background: #719e921a;
+}
+@container app-viewport (max-width: 15em) {
+  .settings-panel[data-home-state="choosing"] .home-choices { grid-template-columns: minmax(0, 1fr); }
+  .selected-practice-heading { flex-wrap: wrap; }
+  .choose-another { max-width: 100%; }
+}
+
+.settings-panel[data-home-state="choosing"] .preset .compact-ja-label { font-size: inherit; }
+/* Give contained Japanese labels definite space in the compact heading row. */
+[lang="ja"] .selected-practice-heading h2 { flex: 1; }
+[lang="ja"] .choose-another { flex: 0 0 52%; }
+
+/* First-arrival welcome: local to the chooser, leaving the compact form intact. */
+.settings-panel[data-home-state="choosing"] .home-welcome-header {
+  display: grid;
+  place-items: center;
+  padding-block: 1.5rem;
+}
+.settings-panel[data-home-state="choosing"] .home-welcome {
+  margin: 0;
+  inline-size: 100%;
+  font-size: 1.05rem;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  text-wrap: balance;
+}
+.settings-panel[data-home-state="choosing"] .preset {
+  min-height: clamp(108px, 15dvh, 128px);
+  padding-block: 16px;
+  gap: 9px;
+  background: #ffffff70;
+  border-color: #668a7b40;
+}
+.settings-panel[data-home-state="choosing"] .preset:hover {
+  background: #f6f1e8eb;
+  border-color: #527e7380;
+}
+.settings-panel[data-home-state="choosing"] .explore-choice {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20px;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 76px;
+  margin-block: 10px 4px;
+  padding: 12px;
+  border: 1px solid #668a7b2a;
+  border-radius: 13px;
+  background: #ffffff22;
+  text-align: start;
+  text-decoration: none;
+}
+.explore-card-copy {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+.explore-card-title { font-size: .875rem; font-weight: 500; line-height: 1.4; }
+.explore-card-subtitle { font-size: .8rem; line-height: 1.4; color: #365c59; }
+.settings-panel[data-home-state="choosing"] .explore-choice svg { transform: rotate(-90deg); }
+[dir="rtl"] .settings-panel[data-home-state="choosing"] .explore-choice svg { transform: rotate(90deg); }
+/* The welcome header owns its spacing; compact panel padding must not add to it. */
+.settings-screen .settings-panel[data-home-state="choosing"] {
+  padding-block-start: 0;
+}

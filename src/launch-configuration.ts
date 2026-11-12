@@ -15,6 +15,7 @@ export interface LaunchConfiguration {
   rhythm: Rhythm;
   minutes: number;
   customRhythm?: Rhythm;
+  homePracticeSelected?: boolean;
 }
 /** Restore valid saved choices, migrating legacy bounds without losing Custom.
  * Missing/invalid timing keeps the default; secondary preferences load separately. */
@@ -66,6 +67,8 @@ function configuration(value: unknown): LaunchConfiguration | undefined {
     rhythm: [...s.rhythm],
     minutes: s.minutes,
     customRhythm: migrateRhythm(s.customRhythm),
+    ...(typeof s.homePracticeSelected === "boolean"
+      ? { homePracticeSelected: s.homePracticeSelected } : {}),
   };
 }
 /** A one-use, tab-local handoff distinguishes our safe update reload from a

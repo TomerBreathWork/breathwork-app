@@ -453,10 +453,8 @@ test("update waits through preparation and pause, then reloads safely and remove
   await expect(page.locator("#duration")).toHaveValue("7");
   for (const [i, value] of [6.5, 1.5, 8, 0.5].entries())
     await expect(page.locator(`#phase-value-${i}`)).toHaveValue(String(value));
-  await expect(page.locator('[data-home-choice="custom"]')).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
+  await expect(page.locator(".settings-panel")).toHaveAttribute("data-home-state", "selected");
+  await expect(page.locator(".settings-panel")).toHaveAttribute("data-selected-practice", "custom");
   const htmlKeys = await page.evaluate(async () =>
     (
       await Promise.all(
