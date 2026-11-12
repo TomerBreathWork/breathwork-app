@@ -6,6 +6,7 @@ export function Icon({
     | "pause"
     | "stop"
     | "restart"
+    | "arrow-left-right"
     | "chevron"
     | "globe"
     | "sound"
@@ -22,6 +23,7 @@ export function Icon({
     pause: "M8 5v14M16 5v14",
     stop: "M6 6h12v12H6Z",
     restart: "M4 9a8 8 0 1 1 1 9M4 4v5h5",
+    "arrow-left-right": "M8 3 4 7l4 4M4 7h16M16 13l4 4-4 4M20 17H4",
     chevron: "m6 9 6 6 6-6",
     globe: "M3 12h18M12 3c5 5 5 13 0 18M12 3c-5 5-5 13 0 18",
     sound: "m4 9 4 0 5-4v14l-5-4H4ZM17 8a6 6 0 0 1 0 8",

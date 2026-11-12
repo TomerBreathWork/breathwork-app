@@ -194,3 +194,38 @@ for (const [language,t] of Object.entries(languages)) test(`${language}: welcomi
   await expect(page.locator('.explore-choice')).toHaveText(t.exploreMore);
   await fits(page);
 });
+for(const [language,label] of [['en','Change Practice'],['he','שינוי תרגול'],['ja','呼吸法を変更']])
+  test(`${language}: Change Practice is a compact keyboard-operable secondary button`,async({page})=>{
+    await page.setViewportSize({width:320,height:568});await open(page,language);
+    await expect(page.getByRole('button',{name:label,exact:true})).toHaveCount(0);
+    await page.locator('[data-home-choice="coherent"]').click();
+    const action=page.getByRole('button',{name:label,exact:true});
+    await expect(action).toBeVisible();
+    await expect(action.locator('svg')).toHaveAttribute('aria-hidden','true');
+    const measured=await action.evaluate(el=>{
+      const s=getComputedStyle(el),r=el.getBoundingClientRect(),header=el.parentElement!.getBoundingClientRect();
+      const luminance=(color:string)=>{
+        const channels=color.match(/[\d.]+/g)!.slice(0,3).map(v=>Number(v)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);
+        return channels[0]*.2126+channels[1]*.7152+channels[2]*.0722;
+      };
+      const text=luminance(s.color),background=luminance(s.backgroundColor);
+      return {height:r.height,width:r.width,headerHeight:header.height,
+        paintedHeight:r.height-parseFloat(s.borderTopWidth)-parseFloat(s.borderBottomWidth),
+        clip:s.backgroundClip,contrast:(Math.max(text,background)+.05)/(Math.min(text,background)+.05),
+        decoration:s.textDecorationLine,background:s.backgroundColor};
+    });
+    expect(measured.height).toBe(44);expect(measured.headerHeight).toBe(44);
+    expect(measured.width).toBeGreaterThanOrEqual(44);expect(measured.paintedHeight).toBe(32);
+    expect(measured.clip).toBe('padding-box');expect(measured.contrast).toBeGreaterThanOrEqual(4.5);
+    expect(measured.decoration).toBe('none');expect(measured.background).not.toBe('rgba(0, 0, 0, 0)');
+    await page.keyboard.press('Tab');await expect(action).toBeFocused();
+    expect(await action.evaluate(el=>getComputedStyle(el).outlineStyle)).not.toBe('none');
+    await page.keyboard.press('Space');
+    await expect(page.locator('.settings-panel')).toHaveAttribute('data-home-state','choosing');
+    await expect(page.locator('[data-home-choice="coherent"]')).toBeFocused();
+    await fits(page);
+    // The transparent top edge is still part of the native 44px hit target.
+    await page.locator('[data-home-choice="coherent"]').click();
+    await action.click({position:{x:10,y:2}});
+    await expect(page.locator('.settings-panel')).toHaveAttribute('data-home-state','choosing');
+  });

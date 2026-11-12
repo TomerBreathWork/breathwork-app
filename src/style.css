@@ -2042,19 +2042,29 @@ input[type="number"],
   border-radius: 3px;
 }
 .choose-another {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   min-height: 44px;
+  min-width: 44px;
   max-width: 55%;
-  padding: 5px 4px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
+  padding: 5px 8px;
+  /* Transparent borders keep the hit area 44px while the painted face is 32px. */
+  border: 6px solid transparent;
+  border-inline-width: 0;
+  border-radius: 14px;
+  background: #dfe9d8;
+  background-clip: padding-box;
   color: var(--teal);
   font-size: .78rem;
   line-height: 1.4;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  text-decoration: none;
 }
-.choose-another:hover, .settings-panel[data-home-state] .explore-choice:hover {
+.choose-another svg { width: 16px; height: 16px; flex: none; }
+.change-practice-label { min-width: 0; flex: 1; }
+.choose-another:hover { background-color: #d2dfca; }
+.settings-panel[data-home-state] .explore-choice:hover {
   background: #719e921a;
 }
 @container app-viewport (max-width: 15em) {

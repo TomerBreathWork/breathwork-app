@@ -94,7 +94,8 @@ export function SettingsPanel({
               <CompactLabel>{t(getPractice(settings.practiceId)?.name ?? "custom")}</CompactLabel>
             </h2>
             <button type="button" className="choose-another" onClick={chooseAnother}>
-              <CompactLabel>{t("chooseAnotherPractice")}</CompactLabel>
+              <Icon name="arrow-left-right" />
+              <span className="change-practice-label"><CompactLabel>{t("chooseAnotherPractice")}</CompactLabel></span>
             </button>
           </div>
           <p className="selected-explanation" data-layout-copy={t("homeCoherentDescription")}>
