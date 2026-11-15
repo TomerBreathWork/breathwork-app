@@ -123,6 +123,7 @@ async function open(page: Page, url: string, sound = "silent") {
     { sound },
   );
   await page.goto(url);
+  await page.locator('[data-home-choice="coherent"]').click();
   await configureBreathing(page, { minutes: 1 });
 }
 async function ready(page: Page) {
@@ -249,6 +250,8 @@ test("offline reload retains settings, all photographs, decoded recordings and a
   });
   await context.setOffline(true);
   await page.reload();
+  await expect(page.locator(".settings-panel")).toHaveAttribute("data-home-state", "choosing");
+  await page.locator('[data-home-choice="coherent"]').click();
   await expect(page.locator(".settings-panel")).toBeVisible();
   expect(
     await page.evaluate(
@@ -473,6 +476,8 @@ test("update waits through preparation and pause, then reloads safely and remove
     ),
   ).toBe(0.25);
   await page.reload();
+  await expect(page.locator(".home-welcome")).toBeVisible();
+  await page.locator('[data-home-choice="custom"]').click();
   await expect(page.locator("#duration")).toHaveValue("7");
   await expect(page.locator("#phase-value-0")).toHaveValue("6.5");
   await expect(page.locator(".settings-panel")).toHaveAttribute("data-selected-practice", "custom");
@@ -600,7 +605,7 @@ test('offline consented usage works without Google requests or replaying offline
   await page.getByRole('button', { name: en.analyticsAllow, exact: true }).click();
   await context.setOffline(true);
   const google: string[] = []; page.on('request', r => { if (/googletagmanager|google-analytics/.test(r.url())) google.push(r.url()); });
-  await page.reload(); await expect(page.locator('.start-button')).toBeEnabled();
+  await page.reload(); await page.locator('[data-home-choice="coherent"]').click(); await expect(page.locator('.start-button')).toBeEnabled();
   expect(await page.evaluate(() => (window.dataLayer ?? []).filter(value => Array.from(value as ArrayLike<unknown>)[0] === 'event').length)).toBe(0);
   await page.getByRole('button', { name: en.start, exact: true }).click();
   await expect(page.locator('.breath-circle')).toHaveAttribute('data-phase', '0', { timeout: 7000 });
@@ -636,4 +641,37 @@ test("offline production sessions use recorded high/middle/low/middle cues", asy
   expect(result.files).toEqual(Array(2).fill(['high_F4_349Hz.mp3', 'mid_C4_262Hz.mp3', 'low_F3_174Hz.mp3', 'mid_C4_262Hz.mp3']).flat());
   expect(result.oscillators).toBe(0);
   await page.getByRole('button', { name: en.stop, exact: true }).click();
+});
+for (const target of ['choosing','selected','details'] as const) test(`safe update retains ${target} navigation and Back/Forward continuity`,async({page,site})=>{
+  await open(page,site.url);await ready(page);
+  if(target==='choosing') { await page.locator('.choose-another').click();await expect(page.locator('.home-welcome')).toBeVisible(); }
+  if(target==='details') {
+    await page.locator('.explore-choice').click();await page.locator('[data-practice="extended"]').click();
+    await page.locator('#practice-base').fill('5.5');await page.locator('#duration').fill('5');await page.locator('#duration').blur();
+  }
+  site.release(2);
+  // Idle updates activate immediately; unlike busy-practice tests, no waiting
+  // worker is required here and evaluation must not span the ensuing reload.
+  await page.evaluate(()=>{void navigator.serviceWorker.getRegistration().then(registration=>registration?.update());});
+  await expect(page.locator('meta[name="test-release"]')).toHaveAttribute('content','two',{timeout:15000});
+  if(target==='details') {
+    await expect(page.locator('[data-practice-detail="extended"]')).toBeVisible();await expect(page.locator('#practice-base')).toHaveValue('5.5');
+    await page.goBack();await expect(page.locator('.practice-list')).toBeVisible();await page.goBack();await expect(page.locator('.start-button')).toBeEnabled();
+    await page.goForward();await page.goForward();await expect(page.locator('#practice-base')).toHaveValue('5.5');
+  } else {
+    await expect(page.locator('.settings-panel')).toHaveAttribute('data-home-state',target);
+    if(target==='selected'){ await page.goBack();await expect(page.locator('.home-welcome')).toBeVisible();await page.goForward();await expect(page.locator('.start-button')).toBeEnabled(); }
+  }
+  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('still-settings')!));expect(saved.navigation).toBeUndefined();
+});
+test('waiting update remains blocked while Back confirmation pauses the live practice',async({page,site})=>{
+  await open(page,site.url);await ready(page);await page.locator('.start-button').click();
+  site.release(2);await checkForUpdate(page);await page.goBack();
+  await expect(page.getByRole('dialog',{name:en.leavePracticeTitle})).toBeVisible();
+  await page.waitForTimeout(200);await expect(page.locator('meta[name="test-release"]')).toHaveCount(0);
+  await page.getByRole('button',{name:en.stayInPractice,exact:true}).click();await page.waitForTimeout(200);
+  await expect(page.locator('meta[name="test-release"]')).toHaveCount(0);
+  await page.getByRole('button',{name:en.stop,exact:true}).click();
+  await expect(page.locator('meta[name="test-release"]')).toHaveAttribute('content','two',{timeout:15000});
+  await expect(page.locator('.start-button')).toBeEnabled();
 });

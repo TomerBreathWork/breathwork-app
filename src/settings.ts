@@ -1,10 +1,12 @@
 import { appDefaults, selectableBackgrounds } from "./media";
 import { hasSavedHomeSelection } from "./home-selection";
+import type { NavigationSnapshot } from "./navigation";
 import { type PatternSettings } from "./presets";
 import {
   consumeUpdateConfiguration,
   saveUpdateConfiguration,
   restoreSavedConfiguration,
+  type LaunchConfiguration,
 } from "./launch-configuration";
 export { presets } from "./presets";
 export type Settings = typeof appDefaults &
@@ -23,9 +25,11 @@ const updateConfiguration = (() => {
     return;
   }
 })();
-export function preserveConfigurationForUpdate(settings: Settings) {
+const { navigation: launchNavigation, ...updateSettings }: Partial<LaunchConfiguration> = updateConfiguration ?? {};
+export { launchNavigation };
+export function preserveConfigurationForUpdate(settings: Settings, navigation?: NavigationSnapshot) {
   try {
-    saveUpdateConfiguration(sessionStorage, settings);
+    saveUpdateConfiguration(sessionStorage, { ...settings, navigation });
   } catch {
     /* Restricted storage must never prevent an update or break practice. */
   }
@@ -34,9 +38,9 @@ export function loadSettings(): Settings {
   const initial = {
     ...appDefaults,
     homePracticeSelected: false,
-    ...updateConfiguration,
+    ...updateSettings,
     rhythm: [
-      ...(updateConfiguration?.rhythm ?? appDefaults.rhythm),
+      ...(updateSettings?.rhythm ?? appDefaults.rhythm),
     ] as typeof appDefaults.rhythm,
   };
   try {
@@ -45,8 +49,8 @@ export function loadSettings(): Settings {
       return {
         ...initial,
         ...restoreSavedConfiguration(s),
-        ...updateConfiguration,
-        homePracticeSelected: updateConfiguration?.homePracticeSelected ?? hasSavedHomeSelection(s),
+        ...updateSettings,
+        homePracticeSelected: updateSettings?.homePracticeSelected ?? hasSavedHomeSelection(s),
         sound: ["bowls", "recordings", "silent"].includes(s.sound)
           ? s.sound
           : appDefaults.sound,

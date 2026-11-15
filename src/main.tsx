@@ -21,7 +21,7 @@ import {
 } from "./presets";
 import { useLanguage } from "./i18n";
 import { useBreathingSession } from "./useBreathingSession";
-import { useSessionHistory } from "./useSessionHistory";
+import { SessionExitDialog } from "./components/SessionExitDialog";
 import { useOfflineSupport } from "./useOfflineSupport";
 import { Brand } from "./components/Brand";
 import { AdvancedOptions } from "./components/AdvancedOptions";
@@ -36,14 +36,15 @@ function App() {
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [category, setCategory] = useState<Category | "all">("all");
   const [settings, setSettings] = useState<Settings>(loadSettings);
-  const [choosingPractice, setChoosingPractice] = useState(() => !settings.homePracticeSelected);
+
   const [background, setBackground] = useState(settingsBackground);
   const [failedImage, setFailedImage] = useState("");
   const previousImage = useRef("");
   const { language, setLanguage, t } = useLanguage();
   const session = useBreathingSession(settings, language),
     active = session.status !== "idle";
-  const navigation = useAppNavigation(active);
+  const navigation = useAppNavigation(session, settings, setSettings);
+  const choosingPractice = navigation.screen.name === "home" && navigation.screen.mode !== "selected";
   const analyticsView: AnalyticsView = active
     ? session.status === "completed" ? "completed" : session.inPreparation ? "preparation" : "practice"
     : navigation.screen.name === "details" ? `details/${navigation.screen.id}`
@@ -52,27 +53,10 @@ function App() {
     analytics.open(analyticsView, language, import.meta.env.PROD);
   }, [analyticsView, language]);
   const { offlineStatus, beginPractice } = useOfflineSupport(
-    session.status === "running" || session.status === "paused",
+    session.status === "running" || session.status === "paused" || navigation.settling || navigation.exitPending,
     settings,
+    navigation.snapshotForUpdate,
   );
-  useSessionHistory(active, session.stop);
-  useEffect(() => {
-    if (navigation.screen.name !== "details" || active) return;
-    setChoosingPractice(false);
-    const practice = getPractice(navigation.screen.id)!;
-    setSettings((value) =>
-      value.practiceId === practice.id
-        ? value
-        : {
-            ...value,
-            homePracticeSelected: true,
-            practiceId: practice.id,
-            preset: practice.preset,
-            rhythm: [...practice.rhythm],
-            minutes: 3,
-          },
-    );
-  }, [navigation.screen, active]);
 
   const displayedBackground = active ? background : settingsBackground;
   const valid =
@@ -111,43 +95,36 @@ function App() {
     if (!valid) return;
     // Close the update/reload race before React commits the running screen.
     beginPractice();
-    if (await session.start()) selectBackground(settings.background, true);
+    if (session.start()) {
+      navigation.beginSession(settings);
+      selectBackground(settings.background, true);
+    }
   }
   function onPreset(key: PresetKey) {
     if (choosingPractice || settings.practiceId !== practiceForPreset(key))
       analytics.selectPractice(practiceForPreset(key), language);
     session.cancelPreparation();
-    setChoosingPractice(false);
-    setSettings((value) => ({
-      ...(value.practiceId === practiceForPreset(key) ? value : selectPreset(value, key)),
-      homePracticeSelected: true,
-      practiceId: practiceForPreset(key),
-    }));
+    const next = { ...(settings.practiceId === practiceForPreset(key) ? settings : selectPreset(settings, key)),
+      homePracticeSelected: true, practiceId: practiceForPreset(key) };
+    setSettings(next);
+    navigation.open({ name: "home", mode: "selected" }, next);
   }
   function onCustom() {
     if (choosingPractice || settings.practiceId !== "custom") analytics.selectPractice("custom", language);
     session.cancelPreparation();
-    setChoosingPractice(false);
-    setSettings((value) => ({ ...selectCustom(value), homePracticeSelected: true, practiceId: "custom" }));
+    const next = { ...selectCustom(settings), homePracticeSelected: true, practiceId: "custom" };
+    setSettings(next);
+    navigation.open({ name: "home", mode: "selected" }, next);
   }
   function openPractice(id: PracticeId) {
     analytics.selectPractice(id, language);
-    setChoosingPractice(false);
     const practice = getPractice(id)!;
     session.cancelPreparation();
-    setSettings((value) =>
-      value.practiceId === id
-        ? { ...value, homePracticeSelected: true }
-        : {
-            ...value,
-            homePracticeSelected: true,
-            practiceId: id,
-            preset: practice.preset,
-            rhythm: [...practice.rhythm],
-            minutes: 3,
-          },
-    );
-    navigation.open({ name: "details", id });
+    const next = settings.practiceId === id ? { ...settings, homePracticeSelected: true } : {
+      ...settings, homePracticeSelected: true, practiceId: id, preset: practice.preset, rhythm: [...practice.rhythm] as Settings["rhythm"], minutes: 3,
+    };
+    setSettings(next);
+    navigation.open({ name: "details", id }, next);
   }
   function reset() {
     session.cancelPreparation();
@@ -187,6 +164,7 @@ function App() {
       <div className="scene-overlay" />
       <AnalyticsConsent t={t} active={active} onVisibility={setPrivacyOpen} />
       <InstallInvitation t={t} home={!active && navigation.screen.name === "home"} privacyOpen={privacyOpen} />
+      {navigation.exitPending && <SessionExitDialog t={t} stay={navigation.stay} end={navigation.endSession} settling={navigation.settling} />}
       <div className="app-view">
         <p className="sr-only" data-offline-status={offlineStatus} aria-live="polite">
           {t(offlineStatus)}
@@ -222,7 +200,7 @@ function App() {
             language={language}
             settings={settings}
             choosing={choosingPractice}
-            chooseAnother={() => setChoosingPractice(true)}
+            chooseAnother={navigation.chooseHome}
             onCustom={onCustom}
             onPreset={onPreset}
             patch={patch}
@@ -254,7 +232,7 @@ function App() {
             restart={() => void start()}
             pause={session.pause}
             resume={() => void session.resume()}
-            stop={session.stop}
+            stop={navigation.endSession}
             muted={session.muted || settings.sound === "silent"}
             onMute={() => {
               if (settings.sound === "silent") {

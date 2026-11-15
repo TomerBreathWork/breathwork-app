@@ -1,4 +1,5 @@
 import { preserveConfigurationForUpdate, type Settings } from "./settings";
+import type { NavigationSnapshot } from "./navigation";
 
 export type OfflineStatus =
   | "offlineSaving"
@@ -13,6 +14,7 @@ class OfflineManager {
   private busy = true;
   private reloadPending = false;
   private configuration?: Settings;
+  private navigationSnapshot?: () => NavigationSnapshot | undefined;
   private registration?: ServiceWorkerRegistration;
   private registering = false;
   private watched = new WeakSet<ServiceWorkerRegistration>();
@@ -34,11 +36,18 @@ class OfflineManager {
   }
   private reloadIfIdle = () => {
     if (this.reloadPending && !this.busy) {
+      const navigation = this.navigationSnapshot?.();
+      // The controller may already be traversing while React's busy effect is
+      // still catching up. Never reload with a partial navigation snapshot.
+      if (this.navigationSnapshot && !navigation) return;
       if (this.configuration)
-        preserveConfigurationForUpdate(this.configuration);
+        preserveConfigurationForUpdate(this.configuration, navigation);
       location.reload();
     }
   };
+  setNavigationSnapshot(snapshot?: () => NavigationSnapshot | undefined) {
+    this.navigationSnapshot = snapshot;
+  }
   setConfiguration(settings: Settings) {
     this.configuration = settings;
   }

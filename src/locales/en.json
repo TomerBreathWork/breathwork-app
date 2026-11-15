@@ -183,5 +183,9 @@
   "homeRelaxUnwind": "Relax & Unwind",
   "homeOwnRhythm": "Your Own Rhythm",
   "homeWelcome": "How would you like to breathe today?",
-  "homeExploreHint": "Discover a rhythm that suits you."
+  "homeExploreHint": "Discover a rhythm that suits you.",
+  "leavePracticeTitle": "End practice?",
+  "leavePracticeBody": "Practice is paused. Resume from here or end it.",
+  "stayInPractice": "Stay",
+  "endPractice": "End Practice"
 }

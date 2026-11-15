@@ -182,6 +182,7 @@ test("equal and extended ratios start directly from Details with exact fractiona
     ).toBeVisible();
     await expect(page.locator(".remaining-value")).toHaveText("00:00");
     await page.getByRole("button", { name: en.stop, exact: true }).click();
+    await page.clock.runFor(5);
     await expect(page.locator("[data-practice-detail]")).toHaveAttribute(
       "data-practice-detail",
       id,
@@ -212,15 +213,20 @@ test("Box adjusts four equal phases, keeps its identity and preserves choices on
   await page.getByRole("button", { name: en.start, exact: true }).click();
   await expect(page.locator(".remaining-value")).toHaveText("03:02");
   await page.getByRole("button", { name: en.stop, exact: true }).click();
+  await page.clock.runFor(5);
   await page.goBack();
   await page.goBack();
   await expect(page.locator(".settings-panel")).toHaveAttribute(
     "data-selected-practice",
     "box",
   );
+  await expect(page.locator(".home-welcome")).toBeVisible();
+  await page.locator('[data-home-choice="box"]').click();
   for (let i = 0; i < 4; i++)
     await expect(page.locator(`#phase-value-${i}`)).toHaveValue("3.5");
   await page.reload();
+  await expect(page.locator(".settings-panel")).toHaveAttribute("data-home-state", "choosing");
+  await page.locator('[data-home-choice="box"]').click();
   await expect(page.locator(".settings-panel")).toHaveAttribute(
     "data-selected-practice",
     "box",

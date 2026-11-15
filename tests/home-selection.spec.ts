@@ -71,7 +71,8 @@ for (const [language, t] of Object.entries(languages)) {
     await page.locator('.choose-another').click();await page.locator('[data-home-choice="box"]').click();
     for(let i=0;i<4;i++)await expect(page.locator(`#phase-value-${i}`)).toHaveValue('6.5');
     await page.reload();
-    await expect(page.locator('.settings-panel')).toHaveAttribute('data-home-state','selected');
+    await expect(page.locator('.settings-panel')).toHaveAttribute('data-home-state','choosing');
+    await page.locator('[data-home-choice="box"]').click();
     for(let i=0;i<4;i++)await expect(page.locator(`#phase-value-${i}`)).toHaveValue('6.5');
     await expect(page.locator('#duration')).toHaveValue('5');
     await expect(page.locator('.selected-practice-heading h2')).toHaveText(t.boxBreathing);
@@ -88,11 +89,18 @@ for (const [language, t] of Object.entries(languages)) {
   });
 }
 for(const [id,preset,rhythm] of [['coherent','coherentBreathing',[5.5,0,5.5,0]],['box','boxBreathing',[6,6,6,6]],['478','eveningUnwind',[4,7,8,0]],['custom','custom',[6.5,0,8,1]],['extended','custom',[4.5,0,9,0]]] as const)
- test(`legacy saved ${id} opens selected with exact configuration and secondary preferences`,async({page})=>{
+ test(`legacy saved ${id} opens chooser and retains exact configuration and secondary preferences`,async({page})=>{
   await open(page,'en',{practiceId:id,preset,rhythm,minutes:7,sound:'silent',volume:.7,audioOutputVersion:1,background:'photo-2',customRhythm:[6.5,0,8,1]});
-  await expect(page.locator('.settings-panel')).toHaveAttribute('data-home-state','selected');
-  await expect(page.locator('.settings-panel')).toHaveAttribute('data-selected-practice',id);
-  for(let i=0;i<4;i++)await expect(page.locator(`#phase-value-${i}`)).toHaveValue(String(rhythm[i]));
+  await expect(page.locator('.settings-panel')).toHaveAttribute('data-home-state','choosing');
+  if(id==='extended') {
+    await page.locator('.explore-choice').click();await page.locator('[data-practice="extended"]').click();
+    await expect(page.locator('#practice-base')).toHaveValue('4.5');
+  } else {
+    await page.locator(`[data-home-choice="${id}"]`).click();
+    await expect(page.locator('.settings-panel')).toHaveAttribute('data-home-state','selected');
+    await expect(page.locator('.settings-panel')).toHaveAttribute('data-selected-practice',id);
+    for(let i=0;i<4;i++)await expect(page.locator(`#phase-value-${i}`)).toHaveValue(String(rhythm[i]));
+  }
   await expect(page.locator('#duration')).toHaveValue('7');
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('still-settings')!));
   expect(saved.volume).toBe(.7); expect(saved.sound).toBe('silent'); expect(saved.background).toBe('photo-2');expect(saved.customRhythm).toEqual([6.5,0,8,1]);
@@ -101,9 +109,9 @@ test('library and practice return preserve the selected home state; preparation 
  await page.clock.install();await open(page);
  await page.locator('.explore-choice').click();await page.locator('[data-practice="extended"]').click();
  await page.locator('.discovery-back').click();await page.locator('.discovery-back').click();
+ await expect(page.locator('.settings-panel')).toHaveAttribute('data-home-state','choosing');
  await expect(page.locator('.settings-panel')).toHaveAttribute('data-selected-practice','extended');
- await expect(page.locator('.start-button')).toBeEnabled();
- await page.locator('.choose-another').click();await page.locator('[data-home-choice="coherent"]').click();
+ await page.locator('[data-home-choice="coherent"]').click();
  await page.locator('.start-button').click();await expect(page.locator('.phase-count')).toHaveText('3');
  await expect(page.locator('.remaining-value')).toHaveText('03:07');
  await page.clock.runFor(3100); await expect(page.locator('.circle-label h2')).toHaveText(en.inhale);
@@ -115,7 +123,7 @@ test('Custom memory survives choosing another practice and a reload',async({page
  await open(page);await page.locator('[data-home-choice="custom"]').click();
  for(const [i,n] of [6.5,1.5,8,0.5].entries()) {await page.locator(`#phase-value-${i}`).fill(String(n));await page.locator(`#phase-value-${i}`).blur();}
  await page.locator('.choose-another').click();await page.locator('[data-home-choice="box"]').click();
- await page.reload();await page.locator('.choose-another').click();await page.locator('[data-home-choice="custom"]').click();
+ await page.reload();await page.locator('[data-home-choice="custom"]').click();
  for(const [i,n] of [6.5,1.5,8,0.5].entries())await expect(page.locator(`#phase-value-${i}`)).toHaveValue(String(n));
 });
 test('restricted storage still permits selection and returning from practice without reset',async({page})=>{

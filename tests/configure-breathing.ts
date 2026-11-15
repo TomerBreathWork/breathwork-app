@@ -11,6 +11,11 @@ export async function configureBreathing(
     if (await chooseAnother.isVisible()) await chooseAnother.click();
     await page.locator(`[data-home-choice="${choice}"]`).click();
   }
+  if (!choice && await page.locator('.home-welcome').isVisible()) {
+    const id = await page.locator('.settings-panel').getAttribute('data-selected-practice');
+    const saved = page.locator(`[data-home-choice="${id}"]`);
+    await (await saved.count() ? saved : page.locator('[data-home-choice="custom"]')).click();
+  }
   if (settings.rhythm)
     for (const [i, value] of settings.rhythm.entries()) {
       await page.locator(`#phase-value-${i}`).fill(String(value));

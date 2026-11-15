@@ -6,9 +6,8 @@ import he from "../src/locales/he.json" with { type: "json" };
 import ja from "../src/locales/ja.json" with { type: "json" };
 
 async function defaults(page: Page) {
-  await expect(
-    page.locator('[data-home-choice="coherent"]'),
-  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator('.home-welcome')).toBeVisible();
+  await page.locator('[data-home-choice="coherent"]').click();
   for (const [i, value] of [5.5, 0, 5.5, 0].entries())
     await expect(page.locator(`#phase-value-${i}`)).toHaveValue(String(value));
   await expect(page.locator("#duration")).toHaveValue("3");
@@ -39,7 +38,8 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
       }
     }, language);
     await page.goto("./");
-    await expect(page.locator('[data-home-choice="custom"]')).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator('.home-welcome')).toBeVisible();
+    await page.locator('[data-home-choice="custom"]').click();
     await expect(page.locator("#duration")).toHaveValue("27");
     await expect(page.locator("#phase-value-0")).toHaveValue("40");
     await expect(page.locator("#phase-value-2")).toHaveValue("40");
@@ -48,29 +48,30 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
       "dir",
       language === "he" ? "rtl" : "ltr",
     );
-    await page.locator('[data-home-choice="custom"]').click();
     await expect(page.locator("#phase-value-0")).toHaveValue("40"); // Current migrated Custom stays selected until the user chooses another pattern.
     const chosen = { preset: "custom", rhythm: [6.5, 1.5, 8, 0.5], minutes: 2 };
     await configureBreathing(page, chosen);
     await configureBreathing(page,{preset:"boxBreathing"});
-    await page.locator('[data-home-choice="custom"]').click();
+    await configureBreathing(page,{preset:"custom"});
     await page.getByRole("button", { name: t.start, exact: true }).click();
     await expect(page.locator(".remaining-value")).toHaveText("02:12");
     await page.getByRole("button", { name: t.stop, exact: true }).click();
+    await page.clock.runFor(5);
     for (const [i, value] of chosen.rhythm.entries())
       await expect(page.locator(`#phase-value-${i}`)).toHaveValue(
         String(value),
       );
     await expect(page.locator("#duration")).toHaveValue("2");
-    await expect(
-      page.locator('[data-home-choice="custom"]'),
-    ).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator('.settings-panel')).toHaveAttribute('data-selected-practice','custom');
     await page.getByRole("button", { name: t.start, exact: true }).click();
     await page.goBack();
+    await expect.poll(async()=>{await page.clock.runFor(1);return page.getByRole('button',{name:t.endPractice,exact:true}).isEnabled();}).toBe(true);
+    await page.getByRole('button',{name:t.endPractice,exact:true}).click();await page.clock.runFor(5);
     await expect(page.locator("#duration")).toHaveValue("2");
     await expect(page.locator("#phase-value-0")).toHaveValue("6.5");
     await page.reload();
-    await expect(page.locator('[data-home-choice="custom"]')).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator('.home-welcome')).toBeVisible();
+    await page.locator('[data-home-choice="custom"]').click();
     await expect(page.locator("#duration")).toHaveValue("2");
     await expect(page.locator("#phase-value-0")).toHaveValue("6.5");
     await showRetainedAdvanced(page); await page.getByRole("button", { name: t.advanced, exact: true }).click();
@@ -88,7 +89,8 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
     await showRetainedAdvanced(page); await page.getByRole("button", { name: t.advanced, exact: true }).click();
     await configureBreathing(page, { preset: "boxBreathing", minutes: 7 });
     await page.goto("./");
-    await expect(page.locator('[data-home-choice="box"]')).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator('.home-welcome')).toBeVisible();
+    await page.locator('[data-home-choice="box"]').click();
     await expect(page.locator("#duration")).toHaveValue("7");
   });
 }

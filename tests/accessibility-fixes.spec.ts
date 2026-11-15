@@ -14,6 +14,7 @@ async function open(page: Page, language: string, consent?: string) {
   await page.route('https://www.googletagmanager.com/**', route => route.fulfill({ contentType: 'text/javascript', body: '' }));
   await page.route('https://*.google-analytics.com/**', route => route.abort());
   await page.goto('./');
+  await page.locator('[data-home-choice="custom"]').click();
   await expect(page.locator('.start-button')).toBeEnabled();
 }
 async function noOverflow(page: Page) {

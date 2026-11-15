@@ -183,5 +183,9 @@
   "homeRelaxUnwind": "הרפיה ומנוחה",
   "homeOwnRhythm": "הקצב שלך",
   "homeWelcome": "איזו נשימה מתאימה לך היום?",
-  "homeExploreHint": "גלו תרגולי נשימה שמתאימים לכם."
+  "homeExploreHint": "גלו תרגולי נשימה שמתאימים לכם.",
+  "leavePracticeTitle": "לסיים את התרגול?",
+  "leavePracticeBody": "התרגול מושהה. אפשר להמשיך מאותה נקודה או לסיים.",
+  "stayInPractice": "להישאר",
+  "endPractice": "סיום התרגול"
 }

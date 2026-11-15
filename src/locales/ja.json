@@ -183,5 +183,9 @@
   "homeRelaxUnwind": "リラックスと休息",
   "homeOwnRhythm": "自分だけのリズム",
   "homeWelcome": "今日はどんな呼吸をしましょうか？",
-  "homeExploreHint": "心地よい呼吸法を見つけましょう。"
+  "homeExploreHint": "心地よい呼吸法を見つけましょう。",
+  "leavePracticeTitle": "練習を終了しますか？",
+  "leavePracticeBody": "一時停止中です。続きから再開するか、終了できます。",
+  "stayInPractice": "練習に戻る",
+  "endPractice": "練習を終了"
 }

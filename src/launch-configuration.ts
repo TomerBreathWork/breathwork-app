@@ -2,6 +2,7 @@ import { getPractice, practiceForPreset } from "./practices.ts";
 import { validConfiguredRhythm, migrateRhythm } from "./duration-controls.ts";
 import { restorePreset } from "./presets.ts";
 import type { Rhythm } from "./engine.ts";
+import { readNavigationSnapshot, type NavigationSnapshot } from "./navigation.ts";
 
 export const launchDefaults = {
   preset: "coherentBreathing",
@@ -16,6 +17,7 @@ export interface LaunchConfiguration {
   minutes: number;
   customRhythm?: Rhythm;
   homePracticeSelected?: boolean;
+  navigation?: NavigationSnapshot;
 }
 /** Restore valid saved choices, migrating legacy bounds without losing Custom.
  * Missing/invalid timing keeps the default; secondary preferences load separately. */
@@ -67,6 +69,7 @@ function configuration(value: unknown): LaunchConfiguration | undefined {
     rhythm: [...s.rhythm],
     minutes: s.minutes,
     customRhythm: migrateRhythm(s.customRhythm),
+    ...(readNavigationSnapshot(s.navigation) ? { navigation: readNavigationSnapshot(s.navigation) } : {}),
     ...(typeof s.homePracticeSelected === "boolean"
       ? { homePracticeSelected: s.homePracticeSelected } : {}),
   };
