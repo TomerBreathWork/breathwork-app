@@ -26,6 +26,7 @@ export function restoreSavedConfiguration(
 ): Partial<LaunchConfiguration> {
   if (!value || typeof value !== "object") return {};
   const s = value as Partial<LaunchConfiguration>;
+  if (getPractice(s.practiceId)?.audience === "kids") return {};
   const result: Partial<LaunchConfiguration> = {};
   const rhythm = migrateRhythm(s.rhythm);
   if (rhythm) {

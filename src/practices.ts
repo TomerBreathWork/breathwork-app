@@ -1,9 +1,14 @@
+import { flowerCandleRhythm } from "./flower-candle.ts";
 import type { Rhythm } from "./engine.ts";
 import type { TranslationKey } from "./i18n";
 export type Category = "calm" | "energy" | "focus";
 export type BreathingRoute = "nose" | "mouth";
-export type PracticeId = "coherent" | "box" | "equal" | "extended" | "478";
+export type PracticeId = "coherent" | "box" | "equal" | "extended" | "478" | "flower-candle";
+export type LibraryFilter = Category | "all" | "kids";
 export interface Practice {
+  audience?: "kids";
+  presentation?: "illustrated";
+  defaultMinutes?: number;
   id: PracticeId;
   name: TranslationKey;
   short: TranslationKey;
@@ -97,6 +102,17 @@ export const practices: Practice[] = [
     preset: "eveningUnwind",
   },
 ];
+/** Audience is independent of the adult Calm/Focus classifications. */
+export const kidsPractices: Practice[] = [{
+  id: "flower-candle", audience: "kids", presentation: "illustrated", defaultMinutes: 1,
+  name: "kidsTitle", short: "kidsPracticeShort", explanation: "kidsIntro",
+  benefit: "kidsComfort", useCases: "kidsIntro", categories: [], icon: "calm",
+  rhythm: [2, 0, 4, 0], ratio: 2, customization: "paired",
+  routes: { inhale: "nose", exhale: "mouth" }, preset: "custom",
+}];
+export const libraryPractices = [...practices, ...kidsPractices];
+export const practicesForFilter = (filter: LibraryFilter) => filter === "kids" ? kidsPractices
+  : filter === "all" ? libraryPractices : practices.filter(p => p.categories.includes(filter));
 export const categories: Category[] = ["calm", "energy", "focus"];
 // Keep Energy data and icons available without exposing its filter for now.
 export const visibleCategories = categories.filter((id) => id !== "energy");
@@ -106,7 +122,7 @@ export const categoryKey = {
   focus: "categoryFocus",
 } as const;
 export const getPractice = (id: unknown) =>
-  practices.find((practice) => practice.id === id);
+  libraryPractices.find((practice) => practice.id === id);
 export const practiceForPreset = (preset: string) =>
   ({
     coherentBreathing: "coherent",
@@ -116,6 +132,7 @@ export const practiceForPreset = (preset: string) =>
 /** Guided controls deliberately use a compact 0.5–10s base range. Full Custom
  * controls remain available on Home. Ratios never round their derived exhale. */
 export function adjustPractice(practice: Practice, seconds: number): Rhythm {
+  if (practice.id === "flower-candle") return flowerCandleRhythm(seconds);
   const base =
     Math.round(
       Math.min(10, Math.max(0.5, Number.isFinite(seconds) ? seconds : 0.5)) * 2,

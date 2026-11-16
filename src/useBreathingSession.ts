@@ -26,6 +26,7 @@ export function useBreathingSession(settings: Settings, language = "en") {
   } | null>(null);
   const rhythm = configuration?.rhythm ?? settings.rhythm;
   const preparation = useRef(false);
+  const allowCompletedTails = useRef(false);
   const metrics = useRef<PracticeAnalytics | undefined>(undefined);
   const audio = useRef(new SampleAudio()),
     operation = useRef(0),
@@ -128,7 +129,7 @@ export function useBreathingSession(settings: Settings, language = "en") {
       audio.current.run(soundSets[0], rhythm, currentElapsed(), end);
     else if (status === "paused") audio.current.pause();
     else if (status === "completed") audio.current.finish();
-    else if (status === "idle") audio.current.stop();
+    else if (status === "idle" && !allowCompletedTails.current) audio.current.stop();
     // No per-render cleanup: independent tails survive phase changes and normal
     // completion. Explicit controls and the unmount effect own cancellation.
   }, [status, ready, inPreparation]);
@@ -159,12 +160,15 @@ export function useBreathingSession(settings: Settings, language = "en") {
         : "audioSamplesUnavailable";
   }
 
-  function cancelPreparation() {
+  function cancelPreparation(preserveCompletedTails = false) {
     operation.current++;
-    audio.current.stop();
+    allowCompletedTails.current = preserveCompletedTails;
+    if (preserveCompletedTails) audio.current.finish();
+    else audio.current.stop();
     setPreparing(false);
   }
   function start() {
+    allowCompletedTails.current = false;
     if (!timingValid) return false;
     metrics.current?.stop(currentElapsed() / 1000);
     metrics.current = analytics.createPractice(
@@ -203,10 +207,10 @@ export function useBreathingSession(settings: Settings, language = "en") {
     });
     return true;
   }
-  function stop() {
+  function stop(preserveCompletedTails = false) {
     metrics.current?.stop(currentElapsed() / 1000);
     metrics.current = undefined;
-    cancelPreparation();
+    cancelPreparation(preserveCompletedTails && current.current.status === "completed");
     preparation.current = false;
     setInPreparation(false);
     setPreparationElapsed(0);
@@ -288,5 +292,6 @@ export function useBreathingSession(settings: Settings, language = "en") {
     preview,
     changeSound,
     cancelPreparation,
+    unlockAudio: () => audio.current.unlock(),
   };
 }

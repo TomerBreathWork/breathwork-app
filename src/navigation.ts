@@ -1,10 +1,11 @@
-import { getPractice, type PracticeId } from "./practices.ts";
+import { getPractice, type PracticeId, type LibraryFilter } from "./practices.ts";
 import { validConfiguredRhythm } from "./duration-controls.ts";
+import { normalizeKidsSettings } from "./kids-settings.ts";
 import type { Rhythm } from "./engine.ts";
 
 export type SetupScreen =
   | { name: "home"; mode?: "choosing" | "selected" }
-  | { name: "library" }
+  | { name: "library"; filter?: LibraryFilter }
   | { name: "details"; id: PracticeId };
 export type Screen = SetupScreen | {
   name: "session"; id: string; returnTo: SetupScreen; returnIndex: number;
@@ -32,11 +33,14 @@ export function readSetupScreen(value: unknown): SetupScreen | undefined {
   if (!value || typeof value !== "object") return;
   const s = value as SetupScreen;
   if (s.name === "home") return { name: "home", mode: s.mode === "selected" ? "selected" : "choosing" };
-  if (s.name === "library") return { name: "library" };
+  if (s.name === "library") return { name: "library", ...(["calm", "focus", "kids"].includes(s.filter ?? "") ? {filter:s.filter} : {}) };
   if (s.name === "details" && getPractice(s.id)) return { name: "details", id: s.id };
 }
 export function readDraft(value: unknown): NavigationDraft | undefined {
   const d = value as NavigationDraft | undefined;
+  if (d?.practiceId === "flower-candle") return {
+    preset:"custom",practiceId:"flower-candle",...normalizeKidsSettings(d),
+  };
   if (!d || !validConfiguredRhythm(d.rhythm) || !Number.isFinite(d.minutes) ||
       d.minutes < 1 || d.minutes > 120 || typeof d.preset !== "string" ||
       !(d.practiceId === "custom" || getPractice(d.practiceId))) return;

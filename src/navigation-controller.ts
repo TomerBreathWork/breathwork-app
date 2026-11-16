@@ -167,6 +167,12 @@ export class NavigationController {
     this.entries.set(this.current.index, this.current);
     this.write(this.current);
   }
+  filterLibrary = (filter: import("./practices.ts").LibraryFilter) => {
+    if (this.current.view.name !== "library" || this.pendingTarget || this.state.settling) return;
+    const view: SetupScreen = filter === "all" ? {name:"library"} : {name:"library",filter};
+    this.current = {...this.current,view};this.entries.set(this.current.index,this.current);
+    this.write(this.current);this.publish();
+  };
   open = (view: SetupScreen, draft?: NavigationDraft) => {
     if (this.pendingTarget || this.state.settling) return;
     if (JSON.stringify(view) === JSON.stringify(this.current.view)) return;

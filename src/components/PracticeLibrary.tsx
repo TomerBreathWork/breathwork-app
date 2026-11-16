@@ -1,12 +1,14 @@
 import { CompactLabel } from "./CompactLabel";
 import type { Translator } from "../i18n";
 import {
-  practices,
+  practicesForFilter,
   visibleCategories,
   categoryKey,
-  type Category,
+  type LibraryFilter,
   type PracticeId,
 } from "../practices";
+import { Fragment } from "react";
+import { FlowerCandleStill } from "../prototypes/FlowerCandleCircle";
 import { CategoryIcon } from "./CategoryIcon";
 import { Icon } from "./Icons";
 export function PracticeLibrary({
@@ -17,11 +19,12 @@ export function PracticeLibrary({
   back,
 }: {
   t: Translator;
-  category: Category | "all";
-  onCategory: (category: Category | "all") => void;
+  category: LibraryFilter;
+  onCategory: (category: LibraryFilter) => void;
   onSelect: (id: PracticeId) => void;
   back: () => void;
 }) {
+  const displayed = practicesForFilter(category);
   return (
     <main className="discovery-panel glass-panel" aria-label={t("explore")}>
       <div className="discovery-heading">
@@ -51,31 +54,31 @@ export function PracticeLibrary({
             <CompactLabel>{t(categoryKey[id])}</CompactLabel>
           </button>
         ))}
+        <button onClick={() => onCategory("kids")} aria-pressed={category === "kids"}><CompactLabel>{t("categoryKids")}</CompactLabel></button>
       </div>
       <div className="discovery-scroll practice-list">
-        {practices
-          .filter(
-            (practice) =>
-              category === "all" || practice.categories.includes(category),
-          )
-          .map((practice) => (
+        {displayed
+          .map((practice,index) => (
+            <Fragment key={practice.id}>
+            {category === "all" && practice.audience === "kids" && displayed[index-1]?.audience !== "kids" && <h3 className="kids-group-title">{t("categoryKids")}</h3>}
             <button
-              className="practice-card"
+              className={`practice-card ${practice.audience === "kids" ? "kids-card" : ""}`}
               key={practice.id}
               data-practice={practice.id}
               onClick={() => onSelect(practice.id)}
             >
-              <CategoryIcon category={practice.icon} />
+              {practice.audience === "kids" ? <span className="kids-card-art"><FlowerCandleStill kind="flower" /><FlowerCandleStill kind="candle" /></span> : <CategoryIcon category={practice.icon} />}
               <span>
                 <strong><CompactLabel>{t(practice.name)}</CompactLabel></strong>
                 <span>{t(practice.short)}</span>
                 <bdi className="practice-rhythm">
-                  {practice.rhythm.join(" / ")} {t("seconds")}
+                  {(practice.audience === "kids" ? [practice.rhythm[0],practice.rhythm[2]] : practice.rhythm).join(" / ")} {t("seconds")}
                   {practice.ratio ? ` · 1:${practice.ratio}` : ""}
                 </bdi>
               </span>
               <Icon name="chevron" />
             </button>
+            </Fragment>
           ))}
       </div>
     </main>

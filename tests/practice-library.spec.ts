@@ -54,7 +54,7 @@ for (const [language, t] of Object.entries({ en, he, ja })) {
       await shellFits(page);
       await openLibrary(page);
       await shellFits(page);
-      await expect(page.locator(".practice-card")).toHaveCount(5);
+      await expect(page.locator(".practice-card")).toHaveCount(6);
       for (const [key, count] of [
         ["categoryCalm", 3],
         ["categoryFocus", 3],

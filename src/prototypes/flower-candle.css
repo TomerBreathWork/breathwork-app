@@ -1,0 +1,112 @@
+/* Scoped to the local prototype; adult screens retain their incumbent styles. */
+.kids-prototype { background: #f6f1e8; }
+.kids-prototype .scenery { opacity: .18; }
+.kids-prototype .scene-overlay { background: #f6f1e840; }
+.kids-prototype .app-view { width: min(100%, 470px); }
+.kids-setup { padding: 20px; border-radius: 20px; background: #f6f1e8d9; display: grid; gap: 10px; }
+.kids-setup h2 { margin: 0; font-family: Georgia, serif; font-size: 1.6rem; text-align: center; font-weight: 400; }
+.kids-setup p { margin: 0; line-height: 1.5; }
+.kids-setup label { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.kids-setup input[type="range"], .kids-setup select { width: 100%; min-height: 44px; accent-color: #5a8c89; }
+.kids-setup select { background: #fffcf4; color: var(--teal); border: 1px solid #74948c80; border-radius: 10px; padding: 8px; }
+.kids-ratio { font-size: .9rem; }
+.kids-introduction { font-size: .9rem; }
+.kids-introduction summary { cursor: pointer; min-height: 44px; padding-block: 10px; }
+.kids-introduction summary:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+.kids-introduction label { justify-content: start; min-height: 44px; }
+.kids-introduction input { width: 20px; height: 20px; }
+.kids-introduction button { min-height: 44px; margin-block: 8px; padding: 8px 12px; color: var(--teal); border: 1px solid #74948c80; border-radius: 10px; background: #e4ecdf; }
+.kids-prototype .kids-recording-note { font-size: .85rem; }
+.kids-circle { position: relative; width: fit-content; }
+.kids-prototype .breath-circle { width: min(78vw, 42dvh, 340px); height: min(78vw, 42dvh, 340px); background: #f6f1e8c9; }
+.kids-prototype .water-clip { opacity: .34; }
+.kids-prototype .wave { opacity: .55; }
+.kids-prototype .circle-label { justify-content: space-between; padding: 14px; }
+.kids-prototype .circle-label h2 { font-family: inherit; font-size: 1rem; letter-spacing: 0; line-height: 1.3; }
+.kids-prototype .phase-count { margin: auto 0 0; font-size: 1.1rem; font-weight: 500; }
+.kids-prototype .breath-route-guidance { display: none; }
+.kids-illustration { position: absolute; width: 64%; aspect-ratio: 1; top: 17%; left: 18%; pointer-events: none; }
+/* Source PNGs remain untouched; all layers retain their intrinsic proportions. */
+.kids-paint { position: absolute; inset: 0; width: 100%; height: 100%; }
+.kids-flower { object-fit: contain; transform-origin: 50% 70%; }
+.kids-candle-body { position: absolute; width: 59.4%; height: auto; left: 20.3%; bottom: 0; }
+/* Body is 10% larger. The proportional flame leaves the original vertical clearance.
+ * Body anchor (180,24), flame anchor (130,330); all use the same art square. */
+.kids-flame { position: absolute; width: 35.5%; aspect-ratio: 1; left: 40.3032%; top: -0.2059%; isolation: isolate; }
+.kids-flame-stage { position: absolute; inset: 0; width: 100%; height: 100%; mix-blend-mode: plus-lighter; }
+.kids-smoke { position: absolute; width: 22%; height: auto; left: 50.5816%; top: 5.6211%; }
+.kids-prototype .phase-guidance { position: static; width: auto; height: auto; clip: auto; clip-path: none; overflow: visible; padding: 0; background: none; min-height: 3em; white-space: pre-line; font-family: inherit; font-size: 1rem; line-height: 1.45; }
+.kids-prototype .remaining { width: auto; min-width: 0; height: auto; padding: 0; border: 0; background: none; box-shadow: none; gap: 2px; }
+.kids-prototype .remaining-value { font-size: 1.25rem; }
+.kids-prototype .remaining > span:last-child { font-size: .8rem; }
+.kids-progress { display: block; width: min(70%, 250px); height: 5px; margin: 12px auto 0; accent-color: #749d90; }
+.kids-prototype [lang="ja"], .kids-prototype:lang(ja) :is(button, h2, summary) { word-break: keep-all; overflow-wrap: normal; line-break: strict; }
+@media (max-height: 700px) {
+  .kids-setup { padding: 12px; gap: 6px; }
+  .kids-prototype .practice { gap: 9px; }
+  .kids-prototype .breath-circle { width: min(76vw, 39dvh); height: min(76vw, 39dvh); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kids-flower, .kids-smoke { transform: none !important; }
+  .kids-flame-stage { display: none; }
+  .kids-flame-stage:first-child { display: block; opacity: 1 !important; transform: none !important; }
+  .kids-prototype .wave { animation: none; }
+}
+
+/* Integrated library/introduction only; Home and adult details stay untouched. */
+.category-filters { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; }
+.category-filters button { padding-inline: 4px; flex-wrap: wrap; justify-content: center; line-height: 1.3; overflow-wrap: normal; }
+.kids-group-title { margin: 12px 0 0; font-size: 1rem; font-weight: 600; }
+.practice-card.kids-card { grid-template-columns: 64px minmax(0,1fr) 16px; }
+.practice-card > .kids-card-art { display: flex; flex-direction: row; gap: 0; width: 64px; }
+.kids-static-art { position: relative; width: 100%; aspect-ratio: 1; flex: none; }
+.kids-card-art .kids-static-art { width: 32px; }
+.kids-details.settings-panel { padding: 14px; gap: 10px; }
+.kids-intro-content { display: flex; flex: 1 1 auto; flex-direction: column; gap: 16px; }
+/* Scroll the real content height instead of shrinking rows beneath their text. */
+.kids-intro-content > * { flex: none; min-width: 0; }
+.kids-steps { display: grid; gap: 18px; }
+.kids-details > .start-button { flex: none; }
+.kids-step { display: grid; grid-template-columns: 112px minmax(0,1fr); gap: 12px; align-items: center; }
+.kids-step h3 { margin: 0 0 6px; font-size: 1rem; font-weight: 600; line-height: 1.4; }
+.kids-step p { margin: 0; font-size: .95rem; line-height: 1.45; }
+.kids-settings-summary { margin: 0; font-size: .85rem; line-height: 1.5; text-align: center; }
+.kids-practice-settings summary { cursor: pointer; padding-block: 10px; min-height: 44px; }
+.kids-practice-settings summary:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+.kids-practice-settings label { display: flex; justify-content: space-between; gap: 10px; }
+.kids-practice-settings input[type="range"] { margin-inline: 0; width: 100%; min-height: 44px; accent-color: #5a8c89; }
+.kids-comfort { margin: 0; font-size: .85rem; line-height: 1.5; }
+@container app-viewport (max-width:340px) {
+ .kids-step { grid-template-columns: 96px minmax(0,1fr); gap: 10px; }
+ .kids-details.settings-panel { padding: 10px; }
+}
+
+.kids-range-scale { display: flex; justify-content: space-between; font-size: .85rem; margin-bottom: 8px; }
+.kids-card > span:not(.kids-card-art) > span { white-space: normal; overflow: visible; text-overflow: clip; }
+.category-filters button { font-size: .8rem; }
+@media (max-width:600px) { .category-filters svg { display: none; } }
+
+/* Keep the two Japanese step titles together without reducing their body copy. */
+.kids-details:lang(ja) .kids-step { column-gap: 4px; }
+.kids-details:lang(ja) .kids-step h3 { font-size: .9375rem; white-space: nowrap; }
+.kids-details:lang(ja) .kids-step h3 .compact-ja-label { inline-size: 100%; max-inline-size: 100%; }
+@container app-viewport (max-width:340px) {
+  .kids-details:lang(ja) .kids-step h3 { font-size: .875rem; }
+}
+/* At enlarged text sizes, preserve readable content instead of forcing overflow. */
+@container app-viewport (max-width:15rem) {
+  .kids-details:lang(ja) .kids-step h3 { white-space: normal; }
+}
+
+/* Recorded introduction: compact controls, without changing the approved steps. */
+.kids-voice-controls { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; font-size: .9rem; }
+.kids-voice-preference { display: flex; align-items: center; gap: 8px; min-height: 44px; cursor: pointer; }
+.kids-voice-preference input { width: 20px; height: 20px; accent-color: var(--teal); }
+.kids-voice-controls button { min-height: 44px; }
+.kids-narration-playback { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 8px; }
+.kids-voice-controls p { margin: 0; line-height: 1.5; }
+.kids-step .kids-static-art { transition: filter .2s ease, transform .2s ease; }
+.kids-step[data-emphasized="true"] .kids-static-art { transform: scale(1.025); filter: drop-shadow(0 0 8px #749d9040); }
+@media (prefers-reduced-motion: reduce) {
+  .kids-step[data-emphasized] .kids-static-art { transition: none; transform: none; }
+}

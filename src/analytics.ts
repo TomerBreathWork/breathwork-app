@@ -9,7 +9,7 @@ type Language = "en" | "he" | "ja";
 export type AnalyticsView = "settings" | "library" | "preparation" | "practice" | "completed" | `details/${string}`;
 const publicUrl = "https://tomerbreathwork.github.io/breathwork-app/";
 const names = {
-  coherent: "Coherent Breathing", box: "Box Breathing", equal: "1:1 Breathing",
+  "flower-candle": "Flower & Candle", coherent: "Coherent Breathing", box: "Box Breathing", equal: "1:1 Breathing",
   extended: "Extended Exhale (1:2)", "478": "4-7-8 Breathing", custom: "Custom Breathing",
 } as const;
 type PracticeId = keyof typeof names;
@@ -177,7 +177,7 @@ export class AnalyticsClient {
       ...(plannedMinutes !== undefined && Number.isFinite(plannedMinutes) ? { planned_duration_minutes: plannedMinutes } : {}),
       app_language: safeLanguage(language), language: safeLanguage(language), display_mode: this.displayMode(),
       page_location: `${publicUrl}#${this.view}`, page_referrer: "", page_title: viewTitle(this.view),
-      ...(id === undefined ? {} : { practice_id: id, practice_name: names[id], preset: id === "coherent" ? "coherentBreathing" : id === "box" ? "boxBreathing" : id === "478" ? "eveningUnwind" : "custom" }),
+      ...(id === undefined ? {} : { practice_id: id, practice_name: names[id], preset: id === "flower-candle" ? "flower-candle" : id === "coherent" ? "coherentBreathing" : id === "box" ? "boxBreathing" : id === "478" ? "eveningUnwind" : "custom" }),
       ...(event === "contact_clicked" ? { contact_method: this.language === "ja" ? "line" : "whatsapp" } : {}),
       ...(seconds === undefined || !Number.isFinite(seconds) ? {} : event === "practice_completed" ? { actual_duration_seconds: Math.max(0, Math.round(seconds * 10) / 10) } : event === "practice_stopped" ? { elapsed_duration_seconds: Math.max(0, Math.round(seconds * 10) / 10) } : {}),
       ...(seconds === undefined || !Number.isFinite(seconds) ? {} : { duration_seconds: Math.max(0, Math.round(seconds * 10) / 10) }),

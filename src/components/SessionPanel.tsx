@@ -8,6 +8,7 @@ import { BreathingCircle } from "./BreathingCircle";
 import { Icon } from "./Icons";
 interface Props {
   t: Translator;
+  circle?: ReactNode;
   status: Exclude<SessionStatus, "idle">;
   phase: {
     index: number;
@@ -30,6 +31,7 @@ interface Props {
 }
 export function SessionPanel({
   t,
+  circle,
   status,
   phase,
   remaining,
@@ -55,14 +57,14 @@ export function SessionPanel({
       <div className="practice">
         <p className="session-intro">{t("intro")}</p>
         <div className="breathing-interface">
-          <BreathingCircle
+          {circle ?? <BreathingCircle
             t={t}
             status={status}
             phase={phase}
             preparationProgress={preparationProgress}
             language={language}
             routes={routes}
-          />
+          />}
           <button
             className="practice-mute"
             type="button"

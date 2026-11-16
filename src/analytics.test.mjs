@@ -142,3 +142,14 @@ test('updated reporting parameters use requested minutes and distinct elapsed/ac
  assert.equal(browser.events('practice_stopped')[0][2].elapsed_duration_seconds,12.5);
  for(const lang of ['en','he','ja']) {client.open('settings',lang,true);client.contactClicked();assert.equal(browser.events('contact_clicked').at(-1)[2].contact_method,lang==='ja'?'line':'whatsapp');}
 });
+
+test('Flower & Candle uses its own identity through existing consented events',()=>{
+ const {browser,client}=opened('granted');client.selectPractice('flower-candle','he');
+ const practice=client.createPractice('flower-candle','he',60,1);practice.start();practice.complete();practice.stop(60);
+ for(const name of ['practice_selected','practice_started','practice_completed']) {
+  const event=browser.events(name).at(-1);assert.equal(event[2].practice_id,'flower-candle');
+  assert.equal(event[2].practice_name,'Flower & Candle');assert.equal(event[2].preset,'flower-candle');
+ }
+ assert.equal(browser.events('practice_stopped').length,0);
+ const denied=opened('denied');denied.client.selectPractice('flower-candle','he');assert.equal(denied.browser.events().length,0);
+});

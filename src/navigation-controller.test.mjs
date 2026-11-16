@@ -80,3 +80,13 @@ test('confirmed End is idempotent even if a stale handler fires after history ha
  const position=f.position;f.controller.end();f.flush();
  assert.equal(f.stops,1);assert.equal(f.position,position);
 });
+
+test('Kids filter replaces library state and survives detail Back and update snapshots',()=>{
+ const f=fixture();f.controller.open({name:'library'});const size=f.stack.length;
+ f.controller.filterLibrary('kids');assert.equal(f.stack.length,size);
+ assert.deepEqual(f.controller.getSnapshot().screen,{name:'library',filter:'kids'});
+ f.controller.open({name:'details',id:'flower-candle'},{preset:'custom',practiceId:'flower-candle',rhythm:[6,0,12,0],minutes:2});
+ f.pop(-1);assert.deepEqual(f.controller.getSnapshot().screen,{name:'library',filter:'kids'});
+ const restored=fixture(readNavigationSnapshot(f.controller.snapshotForUpdate()));
+ assert.deepEqual(restored.controller.getSnapshot().screen,{name:'library',filter:'kids'});
+});

@@ -358,7 +358,7 @@ test("offline reload retains settings, all photographs, decoded recordings and a
   );
   await page.getByRole("button", { name: ja.stop, exact: true }).click();
   await page.locator('[data-home-choice="explore"]').click();
-  await expect(page.locator(".practice-card")).toHaveCount(5);
+  await expect(page.locator(".practice-card")).toHaveCount(6);
   await page.locator('[data-practice="equal"]').click();
   await expect(page.locator(".details-body")).toContainText(
     ja.equalExplanation,
@@ -674,4 +674,49 @@ test('waiting update remains blocked while Back confirmation pauses the live pra
   await page.getByRole('button',{name:en.stop,exact:true}).click();
   await expect(page.locator('meta[name="test-release"]')).toHaveAttribute('content','two',{timeout:15000});
   await expect(page.locator('.start-button')).toBeEnabled();
+});
+
+for(const view of ['library','introduction'] as const)test(`Kids safe update preserves ${view}, both profiles and offline artwork`,async({page,context,site})=>{
+  await open(page,site.url);await ready(page);
+  const adult=await page.evaluate(()=>localStorage.getItem('still-settings'));
+  await page.locator('.explore-choice').click();await page.getByRole('button',{name:en.categoryKids,exact:true}).click();
+  await page.locator('[data-practice="flower-candle"]').click();await page.locator('.kids-practice-settings summary').click();
+  await page.locator('#kids-inhale').focus();await page.keyboard.press('End');await page.locator('#duration').fill('2');
+  if(view==='library')await page.locator('.discovery-back').click();
+  site.release(2);await page.evaluate(()=>{void navigator.serviceWorker.getRegistration().then(r=>r?.update());});
+  await expect(page.locator('meta[name="test-release"]')).toHaveAttribute('content','two',{timeout:15000});
+  expect(await page.evaluate(()=>localStorage.getItem('still-settings'))).toBe(adult);
+  if(view==='library') {await expect(page.getByRole('button',{name:en.categoryKids,exact:true})).toHaveAttribute('aria-pressed','true');await page.locator('[data-practice="flower-candle"]').click();}
+  await expect(page.locator('.kids-details')).toBeVisible();await page.locator('.kids-practice-settings summary').click();
+  await expect(page.locator('#kids-inhale')).toHaveValue('6');await expect(page.locator('#duration')).toHaveValue('2');
+  await context.setOffline(true);await page.reload();await expect(page.locator('.home-welcome')).toBeVisible();
+  await page.locator('.explore-choice').click();await page.getByRole('button',{name:en.categoryKids,exact:true}).click();await page.locator('[data-practice="flower-candle"]').click();
+  await page.locator('.kids-practice-settings summary').click();await expect(page.locator('#kids-inhale')).toHaveValue('6');
+  await page.locator('.start-button').click();await expect(page.locator('.remaining-value')).toHaveText('02:06');
+  await page.locator('.kids-illustration img').first().waitFor({state:'attached'});
+  const images=await page.locator('.kids-illustration img').evaluateAll(async nodes=>{await Promise.all(nodes.map(n=>(n as HTMLImageElement).decode()));return nodes.every(n=>(n as HTMLImageElement).naturalWidth>0);});expect(images).toBe(true);
+  await page.getByRole('button',{name:en.stop,exact:true}).click();await expect(page.locator('.kids-details')).toBeVisible();
+  expect(await page.evaluate(()=>localStorage.getItem('still-settings'))).toBe(adult);
+});
+
+test('Hebrew introduction recording plays offline and a waiting update cannot interrupt narration',async({page,context,site})=>{
+ test.setTimeout(90000);
+ await page.addInitScript(()=>{
+  localStorage.setItem('breath-flow-language','he');localStorage.setItem('breath-flow-analytics-consent','denied');localStorage.setItem('still-settings',JSON.stringify({sound:'silent'}));
+  const w=window as any,NativeAudio=window.Audio;w.voiceAudios=[];
+  w.Audio=function(src:string){const a=new NativeAudio(src);a.addEventListener('ended',()=>w.voiceEnded={time:a.currentTime,duration:a.duration});w.voiceAudios.push(a);return a;};w.Audio.prototype=NativeAudio.prototype;
+ });
+ await page.goto(site.url);await page.evaluate(async()=>{await navigator.serviceWorker.ready;});await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
+ await page.locator('.explore-choice').click();await page.getByRole('button',{name:'ילדים',exact:true}).click();await page.locator('[data-practice="flower-candle"]').click();
+ await context.setOffline(true);await page.reload();await page.locator('.explore-choice').click();await page.getByRole('button',{name:'ילדים',exact:true}).click();await page.locator('[data-practice="flower-candle"]').click();
+ await page.locator('.start-button').click();await expect.poll(()=>page.evaluate(()=>(window as any).voiceAudios.at(-1)?.currentTime??0)).toBeGreaterThan(.1);
+ // A streaming MP3 may report Infinity until its final frame; playback uses ended, not duration.
+ await page.getByRole('button',{name:'השהיה',exact:true}).click();
+ await context.setOffline(false);site.release(2);await checkForUpdate(page);
+ await page.waitForTimeout(300);expect(await page.locator('meta[name="test-release"]').count()).toBe(0);await expect(page.getByText('ההקדמה מושהית',{exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'המשך',exact:true}).click();await expect(page.locator('.phase-count')).toHaveText('3',{timeout:30000});
+ const ended=await page.evaluate(()=>(window as any).voiceEnded);expect(ended.time).toBeGreaterThan(25);expect(ended.time).toBeLessThan(26);
+ await page.waitForTimeout(300);expect(await page.locator('meta[name="test-release"]').count()).toBe(0);
+ await page.getByRole('button',{name:'סיום',exact:true}).click();await expect(page.locator('meta[name="test-release"]')).toHaveCount(1);await expect(page.locator('.kids-details')).toBeVisible();
+ await expect(page.getByRole('button',{name:'השמעת ההקדמה שוב',exact:true})).toBeVisible();
 });

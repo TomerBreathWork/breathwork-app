@@ -9,13 +9,15 @@ export function useAppNavigation(
   session: { status: "idle" | "running" | "paused" | "completed"; pause: () => void; stop: () => void },
   settings: Settings,
   setSettings: React.Dispatch<React.SetStateAction<Settings>>,
+  restoreProfile?: (view: SetupScreen, draft?: NavigationDraft) => boolean,
 ) {
-  const latest = useRef({ session, setSettings });
-  latest.current = { session, setSettings };
+  const latest = useRef({ session, setSettings, restoreProfile });
+  latest.current = { session, setSettings, restoreProfile };
   const [controller] = useState(() => new NavigationController(window, {
     pause: () => latest.current.session.pause(),
     stop: () => latest.current.session.stop(),
     restore: (view: SetupScreen, draft?: NavigationDraft) => {
+      if (latest.current.restoreProfile?.(view,draft)) return;
       if (view.name !== "details" && !(view.name === "home" && view.mode === "selected")) return;
       latest.current.setSettings(value => {
         const restored = draft && restoreSavedConfiguration(draft);
@@ -34,13 +36,14 @@ export function useAppNavigation(
   const active = session.status !== "idle";
   useEffect(() => {
     const homeToggle = previous.current.name === "home" && state.screen.name === "home";
+    const filterChange = previous.current.name === "library" && state.screen.name === "library";
     previous.current = state.screen;
     // SettingsPanel owns focus for its chooser/selected transition.
-    if (homeToggle && !active) return;
+    if ((homeToggle || filterChange) && !active) return;
     document.querySelector(".app-page")?.scrollTo(0, 0);
     document.querySelector<HTMLElement>(active ? ".session-panel" : ".discovery-panel h2, .settings-panel")?.focus({ preventScroll: true });
   }, [state.screen, active]);
   return { ...state, open: controller.open, back: controller.back, chooseHome: controller.chooseHome,
-    beginSession: controller.beginSession, endSession: controller.end, stay: controller.stay,
+    filterLibrary: controller.filterLibrary, beginSession: controller.beginSession, endSession: controller.end, stay: controller.stay,
     snapshotForUpdate: controller.snapshotForUpdate };
 }
