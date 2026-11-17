@@ -118,8 +118,9 @@ export function useBreathingSession(settings: Settings, language = "en") {
     };
   }, [settings.sound, settings.rhythm, status]);
   useEffect(() => {
-    audio.current.setVolume(settings.volume);
-  }, [settings.volume]);
+    // Keep shared preferences intact; only Bee bowl cues use a gentler mix.
+    audio.current.setVolume(settings.volume * (settings.practiceId === "bee-breathing" ? 0.7 : 1));
+  }, [settings.volume, settings.practiceId]);
   useEffect(() => {
     audio.current.setMuted(muted || settings.sound === "silent");
   }, [muted, settings.sound]);
