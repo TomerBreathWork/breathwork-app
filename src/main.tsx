@@ -25,6 +25,10 @@ import { useOfflineSupport } from "./useOfflineSupport";
 import { Brand } from "./components/Brand";
 import { AdvancedOptions } from "./components/AdvancedOptions";
 import { SettingsPanel } from "./components/SettingsPanel";
+import { BeeIntroduction } from "./components/BeeIntroduction";
+import { BeeSession } from "./components/BeeSession";
+import { beeSessionSettings, loadBeeSettings, normalizeBeeSettings, saveBeeSettings } from "./bee-settings";
+import type { KidsPracticeId } from "./kids-settings";
 import { FlowerCandleIntroduction } from "./components/FlowerCandleIntroduction";
 import { FlowerCandleSession } from "./components/FlowerCandleSession";
 import { preloadFlowerCandleArt } from "./prototypes/FlowerCandleCircle";
@@ -35,6 +39,7 @@ import { AnalyticsConsent } from "./components/AnalyticsConsent";
 import { analytics, type AnalyticsView } from "./analytics";
 import "./style.css";
 import "./prototypes/flower-candle.css";
+import "./bee.css";
 const FlowerCandlePrototype = import.meta.env.DEV
   ? React.lazy(() => import("./prototypes/FlowerCandlePrototype"))
   : () => null;
@@ -45,14 +50,18 @@ function App() {
   const [adultSettings, setAdultSettings] = useState<Settings>(loadSettings);
   const launchView = launchNavigation?.current.view;
   const launchSetup = launchView?.name === "session" ? launchView.returnTo : launchView;
-  const launchKids = launchSetup?.name === "details" && launchSetup.id === "flower-candle";
-  const [kidsSelected, setKidsSelected] = useState(!!launchKids);
-  const [kidsSettings, setKidsSettings] = useState(() => launchKids && launchNavigation?.current.draft?.practiceId === "flower-candle"
+  const launchKids = launchSetup?.name === "details" && getPractice(launchSetup.id)?.audience === "kids" ? launchSetup.id as KidsPracticeId : undefined;
+  const [kidsSelected, setKidsSelected] = useState<KidsPracticeId|undefined>(launchKids);
+  const [kidsSettings, setKidsSettings] = useState(() => launchKids==='flower-candle' && launchNavigation?.current.draft?.practiceId === 'flower-candle'
     ? normalizeKidsSettings(launchNavigation.current.draft) : loadKidsSettings());
-  const settings = useMemo(() => kidsSelected ? kidsSessionSettings(adultSettings,kidsSettings) : adultSettings,
-    [adultSettings,kidsSettings,kidsSelected]);
+  const [beeSettings,setBeeSettings]=useState(()=>launchKids==='bee-breathing'&&launchNavigation?.current.draft?.practiceId==='bee-breathing'
+    ?normalizeBeeSettings(launchNavigation.current.draft):loadBeeSettings());
+  const settings = useMemo(() => kidsSelected==='flower-candle' ? kidsSessionSettings(adultSettings,kidsSettings)
+    : kidsSelected==='bee-breathing'?beeSessionSettings(adultSettings,beeSettings):adultSettings,
+    [adultSettings,kidsSettings,beeSettings,kidsSelected]);
   useEffect(() => saveKidsSettings(kidsSettings),[kidsSettings]);
-  useEffect(() => { if (kidsSelected) preloadFlowerCandleArt(); },[kidsSelected]);
+  useEffect(() => saveBeeSettings(beeSettings),[beeSettings]);
+  useEffect(() => { if (kidsSelected==='flower-candle') preloadFlowerCandleArt(); },[kidsSelected]);
 
   const [background, setBackground] = useState(settingsBackground);
   const [failedImage, setFailedImage] = useState("");
@@ -60,12 +69,13 @@ function App() {
   const { language, setLanguage, t } = useLanguage();
   const session = useBreathingSession(settings, language),
     active = session.status !== "idle";
-  const navigation = useAppNavigation({ ...session, stop: () => session.stop(kidsSelected && session.status === "completed") }, settings, setAdultSettings,
+  const navigation = useAppNavigation({ ...session, stop: () => session.stop(!!kidsSelected && session.status === "completed") }, settings, setAdultSettings,
     (view,draft) => {
-      const kids = view.name === "details" && view.id === "flower-candle";
+      const kids = view.name === "details" && getPractice(view.id)?.audience === "kids" ? view.id as KidsPracticeId : undefined;
       setKidsSelected(kids);
       if (kids) {
-        if (draft?.practiceId === "flower-candle") setKidsSettings(normalizeKidsSettings(draft));
+        if (kids==='flower-candle' && draft?.practiceId === kids) setKidsSettings(normalizeKidsSettings(draft));
+        if (kids==='bee-breathing' && draft?.practiceId===kids) setBeeSettings(normalizeBeeSettings(draft));
         return true;
       }
       return false;
@@ -110,8 +120,10 @@ function App() {
     if (patch.sound !== undefined) void session.changeSound(patch.sound);
     if (patch.background !== undefined) selectBackground(patch.background);
     if (kidsSelected) {
-      if (patch.rhythm !== undefined || patch.minutes !== undefined)
-        setKidsSettings(value => normalizeKidsSettings({...value,...patch}));
+      if (patch.rhythm !== undefined || patch.minutes !== undefined) {
+        if(kidsSelected==='flower-candle')setKidsSettings(value => normalizeKidsSettings({...value,...patch}));
+        else setBeeSettings(value=>normalizeBeeSettings({...value,...patch}));
+      }
       const {rhythm: _rhythm, minutes: _minutes, practiceId: _id, preset: _preset, customRhythm: _custom, homePracticeSelected: _selected, ...shared} = patch;
       if (Object.keys(shared).length) setAdultSettings(value=>({...value,...shared}));
       return;
@@ -141,7 +153,7 @@ function App() {
     session.cancelPreparation();
     const next = { ...(adultSettings.practiceId === practiceForPreset(key) ? adultSettings : selectPreset(adultSettings, key)),
       homePracticeSelected: true, practiceId: practiceForPreset(key) };
-    setKidsSelected(false);
+    setKidsSelected(undefined);
     setAdultSettings(next);
     navigation.open({ name: "home", mode: "selected" }, next);
   }
@@ -149,7 +161,7 @@ function App() {
     if (choosingPractice || settings.practiceId !== "custom") analytics.selectPractice("custom", language);
     session.cancelPreparation();
     const next = { ...selectCustom(adultSettings), homePracticeSelected: true, practiceId: "custom" };
-    setKidsSelected(false);
+    setKidsSelected(undefined);
     setAdultSettings(next);
     navigation.open({ name: "home", mode: "selected" }, next);
   }
@@ -158,7 +170,7 @@ function App() {
     const practice = getPractice(id)!;
     session.cancelPreparation();
     if (practice.audience === "kids") {
-      navigation.open({name:"details",id},kidsSessionSettings(adultSettings,kidsSettings));
+      navigation.open({name:"details",id},id==='bee-breathing'?beeSessionSettings(adultSettings,beeSettings):kidsSessionSettings(adultSettings,kidsSettings));
       return;
     }
     const next = adultSettings.practiceId === id ? { ...adultSettings, homePracticeSelected: true } : {
@@ -187,6 +199,7 @@ function App() {
       offlineStatus={offlineStatus}
     />
   );
+  const KidsSession=kidsSelected==='bee-breathing'?BeeSession:FlowerCandleSession;
   return (
     <div
       className={`app-page ${active ? "session" : "settings-screen"} ${!active && navigation.screen.name !== "home" ? "discovery-screen" : ""} ${kidsSelected ? "kids-prototype" : ""}`}
@@ -223,6 +236,11 @@ function App() {
             onSelect={openPractice}
             back={navigation.back}
           />
+        ) : !active && navigation.screen.name === "details" && navigation.screen.id === "bee-breathing" ? (
+          <BeeIntroduction t={t} language={language} settings={settings} patch={patch}
+            back={navigation.back} start={()=>void start()} preparing={session.preparing}
+            onNarrationBusy={value=>{if(value)beginPractice();setNarrationBusy(value);}}
+            unlockAudio={()=>{session.cancelPreparation();void session.unlockAudio();}}/>
         ) : !active && navigation.screen.name === "details" && navigation.screen.id === "flower-candle" ? (
           <FlowerCandleIntroduction t={t} language={language} settings={settings} patch={patch}
             back={navigation.back} start={() => void start()} preparing={session.preparing}
@@ -257,7 +275,7 @@ function App() {
             start={() => void start()}
           />
         ) : kidsSelected ? (
-          <FlowerCandleSession t={t} language={language} session={session} restart={() => void start()}
+          <KidsSession t={t} language={language} session={session} restart={() => void start()}
             stop={navigation.endSession} muted={session.muted || settings.sound === "silent"}
             onMute={() => { if (settings.sound === "silent") { session.setMuted(false);patch({sound:appDefaults.sound}); }
               else session.setMuted(!session.muted); }} />

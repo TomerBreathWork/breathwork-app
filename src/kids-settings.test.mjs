@@ -8,8 +8,8 @@ import {finishAt} from './engine.ts';
 const storage=()=>{const data=new Map();return {data,getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};};
 test('Kids is a separate audience; adult groups and defaults remain unchanged',()=>{
  assert.equal(practices.length,5);assert.deepEqual(visibleCategories,['calm','focus']);
- assert.deepEqual(practicesForFilter('kids').map(p=>p.id),['flower-candle']);
- assert.deepEqual(practicesForFilter('all').map(p=>p.id),[...practices.map(p=>p.id),'flower-candle']);
+ assert.deepEqual(practicesForFilter('kids').map(p=>p.id),['flower-candle','bee-breathing']);
+ assert.deepEqual(practicesForFilter('all').map(p=>p.id),[...practices.map(p=>p.id),'flower-candle','bee-breathing']);
  for(const category of ['calm','focus'])assert.ok(practicesForFilter(category).every(p=>p.audience!=='kids'));
  assert.deepEqual(getPractice('box').categories,['focus']);assert.equal(getPractice('flower-candle').defaultMinutes,1);
 });

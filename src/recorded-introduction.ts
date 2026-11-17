@@ -1,19 +1,21 @@
 /** Recorded introduction only: never owns a breathing clock or bowl scheduler. */
-export type IntroductionCue = 'balanced' | 'flower' | 'candle';
+export type IntroductionCue = 'balanced' | 'flower' | 'candle' | 'inhale' | 'ears' | 'hum';
 export type IntroductionStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'error';
 export interface IntroductionRecording {
   src: string;
+  timeline?: readonly {at:number;cue:IntroductionCue}[];
   cues?: { flower: number; candle: number; balanced: number };
 }
 export const introductionPreferenceKey = 'breath-flow-flower-candle-introduction';
 export interface IntroductionPreference { enabled: boolean; acknowledged: boolean }
-export function readIntroductionPreference(storage?: Pick<Storage,'getItem'>): IntroductionPreference {
+export function readIntroductionPreference(storage?: Pick<Storage,'getItem'>,key=introductionPreferenceKey): IntroductionPreference {
   try {
-    const value=JSON.parse(storage?.getItem(introductionPreferenceKey)??'null')?.he;
+    const value=JSON.parse(storage?.getItem(key)??'null')?.he;
     return {enabled: value?.enabled!==false, acknowledged:value?.acknowledged===true};
   } catch { return {enabled:true,acknowledged:false}; }
 }
-export function introductionCueAt(time: number, cues?: IntroductionRecording['cues']): IntroductionCue {
+export function introductionCueAt(time: number, cues?: IntroductionRecording['cues'],timeline?:IntroductionRecording['timeline']): IntroductionCue {
+  if(timeline)return [...timeline].reverse().find(item=>time>=item.at)?.cue??'balanced';
   if(!cues || time<cues.flower || time>=cues.balanced)return 'balanced';
   return time<cues.candle?'flower':'candle';
 }
@@ -33,10 +35,11 @@ export class RecordedIntroduction {
   private actions:Actions;
   private createAudio:(src:string)=>HTMLAudioElement;
   private storage?:Pick<Storage,'getItem'|'setItem'>;
+  private preferenceKey:string;
   constructor(actions:Actions,createAudio:(src:string)=>HTMLAudioElement,
-    storage?:Pick<Storage,'getItem'|'setItem'>) {
-    this.actions=actions;this.createAudio=createAudio;this.storage=storage;
-    this.value={...readIntroductionPreference(storage),available:false,status:'idle',cue:'balanced',continuesToPractice:false};
+    storage?:Pick<Storage,'getItem'|'setItem'>,preferenceKey=introductionPreferenceKey) {
+    this.actions=actions;this.createAudio=createAudio;this.storage=storage;this.preferenceKey=preferenceKey;
+    this.value={...readIntroductionPreference(storage,preferenceKey),available:false,status:'idle',cue:'balanced',continuesToPractice:false};
   }
   getSnapshot=()=>this.value;
   subscribe=(listener:()=>void)=>{this.listeners.add(listener);return()=>{this.listeners.delete(listener);};};
@@ -45,7 +48,7 @@ export class RecordedIntroduction {
   }
   private save(patch:Partial<IntroductionPreference>) {
     this.update(patch);
-    try {this.storage?.setItem(introductionPreferenceKey,JSON.stringify({version:1,he:{enabled:this.value.enabled,acknowledged:this.value.acknowledged}}));}catch{/* Storage restrictions never block practice. */}
+    try {this.storage?.setItem(this.preferenceKey,JSON.stringify({version:1,he:{enabled:this.value.enabled,acknowledged:this.value.acknowledged}}));}catch{/* Storage restrictions never block practice. */}
   }
   configure(recording?:IntroductionRecording) {
     if(this.recording===recording)return;
@@ -76,7 +79,7 @@ export class RecordedIntroduction {
     try {audio=this.createAudio(this.recording!.src);}catch{this.fail(ticket);return;}
     this.audio=audio;audio.preload='auto';audio.volume=1;
     const valid=()=>ticket===this.serial && audio===this.audio;
-    const time=()=>{if(valid())this.update({cue:introductionCueAt(audio.currentTime,this.recording?.cues)});};
+    const time=()=>{if(valid())this.update({cue:introductionCueAt(audio.currentTime,this.recording?.cues,this.recording?.timeline)});};
     const ended=()=>{
       if(!valid() || !['playing','loading'].includes(this.value.status))return;
       this.complete();

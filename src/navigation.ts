@@ -1,5 +1,6 @@
 import { getPractice, type PracticeId, type LibraryFilter } from "./practices.ts";
 import { validConfiguredRhythm } from "./duration-controls.ts";
+import { normalizeBeeSettings } from "./bee-settings.ts";
 import { normalizeKidsSettings } from "./kids-settings.ts";
 import type { Rhythm } from "./engine.ts";
 
@@ -38,6 +39,9 @@ export function readSetupScreen(value: unknown): SetupScreen | undefined {
 }
 export function readDraft(value: unknown): NavigationDraft | undefined {
   const d = value as NavigationDraft | undefined;
+  if (d?.practiceId === "bee-breathing") return {
+    preset:"custom",practiceId:"bee-breathing",...normalizeBeeSettings(d),
+  };
   if (d?.practiceId === "flower-candle") return {
     preset:"custom",practiceId:"flower-candle",...normalizeKidsSettings(d),
   };

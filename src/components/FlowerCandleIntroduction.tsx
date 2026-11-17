@@ -1,3 +1,5 @@
+import { KidsParentInformation, KidsComfort } from './KidsParentInformation';
+import { RecordedIntroductionControls } from './RecordedIntroductionControls';
 import { useRef } from 'react';
 import type { Language, Translator } from '../i18n';
 import type { Settings } from '../settings';
@@ -28,18 +30,7 @@ export function FlowerCandleIntroduction({t,language,settings,patch,start,back,p
             <p><CompactLabel>{t(i===0?'kidsStep1Body':'kidsStep2Body')}</CompactLabel></p></div>
         </section>)}
       </div>
-      {narration.available && <div className="kids-voice-controls">
-        <label className="kids-voice-preference"><input type="checkbox" checked={narration.enabled}
-          onChange={event=>narration.controller.setEnabled(event.target.checked)} />{t('kidsVoice')}</label>
-        {!narration.active && (narration.acknowledged || !narration.enabled || narration.status==='error') &&
-          <button type="button" className="text-button" onClick={()=>{narration.controller.replay();primary.current?.focus({preventScroll:true});}}>{t('kidsReplayIntroduction')}</button>}
-        {narration.active && <div className="kids-narration-playback" role="group" aria-label={t('kidsNarrationPlaying')}>
-          <span role="status">{t(narration.status==='paused'?'kidsNarrationPaused':'kidsNarrationPlaying')}</span>
-          <button type="button" className="text-button" onClick={narration.status==='paused'?narration.controller.resume:narration.controller.pause}>
-            {t(narration.status==='paused'?'resume':'pause')}</button>
-        </div>}
-        {narration.status==='error' && <p role="status">{t('kidsNarrationUnavailable')}</p>}
-      </div>}
+      <RecordedIntroductionControls narration={narration} t={t} primary={primary} />
       <p className="kids-settings-summary" aria-live="polite">{t('kidsSummary',{inhale:settings.rhythm[0],exhale:settings.rhythm[2],minutes:settings.minutes})}</p>
       <details className="kids-practice-settings">
         <summary>{t('kidsSettings')}</summary>
@@ -50,7 +41,8 @@ export function FlowerCandleIntroduction({t,language,settings,patch,start,back,p
         <p className="kids-ratio">{t('kidsCalculated',{seconds:settings.rhythm[2]})}</p>
         <SessionLength t={t} settings={settings} patch={patch} />
       </details>
-      <p className="kids-comfort">{t('kidsComfort')}</p>
+      <KidsParentInformation t={t} body="flowerParentBody" />
+      <KidsComfort t={t} />
     </div>
     <button ref={primary} type="button" className="start-button" onClick={narration.active?narration.controller.skip:narration.status==='error'?narration.controller.continueWithout:narration.controller.start} disabled={!narration.active && preparing}><Icon name="play" /><CompactLabel>{t(narration.active?'kidsSkipIntroduction':narration.status==='error'?'kidsStartWithoutIntroduction':'start')}</CompactLabel></button>
     <span className="sr-only" lang={language}>{t('finishHint')}</span>

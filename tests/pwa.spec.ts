@@ -358,7 +358,7 @@ test("offline reload retains settings, all photographs, decoded recordings and a
   );
   await page.getByRole("button", { name: ja.stop, exact: true }).click();
   await page.locator('[data-home-choice="explore"]').click();
-  await expect(page.locator(".practice-card")).toHaveCount(6);
+  await expect(page.locator(".practice-card")).toHaveCount(7);
   await page.locator('[data-practice="equal"]').click();
   await expect(page.locator(".details-body")).toContainText(
     ja.equalExplanation,
@@ -719,4 +719,36 @@ test('Hebrew introduction recording plays offline and a waiting update cannot in
  await page.waitForTimeout(300);expect(await page.locator('meta[name="test-release"]').count()).toBe(0);
  await page.getByRole('button',{name:'סיום',exact:true}).click();await expect(page.locator('meta[name="test-release"]')).toHaveCount(1);await expect(page.locator('.kids-details')).toBeVisible();
  await expect(page.getByRole('button',{name:'השמעת ההקדמה שוב',exact:true})).toBeVisible();
+});
+
+for(const view of ['introduction','library']as const)test(`Bee safe update preserves ${view}, independent profiles and offline flight`,async({page,context,site})=>{
+ await page.addInitScript(()=>{
+  localStorage.setItem('breath-flow-language','en');localStorage.setItem('breath-flow-analytics-consent','denied');localStorage.setItem('breath-flow-bee-introduction',JSON.stringify({version:1,he:{enabled:false}}));
+ });
+ await page.goto(site.url);await page.evaluate(async()=>{await navigator.serviceWorker.ready;});await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
+ await page.locator('.explore-choice').click();await page.getByRole('button',{name:en.categoryKids,exact:true}).click();await page.locator('[data-practice="bee-breathing"]').click();await page.locator('.kids-practice-settings summary').click();
+ await page.locator('#bee-phase-0').focus();await page.keyboard.press('End');await page.locator('#bee-phase-2').focus();await page.keyboard.press('End');await page.locator('#duration').fill('2');
+ const original=await page.evaluate(()=>({adult:localStorage.getItem('still-settings'),flower:localStorage.getItem('breath-flow-kids-settings')}));
+ if(view==='library')await page.locator('.discovery-back').click();
+ site.release(2);await page.evaluate(async()=>{await(await navigator.serviceWorker.getRegistration())!.update();});await expect(page.locator('meta[name="test-release"]')).toHaveCount(1);
+ if(view==='library'){await expect(page.getByRole('button',{name:en.categoryKids,exact:true})).toHaveAttribute('aria-pressed','true');await page.locator('[data-practice="bee-breathing"]').click();}
+ await page.locator('.kids-practice-settings summary').click();await expect(page.locator('#bee-phase-0')).toHaveValue('6');await expect(page.locator('#bee-phase-2')).toHaveValue('12');await expect(page.locator('#duration')).toHaveValue('2');
+ await context.setOffline(true);await page.reload();await page.locator('.explore-choice').click();await page.getByRole('button',{name:en.categoryKids,exact:true}).click();await page.locator('[data-practice="bee-breathing"]').click();
+ const decoded=await page.locator('.bee-artwork image').first().evaluate(async n=>{const image=new Image();image.src=(n as SVGImageElement).href.baseVal;await image.decode();return image.naturalWidth;});expect(decoded).toBe(1254);
+ await page.clock.install();await page.locator('.start-button').click();await expect(page.locator('.remaining-value')).toHaveText('02:06');await page.clock.runFor(10000);await expect(page.locator('.bee-flight-guide')).toBeVisible();
+ await page.getByRole('button',{name:en.stop,exact:true}).click();await expect(page.locator('.bee-details')).toBeVisible();
+ expect(await page.evaluate(()=>({adult:localStorage.getItem('still-settings'),flower:localStorage.getItem('breath-flow-kids-settings')}))).toEqual(original);
+});
+
+test('Bee Hebrew recording plays fully offline and its acknowledgment stays independent',async({page,context,site})=>{
+ test.setTimeout(60000);
+ await page.addInitScript(()=>{
+  localStorage.setItem('breath-flow-language','he');localStorage.setItem('breath-flow-analytics-consent','denied');localStorage.setItem('still-settings',JSON.stringify({sound:'silent'}));
+  localStorage.setItem('breath-flow-flower-candle-introduction',JSON.stringify({version:1,he:{enabled:false,acknowledged:true}}));
+ });
+ await page.goto(site.url);await page.evaluate(async()=>{await navigator.serviceWorker.ready;});await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
+ await context.setOffline(true);await page.reload();await page.locator('.explore-choice').click();await page.getByRole('button',{name:'ילדים',exact:true}).click();await page.locator('[data-practice="bee-breathing"]').click();await page.locator('.start-button').click();
+ await expect(page.getByText('מקשיבים להקדמה',{exact:true})).toBeVisible();await expect(page.locator('.phase-count')).toHaveText('3',{timeout:40000});await expect(page.locator('.remaining-value')).toHaveText('01:04');
+ expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('breath-flow-bee-introduction')!).he.acknowledged)).toBe(true);
+ expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('breath-flow-flower-candle-introduction')!).he.enabled)).toBe(false);
 });

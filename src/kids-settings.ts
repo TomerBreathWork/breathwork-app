@@ -2,6 +2,7 @@ import { flowerCandleRhythm } from './flower-candle.ts';
 import type { Rhythm } from './engine.ts';
 import type { Settings } from './settings';
 
+export type KidsPracticeId='flower-candle'|'bee-breathing';
 export const kidsSettingsKey = 'breath-flow-kids-settings';
 export interface KidsSettings { rhythm: Rhythm; minutes: number }
 export function normalizeKidsSettings(value: unknown): KidsSettings {

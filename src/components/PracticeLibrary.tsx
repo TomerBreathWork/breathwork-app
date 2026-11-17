@@ -7,6 +7,7 @@ import {
   type LibraryFilter,
   type PracticeId,
 } from "../practices";
+import { BeeArtwork } from "./BeeArtwork";
 import { Fragment } from "react";
 import { FlowerCandleStill } from "../prototypes/FlowerCandleCircle";
 import { CategoryIcon } from "./CategoryIcon";
@@ -67,7 +68,7 @@ export function PracticeLibrary({
               data-practice={practice.id}
               onClick={() => onSelect(practice.id)}
             >
-              {practice.audience === "kids" ? <span className="kids-card-art"><FlowerCandleStill kind="flower" /><FlowerCandleStill kind="candle" /></span> : <CategoryIcon category={practice.icon} />}
+              {practice.id === "bee-breathing" ? <span className="kids-card-art"><BeeArtwork kind="bee" /></span> : practice.audience === "kids" ? <span className="kids-card-art"><FlowerCandleStill kind="flower" /><FlowerCandleStill kind="candle" /></span> : <CategoryIcon category={practice.icon} />}
               <span>
                 <strong><CompactLabel>{t(practice.name)}</CompactLabel></strong>
                 <span>{t(practice.short)}</span>

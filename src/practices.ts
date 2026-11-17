@@ -3,7 +3,7 @@ import type { Rhythm } from "./engine.ts";
 import type { TranslationKey } from "./i18n";
 export type Category = "calm" | "energy" | "focus";
 export type BreathingRoute = "nose" | "mouth";
-export type PracticeId = "coherent" | "box" | "equal" | "extended" | "478" | "flower-candle";
+export type PracticeId = "coherent" | "box" | "equal" | "extended" | "478" | "flower-candle" | "bee-breathing";
 export type LibraryFilter = Category | "all" | "kids";
 export interface Practice {
   audience?: "kids";
@@ -109,6 +109,10 @@ export const kidsPractices: Practice[] = [{
   benefit: "kidsComfort", useCases: "kidsIntro", categories: [], icon: "calm",
   rhythm: [2, 0, 4, 0], ratio: 2, customization: "paired",
   routes: { inhale: "nose", exhale: "mouth" }, preset: "custom",
+},{
+  id:"bee-breathing",audience:"kids",presentation:"illustrated",defaultMinutes:1,
+  name:"beeTitle",short:"beeSubtitle",explanation:"beeIntro",benefit:"kidsPacingComfort",useCases:"beeParentBody",
+  categories:[],icon:"calm",rhythm:[3,0,5,0],customization:"phases",routes:nasal,preset:"custom",
 }];
 export const libraryPractices = [...practices, ...kidsPractices];
 export const practicesForFilter = (filter: LibraryFilter) => filter === "kids" ? kidsPractices

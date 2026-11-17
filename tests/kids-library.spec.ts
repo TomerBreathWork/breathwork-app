@@ -29,7 +29,7 @@ for(const [language,t] of Object.entries(locales))for(const [width,height]of[[32
   const filters=page.locator('.category-filters button');await expect(filters).toHaveCount(4);
   await expect(filters).toHaveText([t.allPractices,t.categoryCalm,t.categoryFocus,t.categoryKids]);
   for(const filter of await filters.all()){const b=await filter.boundingBox();expect(b!.height).toBeGreaterThanOrEqual(44);expect(await filter.evaluate(n=>n.scrollWidth-n.clientWidth)).toBeLessThanOrEqual(1);}
-  await expect(page.locator('.practice-card')).toHaveCount(6);await expect(page.locator('.kids-group-title')).toHaveText(t.categoryKids);
+  await expect(page.locator('.practice-card')).toHaveCount(7);await expect(page.locator('.kids-group-title')).toHaveText(t.categoryKids);
   await page.getByRole('button',{name:t.categoryCalm,exact:true}).click();await expect(page.getByRole('button',{name:t.categoryCalm,exact:true})).toBeFocused();await expect(page.locator('.practice-card')).toHaveCount(3);await expect(page.locator('[data-practice="box"]')).toHaveCount(0);
   await page.getByRole('button',{name:t.categoryFocus,exact:true}).click();await expect(page.locator('.practice-card')).toHaveCount(3);await expect(page.locator('[data-practice="flower-candle"]')).toHaveCount(0);
   await details(page,language);await expect(page.locator('.kids-steps')).toContainText(t.kidsStep1Body);await expect(page.locator('.kids-steps')).toContainText(t.kidsStep2Body);
@@ -62,7 +62,7 @@ for(const inhale of[1,2,3,4,5,6])test(`${inhale}:${inhale*2}: ratios, saved prof
 });
 test('invalid stored profile normalizes without disturbing adult Custom and Back restores Kids filter',async({page})=>{
  await open(page,'en',{rhythm:[99,8,1,8],minutes:-3});await details(page);await settings(page);await expect(page.locator('#kids-inhale')).toHaveValue('6');await expect(page.locator('#duration')).toHaveValue('1');
- await page.locator('.discovery-back').click();await expect(page.getByRole('button',{name:en.categoryKids,exact:true})).toHaveAttribute('aria-pressed','true');await expect(page.locator('.practice-card')).toHaveCount(1);
+ await page.locator('.discovery-back').click();await expect(page.getByRole('button',{name:en.categoryKids,exact:true})).toHaveAttribute('aria-pressed','true');await expect(page.locator('.practice-card')).toHaveCount(2);
  await page.locator('.discovery-back').click();await page.locator('[data-home-choice="custom"]').click();
  for(const [i,value]of adult.rhythm.entries())await expect(page.locator(`#phase-value-${i}`)).toHaveValue(String(value));await expect(page.locator('#duration')).toHaveValue('7');
 });
