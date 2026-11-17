@@ -2160,3 +2160,60 @@ input[type="number"],
   background: #ffffff70;
 }
 .session-exit-actions button:first-child { background: #dfe9d8; }
+
+/* Desktop uses the same compact vertical experience, over the full-bleed scene.
+   Keep these rules outside mobile viewports; long/zoomed content may scroll. */
+@media (min-width: 768px) {
+  .app-page {
+    /* Reduce the ivory veil by 20%, rather than multiplying photo opacity. */
+    --settings-background-opacity: .48; /* 1 - (1 - .35) * .8 */
+    --practice-background-opacity: .84; /* 1 - (1 - .8) * .8 */
+    padding: 16px;
+  }
+  .app-page.settings-screen .app-view,
+  .app-page.session .app-view {
+    width: min(100%, 430px);
+    height: min(58rem, calc(100dvh - 32px));
+    flex: none;
+    margin-block: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: safe center;
+    container: app-viewport / size;
+  }
+  .app-page .app-header,
+  .app-page.session .app-header { flex: none; gap: 5px; margin-bottom: 12px; }
+  .app-page .brand { gap: 4px; }
+  .app-page .brand-mark { width: 44px; height: 44px; }
+  .app-page .brand h1 { font-size: 1.9rem; }
+  .app-page .attribution { margin-top: 4px; }
+  .app-page .tagline { font-size: .82rem; }
+  .app-page .settings-panel { padding: 14px; gap: 6px; }
+  .app-page .settings-panel:not(.discovery-panel),
+  .app-page .session-panel { flex: none; }
+  .app-page .preset { min-height: 48px; }
+  .app-page .phase-row { min-height: 44px; }
+  .app-page .session-length { min-height: 44px; padding-block: 0; }
+  .app-page .session-panel,
+  .app-page .practice { gap: 14px; }
+  .app-page .breath-circle { width: min(300px, 36dvh); height: min(300px, 36dvh); }
+  .app-page .discovery-panel { padding: 14px; gap: 10px; }
+  .app-page .kids-intro-content { gap: 12px; }
+  .app-page .kids-step { grid-template-columns: 96px minmax(0, 1fr); }
+  .app-page .kids-steps { gap: 14px; }
+  .app-page .settings-panel[data-home-state="choosing"] { padding-top: 0; }
+  .app-page .settings-panel[data-home-state="choosing"] .preset {
+    min-height: clamp(108px, 14dvh, 128px);
+  }
+  /* Preserve the existing nonmodal consent notice's focus-scroll clearance. */
+  .app-page[data-analytics-notice="open"] .app-view::after { flex: none; }
+  .help-dialog { max-width: 430px; }
+  .app-page .language-picker {
+    inset-inline-end: max(16px, calc((100vw - 430px) / 2));
+    top: max(16px, calc((100dvh - 58rem) / 2));
+  }
+  .app-page .analytics-preferences {
+    inset-inline-start: max(16px, calc((100vw - 430px) / 2));
+    top: max(16px, calc((100dvh - 58rem) / 2));
+  }
+}
